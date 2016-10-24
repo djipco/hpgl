@@ -1,0 +1,170 @@
+{
+    "project": {
+        "name": "hpgl",
+        "version": "0.0.0-alpha.1",
+        "description": "A Node.js library to communicate with HPGL-compatible plotters and printers.",
+        "url": ""
+    },
+    "files": {
+        "src/hpgl.js": {
+            "name": "src/hpgl.js",
+            "modules": {
+                "hpgl": 1
+            },
+            "classes": {
+                "Plotter": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        }
+    },
+    "modules": {
+        "hpgl": {
+            "name": "hpgl",
+            "submodules": {},
+            "elements": {},
+            "classes": {
+                "Plotter": 1
+            },
+            "fors": {},
+            "namespaces": {},
+            "tag": "module",
+            "file": "src/hpgl.js",
+            "line": 12,
+            "description": "The `hpgl` library makes it possible to interact with plotters and printers that support the\n*Hewlett-Packard Graphics Language* (a.k.a. *hpgl*). This language is the de facto standard for\nmost plotters."
+        }
+    },
+    "classes": {
+        "Plotter": {
+            "name": "Plotter",
+            "shortname": "Plotter",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "module": "hpgl",
+            "namespace": "",
+            "file": "src/hpgl.js",
+            "line": 12,
+            "description": "The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those\nmade by HP starting in the 1980s. Various other makers also use or support the HPGL protocol.\n\nBy default, this library uses the Node.js [serialport](https://www.npmjs.com/package/serialport)\nmodule for serial communication. This module offers native support on Mac, Linux and Windows. The\nlibrary can also use the [browser-serialport](https://www.npmjs.com/package/browser-serialport)\nmodule which uses the `chrome.serial` API (only available in Chrome Apps and NW.js). For\ndebugging purposes, it can also use the\n[virtual-serialport](https://www.npmjs.com/package/virtual-serialport).",
+            "is_constructor": 1,
+            "params": [
+                {
+                    "name": "transport",
+                    "description": "A transport object compatible with node-serialport's interface.",
+                    "type": "Object"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object"
+                },
+                {
+                    "name": "callback",
+                    "description": "",
+                    "type": "Function"
+                }
+            ]
+        }
+    },
+    "elements": {},
+    "classitems": [
+        {
+            "file": "src/hpgl.js",
+            "line": 65,
+            "description": "The interval (in milliseconds) to wait before sending a new instruction (so as to not overflow\nthe serial connection).",
+            "itemtype": "property",
+            "name": "queueDelay",
+            "type": "{int}",
+            "default": "100",
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 84,
+            "itemtype": "method",
+            "name": "init",
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 102,
+            "description": "Immediately sends an HPGL instruction to the connected device. The instruction is automatically\n terminated with a semicolon.",
+            "itemtype": "method",
+            "name": "send",
+            "params": [
+                {
+                    "name": "instruction",
+                    "description": "The instruction to send",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 123,
+            "description": "Queues an HPGL instruction to be sent to the connected device. If present, parameters are\n appended to the mnemonic and separated by commas.",
+            "itemtype": "method",
+            "name": "send",
+            "params": [
+                {
+                    "name": "mnemonic",
+                    "description": "2-letter code for the HPGL command to send",
+                    "type": "String"
+                },
+                {
+                    "name": "params",
+                    "description": "",
+                    "type": "Array"
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 144,
+            "description": "// * @method send\n // * @param {String} mnemonic 2-letter code for the HPGL command to send\n // * @param {Array} params\n // * @returns {Plotter} Returns the `Plotter` object to allow method chaining.\n // * @chainable",
+            "class": "Plotter",
+            "module": "hpgl"
+        }
+    ],
+    "warnings": [
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:84"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:102"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:123"
+        },
+        {
+            "message": "Missing item type\n// * @method send\n // * @param {String} mnemonic 2-letter code for the HPGL command to send\n // * @param {Array} params\n // * @returns {Plotter} Returns the `Plotter` object to allow method chaining.\n // * @chainable",
+            "line": " src/hpgl.js:144"
+        }
+    ]
+}
