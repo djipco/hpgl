@@ -16,6 +16,8 @@ module.exports = {};
  * The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those
  * made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol.
  *
+ * #### Transport Layer
+ *
  * By default, this library uses the Node.js [serialport](https://www.npmjs.com/package/serialport)
  * module for serial communication. This module offers native support on Mac, Linux and Windows. The
  * library can also use the [browser-serialport](https://www.npmjs.com/package/browser-serialport)
@@ -23,15 +25,42 @@ module.exports = {};
  * debugging purposes, it can also use the
  * [virtual-serialport](https://www.npmjs.com/package/virtual-serialport).
  *
+ * #### Coordinate Sytem
+ *
+ * The coordinate system is anchored in the top-left of the paper sheet. Positive `x` goes right and
+ * positive `y` goes down. Some plotters work differently but I found it easier to stick with the
+ * computer screen standard.
+ *
  * @class Plotter
  * @constructor
  */
 var Plotter = function() {
 
   // Private properties
+  this._plottingAreas = {
+    A: {long: 10365, short: 7962},
+    B: {long: 16640, short: 10365},
+    A4: {long: 11040, short: 7721},
+    A3: {long: 16158, short: 11040}
+  };
+  this._synchronousInstructions = [
+    "OA",
+    "OC",
+    "OD",
+    "OE",
+    "OF",
+    "OH",
+    "OI",
+    "OO",
+    "OP",
+    "OS",
+    "OW",
+  ];
   this._queue = [];
   this._queueTimeOutId = 0;
-  this._paper = "letter";
+  this._paper = "A";
+  this._orientation = "landscape";
+  this._buffer  = "";
 
   /**
    * The interval (in milliseconds) to wait before sending a new instruction (so as to not overflow
@@ -53,12 +82,10 @@ var Plotter = function() {
     enumerable: true,
     writable: false,
     value: [
-      'a',
-      'letter',
-      'a4',
-      'b',
-      'tabloid',
-      'a3'
+      'A',  // letter
+      'B',  // tabloid
+      'A4',
+      'A3'
     ]
   });
 
@@ -73,10 +100,12 @@ util.inherits(Plotter, EventEmitter);
  * @param {Object} transport A transport object compatible with the `serialport` API interface.
  * @param {Object} [options]
  * @param {String} [options.paper="A"] The paper size to use. Choices are:
- *   - *A* or *letter* (default)
- *   - *B* or *tabloid*
+ *   - *A* (a.k.a "letter")
+ *   - *B* (a.k.a "tabloid")
  *   - *A4*
  *   - *A3*
+ * @param {String} [options.orientation="landscape"] The orientation of the paper: *landscape* or
+ * *portrait*.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  * @chainable
  */
@@ -92,8 +121,16 @@ Plotter.prototype.connect = function(transport, options = {}) {
   this.transport = transport;
 
   // Assign different paper size if specified
-  if ( options.paper && this.supportedPapers.includes(options.paper.toLowerCase()) ) {
-    this._paper = options.paper.toLowerCase();
+  if ( options.paper && this.supportedPapers.includes(options.paper.toUpperCase()) ) {
+    this._paper = options.paper.toUpperCase();
+  }
+
+  // Assign different orientation if specified
+  if (
+    options.orientation &&
+    ["landscape", "portrait"].includes(options.orientation.toLowerCase())
+  ) {
+    this._orientation = options.orientation.toLowerCase();
   }
 
   this.transport.open(function (error) {
@@ -104,22 +141,42 @@ Plotter.prototype.connect = function(transport, options = {}) {
 
     } else {
 
-      this.transport.on('data', this._onData);
-      this.transport.on('error', this._onTransportError);
+      this.transport.on('data', this._onData.bind(this));
+      this.transport.on('error', this._onTransportError.bind(this));
+
+      this.queue("OI");
+      // this.queue("OF");
 
       // Resets the device to its 'power on' status (same as DF plus: pen is raised, errors are
       // cleared, rotation set to 0, scaling points reset).
       this.queue("IN");
 
-      // Set the initial point (0,0 in this case)
-      this.queue("IP");
-
       // Select paper size. Basically, this tells the device which paper orientation to use. A4 and
-      // Letter (A) use the same orientation while A3 and Tabloid (B) use the other orientation.
-      if ( ["b", "a3", "tabloid"].includes(this._paper) ) {
+      // A (letter) use the same orientation while A3 and B (tabloid) use the other orientation.
+      if ( ["B", "A3"].includes(this._paper) ) {
         this.queue("PS", 0);
       } else {
         this.queue("PS", 127);
+      }
+
+      // Set the desired orientation
+      if (this._orientation === "portrait") {
+
+        if ( ["A", "A4"].includes(this._paper) ) {
+          this.queue("RO", 90);   // rotate to 0
+          this.queue("IP");       // reassign P1 and P2
+          this.queue("IW");       // reset plotting window
+        }
+
+      } else {
+
+        if ( ["B", "A3"].includes(this._paper) ) {
+          this.queue("RO", 90);   // rotate to 0
+          this.queue("IP");       // reassign P1 and P2
+          this.queue("IW");       // reset plotting window
+        }
+
+
       }
 
       // Instead of using the SC instruction to scale for millimiters, we are using our own
@@ -144,12 +201,52 @@ Plotter.prototype.connect = function(transport, options = {}) {
  * Converts centimeters to plotter units. According to the documentation, a plotter unit is
  * equivalent to 0.02488 millimeters.
  *
- * @method cmToPlotterUnits
+ * @private
+ * @method _toPlotterUnits
  * @param {Number} cm The centimeter value to convert.
  * @return {int} The converted value rounded to the closest **integer**.
  */
-Plotter.prototype.cmToPlotterUnits = function(cm) {
+Plotter.prototype._toPlotterUnits = function(cm) {
   return Math.round(cm / 0.002488);
+};
+
+/**
+ * Converts a point (x, y) whose origin is in the usual top-left to a point following the HPGL
+ * coordinates system. The input coordinates must be expressed in plotter units since this function
+ * takes into account the desired orientation and the paper size.
+ *
+ * @private
+ * @method _toHpglCoordinates
+ * @param {Number} x The x coordinate of the point (must be expressed in plotter units).
+ * @param {Number} y The y coordinate of the point (must be expressed in plotter units).
+ * @return {Object} An object whose **x** and **y** properties have been transformed.
+ */
+Plotter.prototype._toHpglCoordinates = function(x, y) {
+
+  let point = {x: Math.round(x), y: Math.round(y)};
+
+  if ( ["A", "A4"].includes(this._paper) ) {
+
+    if (this._orientation === "portrait") {
+      point.x = this._plottingAreas[this._paper].short - x;
+    } else {
+      point.y = this._plottingAreas[this._paper].short - y;
+    }
+
+
+  } else if ( ["B", "A3"].includes(this._paper) ) {
+
+    if (this._orientation === "portrait") {
+      point.y = x;
+      point.x = y;
+    } else {
+
+    }
+
+  }
+
+  return point;
+
 };
 
 /**
@@ -158,7 +255,14 @@ Plotter.prototype.cmToPlotterUnits = function(cm) {
  * @method _onData
  */
 Plotter.prototype._onData = function(data) {
-  console.log('Data received: ' + data);
+
+  if (data.toString() === "\r") {
+    console.log("Receive: " + this._buffer);
+    this._buffer = "";
+  } else {
+    this._buffer += data.toString();
+  }
+
 };
 
 /**
@@ -201,7 +305,7 @@ Plotter.prototype.send = function(instruction, callback) {
     instruction += ";";
   }
 
-  // console.log("send: " + instruction);
+  console.log("Send: " + instruction);
 
   this.transport.write(instruction, function(results) {
     if (typeof callback === "function") callback(results);
@@ -212,9 +316,12 @@ Plotter.prototype.send = function(instruction, callback) {
 };
 
 /**
- * Draws a text label. CHARACTER SETS DO NOT WORK YET!
+ * Draws a text label.
  *
- * @method drawLabel
+ * @todo text direction (double check with orientation)
+ * @todo charsets
+ *
+ * @method drawText
  * @param {String} text The text to write
  * @param {Object} [options]
  * @param {Number} [options.characterSet=0] The numerical ID of the character set to use to print
@@ -242,10 +349,13 @@ Plotter.prototype.send = function(instruction, callback) {
  * negative value mirrors the text for that dimension.
  * @param {Number} [options.characterHeight=0.269] The height, in centimeters, to draw the text at.
  * A negative value mirrors the text for that dimension.
+ * @param {Number} [options.rotation=0] The rotation to apply to the text (in degrees).
+ * @param {Number} [options.slant=0] The slant (italic) with which characters are lettered (in
+ * degrees).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  * @chainable
  */
-Plotter.prototype.drawLabel = function(text, options = {}) {
+Plotter.prototype.drawText = function(text, options = {}) {
 
   // Defaults
   if (!options.characterSet) options.characterSet = 0;
@@ -260,14 +370,40 @@ Plotter.prototype.drawLabel = function(text, options = {}) {
   this.queue(
     "SI",
     [
-      this.convertToHpglDecimal(options.characterWidth),
-      this.convertToHpglDecimal(options.characterHeight)
+      this._toHpglDecimal(options.characterWidth),
+      this._toHpglDecimal(options.characterHeight)
     ]
   );
 
-  // @todo: DI, DR, SI, SR and SL
+  // Assign correct rotation angle
+  options.rotation = parseFloat(options.rotation);
+  if ( isNaN(options.rotation) ) { options.rotation = 0; }
+
+  let radRotation = options.rotation * Math.PI / 180;
+
+  this.queue(
+    "DI",
+    [
+      this._toHpglDecimal( Math.cos(radRotation) ),
+      this._toHpglDecimal( Math.sin(radRotation) )
+    ]
+  );
+
+
+  // Assign correct rotation angle
+  options.slant = parseFloat(options.slant);
+  if ( isNaN(options.slant) ) { options.slant = 0; }
+
+  let radSlant = options.slant * Math.PI / 180;
+  this.queue("SL", this._toHpglDecimal( Math.tan(radSlant) ) );
+
+
+
 
   this.queue("LB", text);
+
+
+  // @todo: DI, DR, SI, SR and SL
 
   return this;
 
@@ -278,11 +414,12 @@ Plotter.prototype.drawLabel = function(text, options = {}) {
  * Converts a numerical value to an integer that matches HPGL's requirements (must be between
  * -32768 and 32767).
  *
- * @method convertToHpglInteger
+ * @private
+ * @method _toHpglInteger
  * @param {Number} value The text to write
  * @returns {int} The converted integer.
  */
-Plotter.prototype.convertToHpglInteger = function(value) {
+Plotter.prototype._toHpglInteger = function(value) {
 
   value = parseInt(value, 10);
 
@@ -300,11 +437,12 @@ Plotter.prototype.convertToHpglInteger = function(value) {
  * Converts a numerical value to floating-point decimal value respecting HPGL's requirements (must
  * be between -128 and 127.9999 and must a maximum of 4 decimal places).
  *
- * @method convertToHpglInteger
+ * @private
+ * @method _toHpglDecimal
  * @param {Number} value The text to write
- * @returns {int} The converted integer.
+ * @returns {Number} The converted float.
  */
-Plotter.prototype.convertToHpglDecimal = function(value) {
+Plotter.prototype._toHpglDecimal = function(value) {
 
   value = parseFloat(value);
 
@@ -330,8 +468,96 @@ Plotter.prototype.convertToHpglDecimal = function(value) {
  * @chainable
  */
 Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
-  this.queue("CI", [this.cmToPlotterUnits(radius), Math.round(angle)]);
+  this.queue("CI", [this._toPlotterUnits(radius), Math.round(angle)]);
   return this;
+};
+
+/**
+ * Draws a line from the current position to the specified destination position.
+ *
+ * @method drawLine
+ * @param {Number} destX The `x` coordinate of the end of the line (in cm).
+ * @param {Number} destY The `y` coordinate of the end of the line (in cm).
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
+ * @chainable
+ */
+Plotter.prototype.drawLine = function(destX, destY) {
+
+  this.drawLines([destX, destY]);
+  return this;
+
+};
+
+/**
+ * Draws a series of lines starting at the current pen position and going, in turn, to all x/y pairs
+ * specified in the array.
+ *
+ * @method drawLines
+ * @param {Array} positions An array of line-end ositions in the form `[x1, y1, x2, y2, ...]`
+ * @param {Object} [options]
+ * @param {int} [options.linePattern=7] Integer between 0 and 7. Value 0 prints dots at extermities
+ * only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a solid line.
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
+ * @chainable
+ *
+ *
+ * @todo add linePatternLength option
+ */
+Plotter.prototype.drawLines = function(positions = [], options = {}) {
+
+  let positionsPU = [];
+
+  // Check validity of line pattern
+  options.linePattern = parseInt(options.linePattern);
+
+  if (isNaN(options.linePattern) || options.linePattern < 0 || options.linePattern > 7) {
+    options.linePattern = 7;
+  }
+
+  if (options.linePattern === 7) {
+    this.queue("LT");
+  } else {
+    this.queue("LT", options.linePattern);
+  }
+
+
+  for (var i = 0; i < positions.length; i += 2) {
+
+    let x = this._toPlotterUnits(positions[i]);
+    let y = this._toPlotterUnits(positions[i+1]);
+    let p = this._toHpglCoordinates(x, y);
+
+    positionsPU.push(p.x, p.y);
+
+  }
+
+  if (positionsPU.length > 0) {
+    this.queue("PD");
+    this.queue("PA", positionsPU.join(","));
+    this.queue("PU");
+  }
+
+  return this;
+
+};
+
+/**
+ * Draws a rectangle from the current position to the specified destination position.
+ *
+ * @method drawRectangle
+ * @param {Number} destX The `x` coordinate of the end of the line (in cm).
+ * @param {Number} destY The `y` coordinate of the end of the line (in cm).
+ * @param {Boolean} liftPenWhenDone Whether to automatically lift the pen when done p;otting the
+ * line.
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
+ * @chainable
+ */
+Plotter.prototype.drawRectangle = function(destX, destY, liftPenWhenDone = false) {
+
+  this.queue("EA", [this._toPlotterUnits(destX), this._toPlotterUnits(destY)]);
+  // if (liftPenWhenDone) { this.queue("PU"); }
+  return this;
+
 };
 
 /**
@@ -344,8 +570,35 @@ Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
  * @chainable
  */
 Plotter.prototype.moveTo = function(x, y) {
-  this.queue("PU", [this.cmToPlotterUnits(x), this.cmToPlotterUnits(y)]);
+
+  let point = this._toHpglCoordinates(this._toPlotterUnits(x), this._toPlotterUnits(y));
+  this.queue("PU", [point.x, point.y]);
   return this;
+
+};
+
+/**
+ * Sets the velocity of the plotting pen. When the velocity `parameter` is set to `1`, the velocity
+ * will be at its maximum of 38.1cm/s (default). When the `velocity` parameter is set to 0.1, the
+ * actual velocity will be 3.81cm/s.
+ *
+ * @method setVelocity
+ * @param {Number} velocity A decimal number between 0 and 1.
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
+ * @chainable
+ */
+Plotter.prototype.setVelocity = function(velocity = 1.0) {
+
+  velocity = parseFloat(velocity);
+
+  if (isNaN(velocity) || velocity <= 0 || velocity > 38.1) {
+    velocity = 38.1;
+  }
+
+  this.queue("VS", this._toHpglDecimal(velocity));
+
+  return this;
+
 };
 
 /**
@@ -362,15 +615,10 @@ Plotter.prototype.moveTo = function(x, y) {
  */
 Plotter.prototype.queue = function(mnemonic, params = []) {
 
-
   if (!Array.isArray(params)) params = [params];
-
-  // console.log("queued: " + mnemonic + params.join(","));
-
   this._queue.push(mnemonic + params.join(","));
 
   if (this._queueTimeOutId === 0) {
-    console.log("new queueTimeout: " + this.queueDelay);
     this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
   }
 
@@ -384,13 +632,22 @@ Plotter.prototype.queue = function(mnemonic, params = []) {
  */
 Plotter.prototype._processQueue = function() {
 
-  // console.log("processing queue");
-
   this._queueTimeOutId = 0;
 
+  // Send next available instruction (and keep it for later check)
   if (this._queue.length > 0) {
-    this.send(this._queue.shift());
+    var instruction = this._queue.shift();
+    this.send(instruction);
   }
+
+  // If the instruction that was just sent it synchronous (depends on an answer from the device), we
+  // must wait before setting the new timeout.
+  if ( this._synchronousInstructions.includes(instruction.substr(0, 2)) ) {
+    console.log("sync: " + instruction.substr(0, 2));
+  } else {
+    console.log("nosync: " + instruction.substr(0, 2));
+  }
+
 
   if (this._queue.length > 0) {
     this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
