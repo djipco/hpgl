@@ -30,7 +30,7 @@
             "namespaces": {},
             "tag": "module",
             "file": "src/hpgl.js",
-            "line": 12,
+            "line": 15,
             "description": "The `hpgl` library makes it possible to interact with plotters and printers that support the\n*Hewlett-Packard Graphics Language* (a.k.a. *hpgl*). This language is the de facto standard for\nmost plotters."
         }
     },
@@ -46,33 +46,16 @@
             "module": "hpgl",
             "namespace": "",
             "file": "src/hpgl.js",
-            "line": 12,
+            "line": 15,
             "description": "The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those\nmade by HP starting in the 1980s. Various other makers also use or support the HPGL protocol.\n\nBy default, this library uses the Node.js [serialport](https://www.npmjs.com/package/serialport)\nmodule for serial communication. This module offers native support on Mac, Linux and Windows. The\nlibrary can also use the [browser-serialport](https://www.npmjs.com/package/browser-serialport)\nmodule which uses the `chrome.serial` API (only available in Chrome Apps and NW.js). For\ndebugging purposes, it can also use the\n[virtual-serialport](https://www.npmjs.com/package/virtual-serialport).",
-            "is_constructor": 1,
-            "params": [
-                {
-                    "name": "transport",
-                    "description": "A transport object compatible with node-serialport's interface.",
-                    "type": "Object"
-                },
-                {
-                    "name": "options",
-                    "description": "",
-                    "type": "Object"
-                },
-                {
-                    "name": "callback",
-                    "description": "",
-                    "type": "Function"
-                }
-            ]
+            "is_constructor": 1
         }
     },
     "elements": {},
     "classitems": [
         {
             "file": "src/hpgl.js",
-            "line": 65,
+            "line": 36,
             "description": "The interval (in milliseconds) to wait before sending a new instruction (so as to not overflow\nthe serial connection).",
             "itemtype": "property",
             "name": "queueDelay",
@@ -83,28 +66,41 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 84,
-            "itemtype": "method",
-            "name": "init",
-            "return": {
-                "description": "Returns the `Plotter` object to allow method chaining.",
-                "type": "Plotter"
-            },
-            "chainable": 1,
+            "line": 46,
+            "description": "[read-only] Array of all the paper sizes supported by the device",
+            "itemtype": "property",
+            "name": "supportedPapers",
+            "type": "{String[]}",
+            "readonly": "",
             "class": "Plotter",
             "module": "hpgl"
         },
         {
             "file": "src/hpgl.js",
-            "line": 102,
-            "description": "Immediately sends an HPGL instruction to the connected device. The instruction is automatically\n terminated with a semicolon.",
+            "line": 69,
+            "description": "Opens a serial connection to the device.",
             "itemtype": "method",
-            "name": "send",
+            "name": "connect",
             "params": [
                 {
-                    "name": "instruction",
-                    "description": "The instruction to send",
-                    "type": "String"
+                    "name": "transport",
+                    "description": "A transport object compatible with the `serialport` API interface.",
+                    "type": "Object"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object",
+                    "optional": true,
+                    "props": [
+                        {
+                            "name": "paper",
+                            "description": "The paper size to use. Choices are:\n  - *A* or *letter* (default)\n  - *B* or *tabloid*\n  - *A4*\n  - *A3*",
+                            "type": "String",
+                            "optional": true,
+                            "optdefault": "\"A\""
+                        }
+                    ]
                 }
             ],
             "return": {
@@ -117,10 +113,272 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 123,
-            "description": "Queues an HPGL instruction to be sent to the connected device. If present, parameters are\n appended to the mnemonic and separated by commas.",
+            "line": 85,
+            "description": "An object that is used for serial communication. This object must adhere to the `serialport`\nobject's interface.",
+            "itemtype": "property",
+            "name": "transport",
+            "type": "{Object}",
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 129,
+            "description": "Event emitted when a serial connection is successfully established to the device.",
+            "itemtype": "event",
+            "name": "ready",
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 143,
+            "description": "Converts centimeters to plotter units. According to the documentation, a plotter unit is\nequivalent to 0.02488 millimeters.",
+            "itemtype": "method",
+            "name": "cmToPlotterUnits",
+            "params": [
+                {
+                    "name": "cm",
+                    "description": "The centimeter value to convert.",
+                    "type": "Number"
+                }
+            ],
+            "return": {
+                "description": "The converted value rounded to the closest **integer**.",
+                "type": "Int"
+            },
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 155,
+            "access": "private",
+            "tagname": "",
+            "params": [
+                {
+                    "name": "data",
+                    "description": "",
+                    "type": "Object"
+                }
+            ],
+            "itemtype": "method",
+            "name": "_onData",
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 164,
+            "access": "private",
+            "tagname": "",
+            "itemtype": "method",
+            "name": "_onTransportError",
+            "params": [
+                {
+                    "name": "error",
+                    "description": "An object containing information about the error.",
+                    "type": "Object"
+                }
+            ],
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 171,
+            "description": "Event emitted when an error occurs. The specified function will receive an object with\ninformation about the error.",
+            "itemtype": "event",
+            "name": "ready",
+            "params": [
+                {
+                    "name": "error",
+                    "description": "",
+                    "type": "Object"
+                }
+            ],
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 182,
+            "description": "Immediately sends an HPGL instruction down the serial port. The instruction is automatically\n terminated with a semicolon.",
             "itemtype": "method",
             "name": "send",
+            "params": [
+                {
+                    "name": "instruction",
+                    "description": "The instruction to send",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "A function to call once the data has been sent. This function will\n receive an error object, if something went wrong.",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 214,
+            "description": "Draws a text label. CHARACTER SETS DO NOT WORK YET!",
+            "itemtype": "method",
+            "name": "drawLabel",
+            "params": [
+                {
+                    "name": "text",
+                    "description": "The text to write",
+                    "type": "String"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object",
+                    "optional": true,
+                    "props": [
+                        {
+                            "name": "characterSet",
+                            "description": "The numerical ID of the character set to use to print\nthe label. Available sets are:\n - 0: ANSI\n - 1: 9825 Character Set\n - 2: French/German\n - 3: Scandinavian\n - 4: Spanish/Latin American\n - 6: JIS\n - 7: Roman Extensions\n - 8: Katakana\n - 9: ISO Internation Reference Version\n - 30: ISO Swedish\n - 31: ISO Swedish for Names\n - 32: ISO Norway, Version 1 (sic)\n - 33: ISO German\n - 34: ISO French\n - 35: ISO United Kingdom (sic)\n - 36: ISO Italian\n - 37: ISO Spanish\n - 38: ISO Portuguese\n - 39: ISO Norway, Version 2 (sic)",
+                            "type": "Number",
+                            "optional": true,
+                            "optdefault": "0"
+                        },
+                        {
+                            "name": "characterWidth",
+                            "description": "The width, in centimeters, to draw the text at. A\nnegative value mirrors the text for that dimension.",
+                            "type": "Number",
+                            "optional": true,
+                            "optdefault": "0.187"
+                        },
+                        {
+                            "name": "characterHeight",
+                            "description": "The height, in centimeters, to draw the text at.\nA negative value mirrors the text for that dimension.",
+                            "type": "Number",
+                            "optional": true,
+                            "optdefault": "0.269"
+                        }
+                    ]
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 277,
+            "description": "Converts a numerical value to an integer that matches HPGL's requirements (must be between\n-32768 and 32767).",
+            "itemtype": "method",
+            "name": "convertToHpglInteger",
+            "params": [
+                {
+                    "name": "value",
+                    "description": "The text to write",
+                    "type": "Number"
+                }
+            ],
+            "return": {
+                "description": "The converted integer.",
+                "type": "Int"
+            },
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 299,
+            "description": "Converts a numerical value to floating-point decimal value respecting HPGL's requirements (must\nbe between -128 and 127.9999 and must a maximum of 4 decimal places).",
+            "itemtype": "method",
+            "name": "convertToHpglInteger",
+            "params": [
+                {
+                    "name": "value",
+                    "description": "The text to write",
+                    "type": "Number"
+                }
+            ],
+            "return": {
+                "description": "The converted integer.",
+                "type": "Int"
+            },
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 321,
+            "description": "Draws a circle whose center is at the current location of the pen.",
+            "itemtype": "method",
+            "name": "drawCircle",
+            "params": [
+                {
+                    "name": "radius",
+                    "description": "The circle's radius (in centimeters).",
+                    "type": "Number",
+                    "optional": true,
+                    "optdefault": "1"
+                },
+                {
+                    "name": "angle",
+                    "description": "An integer between -180 and 180 degrees representing the chord angle.\nThe most commonly used values are 0-180. In this case, the smaller the angle is, the smoother the\ncircle will be. Negative values make the circle start at 180 degrees instead of 0.",
+                    "type": "Number",
+                    "optional": true,
+                    "optdefault": "5"
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 337,
+            "description": "Lifts the pen and moves it to the specified x and y coordinates.",
+            "itemtype": "method",
+            "name": "moveTo",
+            "params": [
+                {
+                    "name": "x",
+                    "description": "Position along the **x** axis (in centimeters)",
+                    "type": "Number"
+                },
+                {
+                    "name": "y",
+                    "description": "Position along the **y** axis (in centimeters)",
+                    "type": "Number"
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 351,
+            "description": "Queues an HPGL instruction to be sent to the serial port. If any parameters are present, they are\n appended to the 2-letter mnemonic and separated by commas.",
+            "itemtype": "method",
+            "name": "queue",
             "params": [
                 {
                     "name": "mnemonic",
@@ -129,8 +387,8 @@
                 },
                 {
                     "name": "params",
-                    "description": "",
-                    "type": "Array"
+                    "description": "A string, a number or an or array of string or numbers to use\n as parameter(s) for the instruction.",
+                    "type": "Number|String|Array"
                 }
             ],
             "return": {
@@ -143,8 +401,11 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 144,
-            "description": "// * @method send\n // * @param {String} mnemonic 2-letter code for the HPGL command to send\n // * @param {Array} params\n // * @returns {Plotter} Returns the `Plotter` object to allow method chaining.\n // * @chainable",
+            "line": 381,
+            "access": "private",
+            "tagname": "",
+            "itemtype": "method",
+            "name": "_processQueue",
             "class": "Plotter",
             "module": "hpgl"
         }
@@ -152,19 +413,35 @@
     "warnings": [
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:84"
+            "line": " src/hpgl.js:69"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:102"
+            "line": " src/hpgl.js:182"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:123"
+            "line": " src/hpgl.js:214"
         },
         {
-            "message": "Missing item type\n// * @method send\n // * @param {String} mnemonic 2-letter code for the HPGL command to send\n // * @param {Array} params\n // * @returns {Plotter} Returns the `Plotter` object to allow method chaining.\n // * @chainable",
-            "line": " src/hpgl.js:144"
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:277"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:299"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:321"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:337"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:351"
         }
     ]
 }

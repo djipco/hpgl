@@ -83,6 +83,9 @@
     <pre class="code prettyprint linenums">
 &#x27;use strict&#x27;;
 
+var util = require(&#x27;util&#x27;);
+var EventEmitter = require(&#x27;events&#x27;).EventEmitter;
+
 /**
  * The &#x60;hpgl&#x60; library makes it possible to interact with plotters and printers that support the
  * *Hewlett-Packard Graphics Language* (a.k.a. *hpgl*). This language is the de facto standard for
@@ -105,45 +108,13 @@ module.exports = {};
  *
  * @class Plotter
  * @constructor
- * @param {Object} transport A transport object compatible with node-serialport&#x27;s interface.
- * @param {Object} options
- * @param {Function} callback
  */
-var Plotter = function(transport, options = {}, callback) {
+var Plotter = function() {
 
-  this.transport = transport;
-
-  this.transport.open(function (error) {
-
-    if (error) {
-      alert(&#x27;Could not connect to the requested serial port:\n&#x27; + this.transport.path);
-    } else {
-      this.init();
-      callback();
-    }
-
-  }.bind(this));
-
-
-
-
-  // /**
-  //  * [read-only] Array of all the devices supported by this library.
-  //  * @property supportedDevices
-  //  * @type {string[]}
-  //  * @readOnly
-  //  */
-  // Object.defineProperty(this, &#x27;supportedDevices&#x27;, {
-  //   enumerable: true,
-  //   writable: false,
-  //   value: [
-  //     &#x27;PhidgetInterfaceKit&#x27;,
-  //     &#x27;PhidgetBridge&#x27;,
-  //     &#x27;PhidgetLED&#x27;,
-  //     &#x27;PhidgetRFID&#x27;,
-  //     &#x27;PhidgetStepper&#x27;
-  //   ]
-  // });
+  // Private properties
+  this._queue = [];
+  this._queueTimeOutId = 0;
+  this._paper = &quot;letter&quot;;
 
   /**
    * The interval (in milliseconds) to wait before sending a new instruction (so as to not overflow
@@ -153,50 +124,170 @@ var Plotter = function(transport, options = {}, callback) {
    * @type {int}
    * @default 100
    */
-  this.queueDelay = 100;
+  this.queueDelay = 50;
 
-
-  this._queue = [];
-  this._queueTimeOutId = 0;
+  /**
+   * [read-only] Array of all the paper sizes supported by the device
+   * @property supportedPapers
+   * @type {String[]}
+   * @readOnly
+   */
+  Object.defineProperty(this, &#x27;supportedPapers&#x27;, {
+    enumerable: true,
+    writable: false,
+    value: [
+      &#x27;a&#x27;,
+      &#x27;letter&#x27;,
+      &#x27;a4&#x27;,
+      &#x27;b&#x27;,
+      &#x27;tabloid&#x27;,
+      &#x27;a3&#x27;
+    ]
+  });
 
 };
 
-
-// util.inherits(Phidget, EventEmitter);
+util.inherits(Plotter, EventEmitter);
 
 /**
+ * Opens a serial connection to the device.
  *
- * @method init
+ * @method connect
+ * @param {Object} transport A transport object compatible with the &#x60;serialport&#x60; API interface.
+ * @param {Object} [options]
+ * @param {String} [options.paper=&quot;A&quot;] The paper size to use. Choices are:
+ *   - *A* or *letter* (default)
+ *   - *B* or *tabloid*
+ *   - *A4*
+ *   - *A3*
  * @returns {Plotter} Returns the &#x60;Plotter&#x60; object to allow method chaining.
  * @chainable
  */
-Plotter.prototype.init = function() {
+Plotter.prototype.connect = function(transport, options = {}) {
 
-  this.transport.on(&#x27;data&#x27;, function(data) {
-    console.log(&#x27;Data received: &#x27; + data);
-  });
+  /**
+   * An object that is used for serial communication. This object must adhere to the &#x60;serialport&#x60;
+   * object&#x27;s interface.
+   *
+   * @property transport
+   * @type {Object}
+   */
+  this.transport = transport;
 
-  this.transport.on(&#x27;error&#x27;, function(error) {
-    console.log(&#x27;Error received: &#x27; + error);
-  });
+  // Assign different paper size if specified
+  if ( options.paper &amp;&amp; this.supportedPapers.includes(options.paper.toLowerCase()) ) {
+    this._paper = options.paper.toLowerCase();
+  }
+
+  this.transport.open(function (error) {
+
+    if (error) {
+
+      this._onTransportError(error);
+
+    } else {
+
+      this.transport.on(&#x27;data&#x27;, this._onData);
+      this.transport.on(&#x27;error&#x27;, this._onTransportError);
+
+      // Resets the device to its &#x27;power on&#x27; status (same as DF plus: pen is raised, errors are
+      // cleared, rotation set to 0, scaling points reset).
+      this.queue(&quot;IN&quot;);
+
+      // Set the initial point (0,0 in this case)
+      this.queue(&quot;IP&quot;);
+
+      // Select paper size. Basically, this tells the device which paper orientation to use. A4 and
+      // Letter (A) use the same orientation while A3 and Tabloid (B) use the other orientation.
+      if ( [&quot;b&quot;, &quot;a3&quot;, &quot;tabloid&quot;].includes(this._paper) ) {
+        this.queue(&quot;PS&quot;, 0);
+      } else {
+        this.queue(&quot;PS&quot;, 127);
+      }
+
+      // Instead of using the SC instruction to scale for millimiters, we are using our own
+      // conversion function. The decision is motivated by the fact that SC onky accepts integers as
+      // parameters which makes it imprecise.
+
+      /**
+       * Event emitted when a serial connection is successfully established to the device.
+       * @event ready
+       */
+      setTimeout(function () {
+        this.emit(&quot;ready&quot;);
+      }.bind(this), 50);
+
+    }
+
+  }.bind(this));
+
+};
+
+/**
+ * Converts centimeters to plotter units. According to the documentation, a plotter unit is
+ * equivalent to 0.02488 millimeters.
+ *
+ * @method cmToPlotterUnits
+ * @param {Number} cm The centimeter value to convert.
+ * @return {int} The converted value rounded to the closest **integer**.
+ */
+Plotter.prototype.cmToPlotterUnits = function(cm) {
+  return Math.round(cm / 0.002488);
+};
+
+/**
+ * @private
+ * @param {Object} data
+ * @method _onData
+ */
+Plotter.prototype._onData = function(data) {
+  console.log(&#x27;Data received: &#x27; + data);
+};
+
+/**
+ * @private
+ * @method _onTransportError
+ * @param {Object} error An object containing information about the error.
+ */
+Plotter.prototype._onTransportError = function(error) {
+
+  /**
+   * Event emitted when an error occurs. The specified function will receive an object with
+   * information about the error.
+   *
+   * @event ready
+   * @param {Object} error
+   */
+  this.emit(&quot;error&quot;, error);
 
 };
 
 /**
  *
- * Immediately sends an HPGL instruction to the connected device. The instruction is automatically
+ * Immediately sends an HPGL instruction down the serial port. The instruction is automatically
  * terminated with a semicolon.
  *
  * @method send
  * @param {String} instruction The instruction to send
+ * @param {Function} [callback] A function to call once the data has been sent. This function will
+ * receive an error object, if something went wrong.
  * @returns {Plotter} Returns the &#x60;Plotter&#x60; object to allow method chaining.
  * @chainable
  */
-Plotter.prototype.send = function(instruction) {
+Plotter.prototype.send = function(instruction, callback) {
 
-  this.transport.write(instruction + &quot;;&quot;, function(err, results) {
-    console.log(&#x27;err &#x27; + err);
-    console.log(&#x27;results &#x27; + results);
+  // Add termination character. A semicolon is used unless we are printing a label (which requires
+  // special termination char: ETX).
+  if (instruction.substring(0, 2) === &quot;LB&quot;) {
+    instruction += String.fromCharCode(3); // ETX character is label delimiter
+  } else {
+    instruction += &quot;;&quot;;
+  }
+
+  // console.log(&quot;send: &quot; + instruction);
+
+  this.transport.write(instruction, function(results) {
+    if (typeof callback === &quot;function&quot;) callback(results);
   });
 
   return this;
@@ -204,45 +295,193 @@ Plotter.prototype.send = function(instruction) {
 };
 
 /**
+ * Draws a text label. CHARACTER SETS DO NOT WORK YET!
  *
- * Queues an HPGL instruction to be sent to the connected device. If present, parameters are
- * appended to the mnemonic and separated by commas.
- *
- * @method send
- * @param {String} mnemonic 2-letter code for the HPGL command to send
- * @param {Array} params
+ * @method drawLabel
+ * @param {String} text The text to write
+ * @param {Object} [options]
+ * @param {Number} [options.characterSet=0] The numerical ID of the character set to use to print
+ * the label. Available sets are:
+ *  - 0: ANSI
+ *  - 1: 9825 Character Set
+ *  - 2: French/German
+ *  - 3: Scandinavian
+ *  - 4: Spanish/Latin American
+ *  - 6: JIS
+ *  - 7: Roman Extensions
+ *  - 8: Katakana
+ *  - 9: ISO Internation Reference Version
+ *  - 30: ISO Swedish
+ *  - 31: ISO Swedish for Names
+ *  - 32: ISO Norway, Version 1 (sic)
+ *  - 33: ISO German
+ *  - 34: ISO French
+ *  - 35: ISO United Kingdom (sic)
+ *  - 36: ISO Italian
+ *  - 37: ISO Spanish
+ *  - 38: ISO Portuguese
+ *  - 39: ISO Norway, Version 2 (sic)
+ * @param {Number} [options.characterWidth=0.187] The width, in centimeters, to draw the text at. A
+ * negative value mirrors the text for that dimension.
+ * @param {Number} [options.characterHeight=0.269] The height, in centimeters, to draw the text at.
+ * A negative value mirrors the text for that dimension.
  * @returns {Plotter} Returns the &#x60;Plotter&#x60; object to allow method chaining.
  * @chainable
  */
-Plotter.prototype.queue = function(mnemonic, params = []) {
-  this._queue.push(mnemonic + params.join(&quot;,&quot;));
+Plotter.prototype.drawLabel = function(text, options = {}) {
 
-  if (this._queueTimeOutId === 0) {
-    this._queueTimeOutId = setTimeout(this._processQueue, this.queueDelay);
+  // Defaults
+  if (!options.characterSet) options.characterSet = 0;
+  if (!options.characterWidth) options.characterWidth = .187;
+  if (!options.characterHeight) options.characterHeight = .269;
+
+  // Define the standard character set (CS) and select it (SS)
+  this.queue(&quot;CS&quot;, options.characterSet);
+  this.queue(&quot;SS&quot;);
+
+  // Assign character width and height
+  this.queue(
+    &quot;SI&quot;,
+    [
+      this.convertToHpglDecimal(options.characterWidth),
+      this.convertToHpglDecimal(options.characterHeight)
+    ]
+  );
+
+  // @todo: DI, DR, SI, SR and SL
+
+  this.queue(&quot;LB&quot;, text);
+
+  return this;
+
+};
+
+
+/**
+ * Converts a numerical value to an integer that matches HPGL&#x27;s requirements (must be between
+ * -32768 and 32767).
+ *
+ * @method convertToHpglInteger
+ * @param {Number} value The text to write
+ * @returns {int} The converted integer.
+ */
+Plotter.prototype.convertToHpglInteger = function(value) {
+
+  value = parseInt(value, 10);
+
+  if (value &gt; 32767) {
+    value = 32767;
+  } else if (value &lt; -32768) {
+    value = -32768;
   }
 
+  return value;
+
+};
+
+/**
+ * Converts a numerical value to floating-point decimal value respecting HPGL&#x27;s requirements (must
+ * be between -128 and 127.9999 and must a maximum of 4 decimal places).
+ *
+ * @method convertToHpglInteger
+ * @param {Number} value The text to write
+ * @returns {int} The converted integer.
+ */
+Plotter.prototype.convertToHpglDecimal = function(value) {
+
+  value = parseFloat(value);
+
+  if (value &lt; -128) {
+    value = -128;
+  } else if (value &gt; 127.9999) {
+    value = 127.9999;
+  }
+
+  return value.toFixed(4);
+
+};
+
+/**
+ * Draws a circle whose center is at the current location of the pen.
+ *
+ * @method drawCircle
+ * @param {Number} [radius=1] The circle&#x27;s radius (in centimeters).
+ * @param {Number} [angle=5]  An integer between -180 and 180 degrees representing the chord angle.
+ * The most commonly used values are 0-180. In this case, the smaller the angle is, the smoother the
+ * circle will be. Negative values make the circle start at 180 degrees instead of 0.
+ * @returns {Plotter} Returns the &#x60;Plotter&#x60; object to allow method chaining.
+ * @chainable
+ */
+Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
+  this.queue(&quot;CI&quot;, [this.cmToPlotterUnits(radius), Math.round(angle)]);
+  return this;
+};
+
+/**
+ * Lifts the pen and moves it to the specified x and y coordinates.
+ *
+ * @method moveTo
+ * @param {Number} x Position along the **x** axis (in centimeters)
+ * @param {Number} y Position along the **y** axis (in centimeters)
+ * @returns {Plotter} Returns the &#x60;Plotter&#x60; object to allow method chaining.
+ * @chainable
+ */
+Plotter.prototype.moveTo = function(x, y) {
+  this.queue(&quot;PU&quot;, [this.cmToPlotterUnits(x), this.cmToPlotterUnits(y)]);
   return this;
 };
 
 /**
  *
- // * @method send
- // * @param {String} mnemonic 2-letter code for the HPGL command to send
- // * @param {Array} params
- // * @returns {Plotter} Returns the &#x60;Plotter&#x60; object to allow method chaining.
- // * @chainable
+ * Queues an HPGL instruction to be sent to the serial port. If any parameters are present, they are
+ * appended to the 2-letter mnemonic and separated by commas.
+ *
+ * @method queue
+ * @param {String} mnemonic 2-letter code for the HPGL command to send
+ * @param {Number|String|Array} params A string, a number or an or array of string or numbers to use
+ * as parameter(s) for the instruction.
+ * @returns {Plotter} Returns the &#x60;Plotter&#x60; object to allow method chaining.
+ * @chainable
+ */
+Plotter.prototype.queue = function(mnemonic, params = []) {
+
+
+  if (!Array.isArray(params)) params = [params];
+
+  // console.log(&quot;queued: &quot; + mnemonic + params.join(&quot;,&quot;));
+
+  this._queue.push(mnemonic + params.join(&quot;,&quot;));
+
+  if (this._queueTimeOutId === 0) {
+    console.log(&quot;new queueTimeout: &quot; + this.queueDelay);
+    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
+  }
+
+  return this;
+
+};
+
+/**
+ * @private
+ * @method _processQueue
  */
 Plotter.prototype._processQueue = function() {
 
+  // console.log(&quot;processing queue&quot;);
+
+  this._queueTimeOutId = 0;
 
   if (this._queue.length &gt; 0) {
+    this.send(this._queue.shift());
+  }
 
+  if (this._queue.length &gt; 0) {
+    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
   }
 
 };
 
 module.exports.Plotter = Plotter;
-
 
     </pre>
 </div>
