@@ -93,12 +93,17 @@
 <div class="box intro">
     <p>The <code>Plotter</code> class provides methods to interact with an HPGL-compatible plotter such as those
 made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol.</p>
+<h4>Transport Layer</h4>
 <p>By default, this library uses the Node.js <a href="https://www.npmjs.com/package/serialport">serialport</a>
 module for serial communication. This module offers native support on Mac, Linux and Windows. The
 library can also use the <a href="https://www.npmjs.com/package/browser-serialport">browser-serialport</a>
 module which uses the <code>chrome.serial</code> API (only available in Chrome Apps and NW.js). For
 debugging purposes, it can also use the
 <a href="https://www.npmjs.com/package/virtual-serialport">virtual-serialport</a>.</p>
+<h4>Coordinate Sytem</h4>
+<p>The coordinate system is anchored in the top-left of the paper sheet. Positive <code>x</code> goes right and
+positive <code>y</code> goes down. Some plotters work differently but I found it easier to stick with the
+computer screen standard.</p>
 
 </div>
 
@@ -165,8 +170,20 @@ debugging purposes, it can also use the
                                 <a href="#method__processQueue">_processQueue</a>
 
                             </li>
-                            <li class="index-item method">
-                                <a href="#method_cmToPlotterUnits">cmToPlotterUnits</a>
+                            <li class="index-item method private">
+                                <a href="#method__toHpglCoordinates">_toHpglCoordinates</a>
+
+                            </li>
+                            <li class="index-item method private">
+                                <a href="#method__toHpglDecimal">_toHpglDecimal</a>
+
+                            </li>
+                            <li class="index-item method private">
+                                <a href="#method__toHpglInteger">_toHpglInteger</a>
+
+                            </li>
+                            <li class="index-item method private">
+                                <a href="#method__toPlotterUnits">_toPlotterUnits</a>
 
                             </li>
                             <li class="index-item method">
@@ -174,19 +191,23 @@ debugging purposes, it can also use the
 
                             </li>
                             <li class="index-item method">
-                                <a href="#method_convertToHpglInteger">convertToHpglInteger</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_convertToHpglInteger">convertToHpglInteger</a>
-
-                            </li>
-                            <li class="index-item method">
                                 <a href="#method_drawCircle">drawCircle</a>
 
                             </li>
                             <li class="index-item method">
-                                <a href="#method_drawLabel">drawLabel</a>
+                                <a href="#method_drawLine">drawLine</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_drawLines">drawLines</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_drawRectangle">drawRectangle</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_drawText">drawText</a>
 
                             </li>
                             <li class="index-item method">
@@ -201,6 +222,10 @@ debugging purposes, it can also use the
                                 <a href="#method_send">send</a>
 
                             </li>
+                            <li class="index-item method">
+                                <a href="#method_setVelocity">setVelocity</a>
+
+                            </li>
                     </ul>
                 </div>
 
@@ -208,6 +233,14 @@ debugging purposes, it can also use the
                     <h3>Properties</h3>
 
                     <ul class="index-list properties">
+                            <li class="index-item property">
+                                <a href="#property_capabilities">capabilities</a>
+
+                            </li>
+                            <li class="index-item property">
+                                <a href="#property_model">model</a>
+
+                            </li>
                             <li class="index-item property">
                                 <a href="#property_queueDelay">queueDelay</a>
 
@@ -265,7 +298,7 @@ debugging purposes, it can also use the
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l155"><code>src&#x2F;hpgl.js:155</code></a>
+        <a href="../files/src_hpgl.js.html#l279"><code>src&#x2F;hpgl.js:279</code></a>
         </p>
 
 
@@ -318,7 +351,7 @@ debugging purposes, it can also use the
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l164"><code>src&#x2F;hpgl.js:164</code></a>
+        <a href="../files/src_hpgl.js.html#l296"><code>src&#x2F;hpgl.js:296</code></a>
         </p>
 
 
@@ -366,7 +399,7 @@ debugging purposes, it can also use the
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l381"><code>src&#x2F;hpgl.js:381</code></a>
+        <a href="../files/src_hpgl.js.html#l687"><code>src&#x2F;hpgl.js:687</code></a>
         </p>
 
 
@@ -374,15 +407,235 @@ debugging purposes, it can also use the
     </div>
 
     <div class="description">
-        
+        <p>The queue is comprised of objects:...</p>
+
     </div>
 
 
 
 
 </div>
-<div id="method_cmToPlotterUnits" class="method item">
-    <h3 class="name"><code>cmToPlotterUnits</code></h3>
+<div id="method__toHpglCoordinates" class="method item private">
+    <h3 class="name"><code>_toHpglCoordinates</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>x</code>
+                </li>
+                <li class="arg">
+                        <code>y</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object" class="crosslink external" target="_blank">Object</a></span>
+        </span>
+
+
+        <span class="flag private">private</span>
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/src_hpgl.js.html#l240"><code>src&#x2F;hpgl.js:240</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Converts a point (x, y) whose origin is in the usual top-left to a point following the HPGL
+coordinates system. The input coordinates must be expressed in plotter units since this function
+takes into account the desired orientation and the paper size.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">x</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+
+                    <div class="param-description">
+                        <p>The x coordinate of the point (must be expressed in plotter units).</p>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">y</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+
+                    <div class="param-description">
+                        <p>The y coordinate of the point (must be expressed in plotter units).</p>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object" class="crosslink external" target="_blank">Object</a></span>:
+                    <p>An object whose <strong>x</strong> and <strong>y</strong> properties have been transformed.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method__toHpglDecimal" class="method item private">
+    <h3 class="name"><code>_toHpglDecimal</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>value</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+        </span>
+
+
+        <span class="flag private">private</span>
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/src_hpgl.js.html#l480"><code>src&#x2F;hpgl.js:480</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Converts a numerical value to floating-point decimal value respecting HPGL's requirements (must
+be between -128 and 127.9999 and must a maximum of 4 decimal places).</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">value</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+
+                    <div class="param-description">
+                        <p>The text to write</p>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>:
+                    <p>The converted float.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method__toHpglInteger" class="method item private">
+    <h3 class="name"><code>_toHpglInteger</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>value</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Int</span>
+        </span>
+
+
+        <span class="flag private">private</span>
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/src_hpgl.js.html#l457"><code>src&#x2F;hpgl.js:457</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Converts a numerical value to an integer that matches HPGL's requirements (must be between
+-32768 and 32767).</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">value</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+
+                    <div class="param-description">
+                        <p>The text to write</p>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Int</span>:
+                    <p>The converted integer.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method__toPlotterUnits" class="method item private">
+    <h3 class="name"><code>_toPlotterUnits</code></h3>
 
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
@@ -397,6 +650,7 @@ debugging purposes, it can also use the
         </span>
 
 
+        <span class="flag private">private</span>
 
 
 
@@ -405,7 +659,7 @@ debugging purposes, it can also use the
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l143"><code>src&#x2F;hpgl.js:143</code></a>
+        <a href="../files/src_hpgl.js.html#l227"><code>src&#x2F;hpgl.js:227</code></a>
         </p>
 
 
@@ -476,7 +730,7 @@ equivalent to 0.02488 millimeters.</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l69"><code>src&#x2F;hpgl.js:69</code></a>
+        <a href="../files/src_hpgl.js.html#l115"><code>src&#x2F;hpgl.js:115</code></a>
         </p>
 
 
@@ -522,11 +776,23 @@ equivalent to 0.02488 millimeters.</p>
                                 <div class="param-description">
                                     <p>The paper size to use. Choices are:</p>
 <ul>
-<li><em>A</em> or <em>letter</em> (default)</li>
-<li><em>B</em> or <em>tabloid</em></li>
+<li><em>A</em> (a.k.a &quot;letter&quot;)</li>
+<li><em>B</em> (a.k.a &quot;tabloid&quot;)</li>
 <li><em>A4</em></li>
 <li><em>A3</em></li>
 </ul>
+
+                                </div>
+
+                            </li>
+                            <li class="param">
+                                    <code class="param-name optional">[orientation=&quot;landscape&quot;]</code>
+                                    <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                    <span class="flag optional" title="This parameter is optional.">optional</span>
+
+                                <div class="param-description">
+                                    <p>The orientation of the paper: <em>landscape</em> or
+<em>portrait</em>.</p>
 
                                 </div>
 
@@ -542,140 +808,6 @@ equivalent to 0.02488 millimeters.</p>
             <div class="returns-description">
                         <span class="type"><a href="../classes/Plotter.html" class="crosslink">Plotter</a></span>:
                     <p>Returns the <code>Plotter</code> object to allow method chaining.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_convertToHpglInteger" class="method item">
-    <h3 class="name"><code>convertToHpglInteger</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>value</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Int</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/src_hpgl.js.html#l299"><code>src&#x2F;hpgl.js:299</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Converts a numerical value to floating-point decimal value respecting HPGL's requirements (must
-be between -128 and 127.9999 and must a maximum of 4 decimal places).</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">value</code>
-                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
-
-
-                    <div class="param-description">
-                        <p>The text to write</p>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Int</span>:
-                    <p>The converted integer.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_convertToHpglInteger" class="method item">
-    <h3 class="name"><code>convertToHpglInteger</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>value</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Int</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/src_hpgl.js.html#l277"><code>src&#x2F;hpgl.js:277</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Converts a numerical value to an integer that matches HPGL's requirements (must be between
--32768 and 32767).</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">value</code>
-                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
-
-
-                    <div class="param-description">
-                        <p>The text to write</p>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Int</span>:
-                    <p>The converted integer.</p>
 
             </div>
         </div>
@@ -710,7 +842,7 @@ be between -128 and 127.9999 and must a maximum of 4 decimal places).</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l321"><code>src&#x2F;hpgl.js:321</code></a>
+        <a href="../files/src_hpgl.js.html#l503"><code>src&#x2F;hpgl.js:503</code></a>
         </p>
 
 
@@ -767,8 +899,281 @@ circle will be. Negative values make the circle start at 180 degrees instead of 
 
 
 </div>
-<div id="method_drawLabel" class="method item">
-    <h3 class="name"><code>drawLabel</code></h3>
+<div id="method_drawLine" class="method item">
+    <h3 class="name"><code>drawLine</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>destX</code>
+                </li>
+                <li class="arg">
+                        <code>destY</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/Plotter.html" class="crosslink">Plotter</a></span>
+        </span>
+
+
+
+
+
+        <span class="flag chainable">chainable</span>
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/src_hpgl.js.html#l519"><code>src&#x2F;hpgl.js:519</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Draws a line from the current position to the specified destination position.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">destX</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+
+                    <div class="param-description">
+                        <p>The <code>x</code> coordinate of the end of the line (in cm).</p>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">destY</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+
+                    <div class="param-description">
+                        <p>The <code>y</code> coordinate of the end of the line (in cm).</p>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/Plotter.html" class="crosslink">Plotter</a></span>:
+                    <p>Returns the <code>Plotter</code> object to allow method chaining.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_drawLines" class="method item">
+    <h3 class="name"><code>drawLines</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>positions</code>
+                </li>
+                <li class="arg">
+                        <code class="optional">[options]</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/Plotter.html" class="crosslink">Plotter</a></span>
+        </span>
+
+
+
+
+
+        <span class="flag chainable">chainable</span>
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/src_hpgl.js.html#l535"><code>src&#x2F;hpgl.js:535</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Draws a series of lines starting at the current pen position and going, in turn, to all x/y pairs
+specified in the array.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">positions</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+
+
+                    <div class="param-description">
+                        <p>An array of line-end ositions in the form <code>[x1, y1, x2, y2, ...]</code></p>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name optional">[options]</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object" class="crosslink external" target="_blank">Object</a></span>
+                        <span class="flag optional" title="This parameter is optional.">optional</span>
+
+
+                    <div class="param-description">
+                         
+                    </div>
+
+                        <ul class="params-list">
+                            <li class="param">
+                                    <code class="param-name optional">[linePattern=7]</code>
+                                    <span class="type">Int</span>
+                                    <span class="flag optional" title="This parameter is optional.">optional</span>
+
+                                <div class="param-description">
+                                    <p>Integer between 0 and 7. Value 0 prints dots at extermities
+only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a solid line.</p>
+
+                                </div>
+
+                            </li>
+                        </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/Plotter.html" class="crosslink">Plotter</a></span>:
+                    <p>Returns the <code>Plotter</code> object to allow method chaining.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_drawRectangle" class="method item">
+    <h3 class="name"><code>drawRectangle</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>destX</code>
+                </li>
+                <li class="arg">
+                        <code>destY</code>
+                </li>
+                <li class="arg">
+                        <code>liftPenWhenDone</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/Plotter.html" class="crosslink">Plotter</a></span>
+        </span>
+
+
+
+
+
+        <span class="flag chainable">chainable</span>
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/src_hpgl.js.html#l588"><code>src&#x2F;hpgl.js:588</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Draws a rectangle from the current position to the specified destination position.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">destX</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+
+                    <div class="param-description">
+                        <p>The <code>x</code> coordinate of the end of the line (in cm).</p>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">destY</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+
+                    <div class="param-description">
+                        <p>The <code>y</code> coordinate of the end of the line (in cm).</p>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">liftPenWhenDone</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
+
+
+                    <div class="param-description">
+                        <p>Whether to automatically lift the pen when done p;otting the
+line.</p>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/Plotter.html" class="crosslink">Plotter</a></span>:
+                    <p>Returns the <code>Plotter</code> object to allow method chaining.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_drawText" class="method item">
+    <h3 class="name"><code>drawText</code></h3>
 
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
@@ -795,7 +1200,7 @@ circle will be. Negative values make the circle start at 180 degrees instead of 
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l214"><code>src&#x2F;hpgl.js:214</code></a>
+        <a href="../files/src_hpgl.js.html#l362"><code>src&#x2F;hpgl.js:362</code></a>
         </p>
 
 
@@ -803,7 +1208,7 @@ circle will be. Negative values make the circle start at 180 degrees instead of 
     </div>
 
     <div class="description">
-        <p>Draws a text label. CHARACTER SETS DO NOT WORK YET!</p>
+        <p>Draws a text label.</p>
 
     </div>
 
@@ -890,6 +1295,29 @@ A negative value mirrors the text for that dimension.</p>
                                 </div>
 
                             </li>
+                            <li class="param">
+                                    <code class="param-name optional">[rotation=0]</code>
+                                    <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+                                    <span class="flag optional" title="This parameter is optional.">optional</span>
+
+                                <div class="param-description">
+                                    <p>The rotation to apply to the text (in degrees).</p>
+
+                                </div>
+
+                            </li>
+                            <li class="param">
+                                    <code class="param-name optional">[slant=0]</code>
+                                    <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+                                    <span class="flag optional" title="This parameter is optional.">optional</span>
+
+                                <div class="param-description">
+                                    <p>The slant (italic) with which characters are lettered (in
+degrees).</p>
+
+                                </div>
+
+                            </li>
                         </ul>
                 </li>
             </ul>
@@ -935,7 +1363,7 @@ A negative value mirrors the text for that dimension.</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l337"><code>src&#x2F;hpgl.js:337</code></a>
+        <a href="../files/src_hpgl.js.html#l607"><code>src&#x2F;hpgl.js:607</code></a>
         </p>
 
 
@@ -999,6 +1427,12 @@ A negative value mirrors the text for that dimension.</p>
                 <li class="arg">
                         <code>params</code>
                 </li>
+                <li class="arg">
+                        <code>callback</code>
+                </li>
+                <li class="arg">
+                        <code>waitForResponse</code>
+                </li>
             </ul><span class="paren">)</span>
         </div>
 
@@ -1016,7 +1450,7 @@ A negative value mirrors the text for that dimension.</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l351"><code>src&#x2F;hpgl.js:351</code></a>
+        <a href="../files/src_hpgl.js.html#l648"><code>src&#x2F;hpgl.js:648</code></a>
         </p>
 
 
@@ -1056,6 +1490,26 @@ as parameter(s) for the instruction.</p>
                     </div>
 
                 </li>
+                <li class="param">
+                        <code class="param-name">callback</code>
+                        <span class="type">Function=null</span>
+
+
+                    <div class="param-description">
+                         
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">waitForResponse</code>
+                        <span class="type">Boolean=false</span>
+
+
+                    <div class="param-description">
+                         
+                    </div>
+
+                </li>
             </ul>
         </div>
 
@@ -1080,7 +1534,10 @@ as parameter(s) for the instruction.</p>
                         <code>instruction</code>
                 </li>
                 <li class="arg">
-                        <code class="optional">[callback]</code>
+                        <code class="optional">[callback=null]</code>
+                </li>
+                <li class="arg">
+                        <code class="optional">[waitForResponse=false]</code>
                 </li>
             </ul><span class="paren">)</span>
         </div>
@@ -1099,7 +1556,7 @@ as parameter(s) for the instruction.</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l182"><code>src&#x2F;hpgl.js:182</code></a>
+        <a href="../files/src_hpgl.js.html#l314"><code>src&#x2F;hpgl.js:314</code></a>
         </p>
 
 
@@ -1122,20 +1579,102 @@ terminated with a semicolon.</p>
 
 
                     <div class="param-description">
-                        <p>The instruction to send</p>
+                        <p>The instruction to send (unterminated).</p>
 
                     </div>
 
                 </li>
                 <li class="param">
-                        <code class="param-name optional">[callback]</code>
+                        <code class="param-name optional">[callback=null]</code>
                         <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
                         <span class="flag optional" title="This parameter is optional.">optional</span>
 
 
                     <div class="param-description">
-                        <p>A function to call once the data has been sent. This function will
-receive an error object, if something went wrong.</p>
+                        <p>A function to call once the data has been sent to the device
+(default) or when an answer has been received from the device.</p>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name optional">[waitForResponse=false]</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
+                        <span class="flag optional" title="This parameter is optional.">optional</span>
+
+
+                    <div class="param-description">
+                        <p>Whether to execute the callback when the data is sent or
+when a response is received.</p>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/Plotter.html" class="crosslink">Plotter</a></span>:
+                    <p>Returns the <code>Plotter</code> object to allow method chaining.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_setVelocity" class="method item">
+    <h3 class="name"><code>setVelocity</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>velocity</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/Plotter.html" class="crosslink">Plotter</a></span>
+        </span>
+
+
+
+
+
+        <span class="flag chainable">chainable</span>
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/src_hpgl.js.html#l624"><code>src&#x2F;hpgl.js:624</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the velocity of the plotting pen. When the velocity <code>parameter</code> is set to <code>1</code>, the velocity
+will be at its maximum of 38.1cm/s (default). When the <code>velocity</code> parameter is set to 0.1, the
+actual velocity will be 3.81cm/s.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">velocity</code>
+                        <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+
+                    <div class="param-description">
+                        <p>A decimal number between 0 and 1.</p>
 
                     </div>
 
@@ -1160,6 +1699,60 @@ receive an error object, if something went wrong.</p>
             <div id="properties" class="api-class-tabpanel">
                 <h2 class="off-left">Properties</h2>
 
+<div id="property_capabilities" class="property item">
+    <h3 class="name"><code>capabilities</code></h3>
+    <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object" class="crosslink external" target="_blank">Object</a></span>
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/src_hpgl.js.html#l84"><code>src&#x2F;hpgl.js:84</code></a>
+        </p>
+
+
+    </div>
+
+    <div class="description">
+        <p>The device's capabilities:</p>
+<ul>
+<li></li>
+</ul>
+
+    </div>
+
+
+
+</div>
+<div id="property_model" class="property item">
+    <h3 class="name"><code>model</code></h3>
+    <span class="type"><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/src_hpgl.js.html#l75"><code>src&#x2F;hpgl.js:75</code></a>
+        </p>
+
+
+    </div>
+
+    <div class="description">
+        <p>The model name as reported by the device. Only available after the <code>ready</code> event has been
+fired.</p>
+
+    </div>
+
+
+
+</div>
 <div id="property_queueDelay" class="property item">
     <h3 class="name"><code>queueDelay</code></h3>
     <span class="type">Int</span>
@@ -1171,7 +1764,7 @@ receive an error object, if something went wrong.</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l36"><code>src&#x2F;hpgl.js:36</code></a>
+        <a href="../files/src_hpgl.js.html#l65"><code>src&#x2F;hpgl.js:65</code></a>
         </p>
 
 
@@ -1198,7 +1791,7 @@ the serial connection).</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l46"><code>src&#x2F;hpgl.js:46</code></a>
+        <a href="../files/src_hpgl.js.html#l94"><code>src&#x2F;hpgl.js:94</code></a>
         </p>
 
 
@@ -1223,7 +1816,7 @@ the serial connection).</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/src_hpgl.js.html#l85"><code>src&#x2F;hpgl.js:85</code></a>
+        <a href="../files/src_hpgl.js.html#l133"><code>src&#x2F;hpgl.js:133</code></a>
         </p>
 
 
@@ -1255,7 +1848,7 @@ object's interface.</p>
                         <div class="meta">
                                     <p>
                                     Defined in
-                            <a href="../files/src_hpgl.js.html#l129"><code>src&#x2F;hpgl.js:129</code></a>
+                            <a href="../files/src_hpgl.js.html#l213"><code>src&#x2F;hpgl.js:213</code></a>
                             </p>
                     
                     
@@ -1280,7 +1873,7 @@ object's interface.</p>
                         <div class="meta">
                                     <p>
                                     Defined in
-                            <a href="../files/src_hpgl.js.html#l171"><code>src&#x2F;hpgl.js:171</code></a>
+                            <a href="../files/src_hpgl.js.html#l303"><code>src&#x2F;hpgl.js:303</code></a>
                             </p>
                     
                     
