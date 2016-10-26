@@ -47,7 +47,7 @@
             "namespace": "",
             "file": "src/hpgl.js",
             "line": 15,
-            "description": "The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those\nmade by HP starting in the 1980s. Various other makers also use or support the HPGL protocol.\n\nBy default, this library uses the Node.js [serialport](https://www.npmjs.com/package/serialport)\nmodule for serial communication. This module offers native support on Mac, Linux and Windows. The\nlibrary can also use the [browser-serialport](https://www.npmjs.com/package/browser-serialport)\nmodule which uses the `chrome.serial` API (only available in Chrome Apps and NW.js). For\ndebugging purposes, it can also use the\n[virtual-serialport](https://www.npmjs.com/package/virtual-serialport).",
+            "description": "The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those\nmade by HP starting in the 1980s. Various other makers also use or support the HPGL protocol.\n\n#### Transport Layer\n\nBy default, this library uses the Node.js [serialport](https://www.npmjs.com/package/serialport)\nmodule for serial communication. This module offers native support on Mac, Linux and Windows. The\nlibrary can also use the [browser-serialport](https://www.npmjs.com/package/browser-serialport)\nmodule which uses the `chrome.serial` API (only available in Chrome Apps and NW.js). For\ndebugging purposes, it can also use the\n[virtual-serialport](https://www.npmjs.com/package/virtual-serialport).\n\n#### Coordinate Sytem\n\nThe coordinate system is anchored in the top-left of the paper sheet. Positive `x` goes right and\npositive `y` goes down. Some plotters work differently but I found it easier to stick with the\ncomputer screen standard.",
             "is_constructor": 1
         }
     },
@@ -55,7 +55,7 @@
     "classitems": [
         {
             "file": "src/hpgl.js",
-            "line": 36,
+            "line": 65,
             "description": "The interval (in milliseconds) to wait before sending a new instruction (so as to not overflow\nthe serial connection).",
             "itemtype": "property",
             "name": "queueDelay",
@@ -66,7 +66,27 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 46,
+            "line": 75,
+            "description": "The model name as reported by the device. Only available after the `ready` event has been\nfired.",
+            "itemtype": "property",
+            "name": "model",
+            "type": "{String}",
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 84,
+            "description": "The device's capabilities:\n\n -",
+            "itemtype": "property",
+            "name": "capabilities",
+            "type": "{Object}",
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 94,
             "description": "[read-only] Array of all the paper sizes supported by the device",
             "itemtype": "property",
             "name": "supportedPapers",
@@ -77,7 +97,7 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 69,
+            "line": 115,
             "description": "Opens a serial connection to the device.",
             "itemtype": "method",
             "name": "connect",
@@ -95,10 +115,17 @@
                     "props": [
                         {
                             "name": "paper",
-                            "description": "The paper size to use. Choices are:\n  - *A* or *letter* (default)\n  - *B* or *tabloid*\n  - *A4*\n  - *A3*",
+                            "description": "The paper size to use. Choices are:\n  - *A* (a.k.a \"letter\")\n  - *B* (a.k.a \"tabloid\")\n  - *A4*\n  - *A3*",
                             "type": "String",
                             "optional": true,
                             "optdefault": "\"A\""
+                        },
+                        {
+                            "name": "orientation",
+                            "description": "The orientation of the paper: *landscape* or\n*portrait*.",
+                            "type": "String",
+                            "optional": true,
+                            "optdefault": "\"landscape\""
                         }
                     ]
                 }
@@ -113,7 +140,7 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 85,
+            "line": 133,
             "description": "An object that is used for serial communication. This object must adhere to the `serialport`\nobject's interface.",
             "itemtype": "property",
             "name": "transport",
@@ -123,7 +150,7 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 129,
+            "line": 213,
             "description": "Event emitted when a serial connection is successfully established to the device.",
             "itemtype": "event",
             "name": "ready",
@@ -132,10 +159,12 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 143,
+            "line": 227,
             "description": "Converts centimeters to plotter units. According to the documentation, a plotter unit is\nequivalent to 0.02488 millimeters.",
+            "access": "private",
+            "tagname": "",
             "itemtype": "method",
-            "name": "cmToPlotterUnits",
+            "name": "_toPlotterUnits",
             "params": [
                 {
                     "name": "cm",
@@ -152,7 +181,34 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 155,
+            "line": 240,
+            "description": "Converts a point (x, y) whose origin is in the usual top-left to a point following the HPGL\ncoordinates system. The input coordinates must be expressed in plotter units since this function\ntakes into account the desired orientation and the paper size.",
+            "access": "private",
+            "tagname": "",
+            "itemtype": "method",
+            "name": "_toHpglCoordinates",
+            "params": [
+                {
+                    "name": "x",
+                    "description": "The x coordinate of the point (must be expressed in plotter units).",
+                    "type": "Number"
+                },
+                {
+                    "name": "y",
+                    "description": "The y coordinate of the point (must be expressed in plotter units).",
+                    "type": "Number"
+                }
+            ],
+            "return": {
+                "description": "An object whose **x** and **y** properties have been transformed.",
+                "type": "Object"
+            },
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 279,
             "access": "private",
             "tagname": "",
             "params": [
@@ -169,7 +225,7 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 164,
+            "line": 296,
             "access": "private",
             "tagname": "",
             "itemtype": "method",
@@ -186,7 +242,7 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 171,
+            "line": 303,
             "description": "Event emitted when an error occurs. The specified function will receive an object with\ninformation about the error.",
             "itemtype": "event",
             "name": "ready",
@@ -202,21 +258,29 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 182,
+            "line": 314,
             "description": "Immediately sends an HPGL instruction down the serial port. The instruction is automatically\n terminated with a semicolon.",
             "itemtype": "method",
             "name": "send",
             "params": [
                 {
                     "name": "instruction",
-                    "description": "The instruction to send",
+                    "description": "The instruction to send (unterminated).",
                     "type": "String"
                 },
                 {
                     "name": "callback",
-                    "description": "A function to call once the data has been sent. This function will\n receive an error object, if something went wrong.",
+                    "description": "A function to call once the data has been sent to the device\n (default) or when an answer has been received from the device.",
                     "type": "Function",
-                    "optional": true
+                    "optional": true,
+                    "optdefault": "null"
+                },
+                {
+                    "name": "waitForResponse",
+                    "description": "Whether to execute the callback when the data is sent or\n when a response is received.",
+                    "type": "Boolean",
+                    "optional": true,
+                    "optdefault": "false"
                 }
             ],
             "return": {
@@ -229,10 +293,14 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 214,
-            "description": "Draws a text label. CHARACTER SETS DO NOT WORK YET!",
+            "line": 362,
+            "description": "Draws a text label.",
+            "todo": [
+                "text direction (double check with orientation)",
+                "charsets"
+            ],
             "itemtype": "method",
-            "name": "drawLabel",
+            "name": "drawText",
             "params": [
                 {
                     "name": "text",
@@ -265,6 +333,20 @@
                             "type": "Number",
                             "optional": true,
                             "optdefault": "0.269"
+                        },
+                        {
+                            "name": "rotation",
+                            "description": "The rotation to apply to the text (in degrees).",
+                            "type": "Number",
+                            "optional": true,
+                            "optdefault": "0"
+                        },
+                        {
+                            "name": "slant",
+                            "description": "The slant (italic) with which characters are lettered (in\ndegrees).",
+                            "type": "Number",
+                            "optional": true,
+                            "optdefault": "0"
                         }
                     ]
                 }
@@ -279,10 +361,12 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 277,
+            "line": 457,
             "description": "Converts a numerical value to an integer that matches HPGL's requirements (must be between\n-32768 and 32767).",
+            "access": "private",
+            "tagname": "",
             "itemtype": "method",
-            "name": "convertToHpglInteger",
+            "name": "_toHpglInteger",
             "params": [
                 {
                     "name": "value",
@@ -299,10 +383,12 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 299,
+            "line": 480,
             "description": "Converts a numerical value to floating-point decimal value respecting HPGL's requirements (must\nbe between -128 and 127.9999 and must a maximum of 4 decimal places).",
+            "access": "private",
+            "tagname": "",
             "itemtype": "method",
-            "name": "convertToHpglInteger",
+            "name": "_toHpglDecimal",
             "params": [
                 {
                     "name": "value",
@@ -311,15 +397,15 @@
                 }
             ],
             "return": {
-                "description": "The converted integer.",
-                "type": "Int"
+                "description": "The converted float.",
+                "type": "Number"
             },
             "class": "Plotter",
             "module": "hpgl"
         },
         {
             "file": "src/hpgl.js",
-            "line": 321,
+            "line": 503,
             "description": "Draws a circle whose center is at the current location of the pen.",
             "itemtype": "method",
             "name": "drawCircle",
@@ -349,7 +435,103 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 337,
+            "line": 519,
+            "description": "Draws a line from the current position to the specified destination position.",
+            "itemtype": "method",
+            "name": "drawLine",
+            "params": [
+                {
+                    "name": "destX",
+                    "description": "The `x` coordinate of the end of the line (in cm).",
+                    "type": "Number"
+                },
+                {
+                    "name": "destY",
+                    "description": "The `y` coordinate of the end of the line (in cm).",
+                    "type": "Number"
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 535,
+            "description": "Draws a series of lines starting at the current pen position and going, in turn, to all x/y pairs\nspecified in the array.",
+            "itemtype": "method",
+            "name": "drawLines",
+            "params": [
+                {
+                    "name": "positions",
+                    "description": "An array of line-end ositions in the form `[x1, y1, x2, y2, ...]`",
+                    "type": "Array"
+                },
+                {
+                    "name": "options",
+                    "description": "",
+                    "type": "Object",
+                    "optional": true,
+                    "props": [
+                        {
+                            "name": "linePattern",
+                            "description": "Integer between 0 and 7. Value 0 prints dots at extermities\nonly. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a solid line.",
+                            "type": "Int",
+                            "optional": true,
+                            "optdefault": "7"
+                        }
+                    ]
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "todo": [
+                "add linePatternLength option"
+            ],
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 588,
+            "description": "Draws a rectangle from the current position to the specified destination position.",
+            "itemtype": "method",
+            "name": "drawRectangle",
+            "params": [
+                {
+                    "name": "destX",
+                    "description": "The `x` coordinate of the end of the line (in cm).",
+                    "type": "Number"
+                },
+                {
+                    "name": "destY",
+                    "description": "The `y` coordinate of the end of the line (in cm).",
+                    "type": "Number"
+                },
+                {
+                    "name": "liftPenWhenDone",
+                    "description": "Whether to automatically lift the pen when done p;otting the\nline.",
+                    "type": "Boolean"
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 607,
             "description": "Lifts the pen and moves it to the specified x and y coordinates.",
             "itemtype": "method",
             "name": "moveTo",
@@ -375,7 +557,28 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 351,
+            "line": 624,
+            "description": "Sets the velocity of the plotting pen. When the velocity `parameter` is set to `1`, the velocity\nwill be at its maximum of 38.1cm/s (default). When the `velocity` parameter is set to 0.1, the\nactual velocity will be 3.81cm/s.",
+            "itemtype": "method",
+            "name": "setVelocity",
+            "params": [
+                {
+                    "name": "velocity",
+                    "description": "A decimal number between 0 and 1.",
+                    "type": "Number"
+                }
+            ],
+            "return": {
+                "description": "Returns the `Plotter` object to allow method chaining.",
+                "type": "Plotter"
+            },
+            "chainable": 1,
+            "class": "Plotter",
+            "module": "hpgl"
+        },
+        {
+            "file": "src/hpgl.js",
+            "line": 648,
             "description": "Queues an HPGL instruction to be sent to the serial port. If any parameters are present, they are\n appended to the 2-letter mnemonic and separated by commas.",
             "itemtype": "method",
             "name": "queue",
@@ -389,6 +592,16 @@
                     "name": "params",
                     "description": "A string, a number or an or array of string or numbers to use\n as parameter(s) for the instruction.",
                     "type": "Number|String|Array"
+                },
+                {
+                    "name": "callback",
+                    "description": "",
+                    "type": "Function=null"
+                },
+                {
+                    "name": "waitForResponse",
+                    "description": "",
+                    "type": "Boolean=false"
                 }
             ],
             "return": {
@@ -401,7 +614,8 @@
         },
         {
             "file": "src/hpgl.js",
-            "line": 381,
+            "line": 687,
+            "description": "The queue is comprised of objects:...",
             "access": "private",
             "tagname": "",
             "itemtype": "method",
@@ -413,35 +627,51 @@
     "warnings": [
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:69"
+            "line": " src/hpgl.js:115"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:182"
+            "line": " src/hpgl.js:314"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:214"
+            "line": " src/hpgl.js:362"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:277"
+            "line": " src/hpgl.js:457"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:299"
+            "line": " src/hpgl.js:480"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:321"
+            "line": " src/hpgl.js:503"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:337"
+            "line": " src/hpgl.js:519"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " src/hpgl.js:351"
+            "line": " src/hpgl.js:535"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:588"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:607"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:624"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " src/hpgl.js:648"
         }
     ]
 }
