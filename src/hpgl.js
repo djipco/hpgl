@@ -73,6 +73,25 @@ var Plotter = function() {
   this.queueDelay = 50;
 
   /**
+   * The model name as reported by the device. Only available after the `ready` event has been
+   * fired.
+   *
+   * @property model
+   * @type {String}
+   */
+  this.model = undefined;
+
+  /**
+   * The device's capabilities:
+   *
+   *  -
+   *
+   * @property capabilities
+   * @type {Object}
+   */
+  this.capabilities = undefined;
+
+  /**
    * [read-only] Array of all the paper sizes supported by the device
    * @property supportedPapers
    * @type {String[]}
@@ -144,8 +163,16 @@ Plotter.prototype.connect = function(transport, options = {}) {
       this.transport.on('data', this._onData.bind(this));
       this.transport.on('error', this._onTransportError.bind(this));
 
-      this.queue("OI");
-      // this.queue("OF");
+      // Retrieve device model
+      this.queue("OI", [], (data) => {
+        this.model = data;
+        console.log("Response OI: " + data);
+      }, true);
+
+      // Retrieve capabilities
+      this.queue("OO", [], (data) => {
+        console.log("Response OF: " + data);
+      }, true);
 
       // Resets the device to its 'power on' status (same as DF plus: pen is raised, errors are
       // cleared, rotation set to 0, scaling points reset).
@@ -257,7 +284,8 @@ Plotter.prototype._toHpglCoordinates = function(x, y) {
 Plotter.prototype._onData = function(data) {
 
   if (data.toString() === "\r") {
-    console.log("Receive: " + this._buffer);
+    // console.log("Receive: " + this._buffer);
+    this.emit("data", this._buffer);
     this._buffer = "";
   } else {
     this._buffer += data.toString();
@@ -289,16 +317,18 @@ Plotter.prototype._onTransportError = function(error) {
  * terminated with a semicolon.
  *
  * @method send
- * @param {String} instruction The instruction to send
- * @param {Function} [callback] A function to call once the data has been sent. This function will
- * receive an error object, if something went wrong.
+ * @param {String} instruction The instruction to send (unterminated).
+ * @param {Function} [callback=null] A function to call once the data has been sent to the device
+ * (default) or when an answer has been received from the device.
+ * @param {Boolean} [waitForResponse=false] Whether to execute the callback when the data is sent or
+ * when a response is received.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  * @chainable
  */
-Plotter.prototype.send = function(instruction, callback) {
+Plotter.prototype.send = function(instruction, callback = null, waitForResponse = false) {
 
   // Add termination character. A semicolon is used unless we are printing a label (which requires
-  // special termination char: ETX).
+  // a special termination char: ETX).
   if (instruction.substring(0, 2) === "LB") {
     instruction += String.fromCharCode(3); // ETX character is label delimiter
   } else {
@@ -307,9 +337,23 @@ Plotter.prototype.send = function(instruction, callback) {
 
   console.log("Send: " + instruction);
 
-  this.transport.write(instruction, function(results) {
-    if (typeof callback === "function") callback(results);
-  });
+  // Send the instruction. Wait for printer response if required
+  if (waitForResponse) {
+
+    this.once("data", (data) => {
+      // console.log("data2");
+      if (typeof callback === "function") callback(data);
+    });
+    this.transport.write(instruction);
+
+  } else {
+
+    this.transport.write(instruction, (results) => {
+      if (typeof callback === "function") callback(results);
+    });
+
+  }
+
 
   return this;
 
@@ -610,14 +654,28 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
  * @param {String} mnemonic 2-letter code for the HPGL command to send
  * @param {Number|String|Array} params A string, a number or an or array of string or numbers to use
  * as parameter(s) for the instruction.
+ * @param {Function=null} callback
+ * @param {Boolean=false} waitForResponse
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  * @chainable
  */
-Plotter.prototype.queue = function(mnemonic, params = []) {
+Plotter.prototype.queue = function(
+  mnemonic, params = [], callback = null, waitForResponse = false
+) {
 
+  // Make sure the params are wrapped in an array.
   if (!Array.isArray(params)) params = [params];
-  this._queue.push(mnemonic + params.join(","));
 
+  // Add command object to queue.
+  this._queue.push({
+    instruction: mnemonic + params.join(","),
+    callback: callback,
+    waitForResponse: waitForResponse
+  });
+
+  console.log("Queue: " + mnemonic + params.join(","));
+
+  // If the queue is not set for execution, set it.
   if (this._queueTimeOutId === 0) {
     this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
   }
@@ -627,29 +685,33 @@ Plotter.prototype.queue = function(mnemonic, params = []) {
 };
 
 /**
+ * The queue is comprised of objects:...
+ *
  * @private
  * @method _processQueue
  */
 Plotter.prototype._processQueue = function() {
 
+  console.log("Process queue");
+
+  // Make sure any pending timeout is cancelled
+  clearTimeout(this._queueTimeOutId);
   this._queueTimeOutId = 0;
 
-  // Send next available instruction (and keep it for later check)
+  // If the queue is not empty, send oldest available instruction (and keep it for later check)
   if (this._queue.length > 0) {
-    var instruction = this._queue.shift();
-    this.send(instruction);
+    var command = this._queue.shift();
+    this.send(command.instruction, command.callback, command.waitForResponse);
   }
 
-  // If the instruction that was just sent it synchronous (depends on an answer from the device), we
-  // must wait before setting the new timeout.
-  if ( this._synchronousInstructions.includes(instruction.substr(0, 2)) ) {
-    console.log("sync: " + instruction.substr(0, 2));
-  } else {
-    console.log("nosync: " + instruction.substr(0, 2));
-  }
-
-
-  if (this._queue.length > 0) {
+  // If the command must wait for a response, we have to hold the queue until then. Otherwise, if
+  // more commands are in the queue, process them.
+  if (command.waitForResponse) {
+    this.once("data", () => {
+      // console.log("data");
+      this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
+    })
+  } else if (this._queue.length > 0) {
     this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
   }
 
