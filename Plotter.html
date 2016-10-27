@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="module-hpgl-Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="module-hpgl-Plotter.html#connect">connect</a></li><li data-type='method'><a href="module-hpgl-Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="module-hpgl-Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="module-hpgl-Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="module-hpgl-Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="module-hpgl-Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="module-hpgl-Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="module-hpgl-Plotter.html#queue">queue</a></li><li data-type='method'><a href="module-hpgl-Plotter.html#send">send</a></li><li data-type='method'><a href="module-hpgl-Plotter.html#setVelocity">setVelocity</a></li></ul></li></ul><h3>Modules</h3><ul><li><a href="module-hpgl.html">hpgl</a></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul>
 </nav>
 
 <div id="main">
@@ -40,8 +40,6 @@
 <header>
     
         <h2>
-            <span class="ancestors"><a href="module-hpgl.html">hpgl</a>~</span>
-        
         Plotter
         </h2>
         
@@ -67,7 +65,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line36">line 36</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line64">line 64</a>
     </li></ul></dd>
     
 
@@ -108,7 +106,8 @@
 
 <div class="description">
     <p>The <code>Plotter</code> class provides methods to interact with an HPGL-compatible plotter such as those
-made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol.</p>
+made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol
+(Calcomp, for example).</p>
 <h4>Transport Layer</h4><p>By default, this library uses the Node.js <a href="https://www.npmjs.com/package/serialport">serialport</a>
 module for serial communication. This module offers native support on Mac, Linux and Windows. The
 library can also use the <a href="https://www.npmjs.com/package/browser-serialport">browser-serialport</a>
@@ -162,7 +161,7 @@ computer screen standard.</p>
 
         
             
-<h4 class="name" id="model"><span class="type-signature"></span>model<span class="type-signature"> :String</span></h4>
+<h4 class="name" id="model"><span class="type-signature">(readonly) </span>model<span class="type-signature"> :string</span></h4>
 
 
 
@@ -173,7 +172,7 @@ computer screen standard.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line78">line 78</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line94">line 94</a>
     </li></ul></dd>
     
 
@@ -223,7 +222,7 @@ fired.</p>
     <ul>
         <li>
             
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 
 
         </li>
@@ -236,7 +235,7 @@ fired.</p>
 
         
             
-<h4 class="name" id="queueDelay"><span class="type-signature"></span>queueDelay<span class="type-signature"> :int</span></h4>
+<h4 class="name" id="queueDelay"><span class="type-signature"></span>queueDelay<span class="type-signature"> :number</span></h4>
 
 
 
@@ -247,7 +246,7 @@ fired.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line70">line 70</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line85">line 85</a>
     </li></ul></dd>
     
 
@@ -297,7 +296,7 @@ the serial connection).</p>
     <ul>
         <li>
             
-<span class="param-type">int</span>
+<span class="param-type">number</span>
 
 
         </li>
@@ -310,7 +309,7 @@ the serial connection).</p>
 
         
             
-<h4 class="name" id="transport"><span class="type-signature"></span>transport<span class="type-signature"> :Object</span></h4>
+<h4 class="name" id="supportedPapers"><span class="type-signature">(readonly) </span>supportedPapers<span class="type-signature"> :Array.&lt;string></span></h4>
 
 
 
@@ -321,7 +320,80 @@ the serial connection).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line86">line 86</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line114">line 114</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>[read-only] Array of all the paper sizes supported by the device</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Array.&lt;string></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="transport"><span class="type-signature">(readonly) </span>transport<span class="type-signature"> :Object</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line103">line 103</a>
     </li></ul></dd>
     
 
@@ -383,19 +455,9 @@ object's interface.</p>
 
 
         
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        
             
+<h4 class="name" id="unitsPerMillimiter"><span class="type-signature">(readonly) </span>unitsPerMillimiter<span class="type-signature"> :Array.&lt;number></span></h4>
 
-    
-
-    <h4 class="name" id="connect"><span class="type-signature"></span>connect<span class="signature">(transport, options<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
-
-    
 
 
 
@@ -405,7 +467,7 @@ object's interface.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line122">line 122</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line112">line 112</a>
     </li></ul></dd>
     
 
@@ -445,7 +507,91 @@ object's interface.</p>
 
 
 <div class="description">
-    <p>Opens a serial connection to the device.</p>
+    <p>A 2-position array containing the number of plotter units per millimiter on the <code>x</code> and <code>y</code>
+axis, respectively.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Array.&lt;number></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id="connect"><span class="type-signature"></span>connect<span class="signature">(transport, options<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line150">line 150</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Opens a serial connection to the device using the specified transport layer.</p>
 </div>
 
 
@@ -578,7 +724,7 @@ object's interface.</p>
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 
 
             
@@ -623,7 +769,7 @@ object's interface.</p>
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 
 
             
@@ -680,12 +826,6 @@ object's interface.</p>
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    <ul>
-<li>Returns the <code>Plotter</code> object to allow method chaining.</li>
-</ul>
-</div>
-
 
 
 <dl class="param-type">
@@ -720,7 +860,7 @@ object's interface.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line495">line 495</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line525">line 525</a>
     </li></ul></dd>
     
 
@@ -808,7 +948,7 @@ object's interface.</p>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -847,7 +987,7 @@ object's interface.</p>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -873,8 +1013,8 @@ object's interface.</p>
                 </td>
             
 
-            <td class="description last"><p>An integer between -180 and 180 degrees representing the chord angle.
-The most commonly used values are 0-180. In this case, the smaller the angle is, the smoother the
+            <td class="description last"><p>An integer between -180° and 180° representing the chord angle. The
+most commonly used values are 0-180. In this case, the smaller the angle is, the smoother the
 circle will be. Negative values make the circle start at 180 degrees instead of 0.</p></td>
         </tr>
 
@@ -936,7 +1076,7 @@ circle will be. Negative values make the circle start at 180 degrees instead of 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line507">line 507</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line537">line 537</a>
     </li></ul></dd>
     
 
@@ -1020,7 +1160,7 @@ circle will be. Negative values make the circle start at 180 degrees instead of 
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -1043,7 +1183,7 @@ circle will be. Negative values make the circle start at 180 degrees instead of 
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -1114,7 +1254,7 @@ circle will be. Negative values make the circle start at 180 degrees instead of 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line526">line 526</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line556">line 556</a>
     </li></ul></dd>
     
 
@@ -1208,7 +1348,7 @@ specified in the array.</p>
             <td class="type">
             
                 
-<span class="param-type">Array</span>
+<span class="param-type">Array.&lt;number></span>
 
 
             
@@ -1226,7 +1366,7 @@ specified in the array.</p>
 
             
 
-            <td class="description last"><p>An array of line-end ositions in the form <code>[x1, y1, x2, y2, ...]</code></p></td>
+            <td class="description last"><p>An array of line-end positions in the form <code>[x1, y1, x2, y2, ...]</code></p></td>
         </tr>
 
     
@@ -1295,7 +1435,7 @@ specified in the array.</p>
             <td class="type">
             
                 
-<span class="param-type">int</span>
+<span class="param-type">number</span>
 
 
             
@@ -1378,7 +1518,7 @@ only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a
 
     
 
-    <h4 class="name" id="drawRectangle"><span class="type-signature"></span>drawRectangle<span class="signature">(destX, destY, liftPenWhenDone)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
+    <h4 class="name" id="drawRectangle"><span class="type-signature"></span>drawRectangle<span class="signature">(destX, destY)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
 
     
 
@@ -1390,7 +1530,7 @@ only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line573">line 573</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line603">line 603</a>
     </li></ul></dd>
     
 
@@ -1422,6 +1562,13 @@ only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a
 
     
 
+    
+    <dt class="tag-todo">To Do:</dt>
+    <dd class="tag-todo">
+        <ul>
+            <li>validate input</li>
+        </ul>
+    </dd>
     
 </dl>
 
@@ -1474,7 +1621,7 @@ only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -1484,7 +1631,7 @@ only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a
 
             
 
-            <td class="description last"><p>The <code>x</code> coordinate of the end of the line (in cm).</p></td>
+            <td class="description last"><p>The <code>x</code> coordinate of the second point of the rectangle (in cm).</p></td>
         </tr>
 
     
@@ -1497,7 +1644,7 @@ only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -1507,31 +1654,7 @@ only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a
 
             
 
-            <td class="description last"><p>The <code>y</code> coordinate of the end of the line (in cm).</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>liftPenWhenDone</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Whether to automatically lift the pen when done p;otting the
-line.</p></td>
+            <td class="description last"><p>The <code>y</code> coordinate of the second point of the rectangle (in cm).</p></td>
         </tr>
 
     
@@ -1592,7 +1715,7 @@ line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line385">line 385</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line415">line 415</a>
     </li></ul></dd>
     
 
@@ -1687,7 +1810,7 @@ line.</p></td>
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 
 
             
@@ -1774,7 +1897,7 @@ line.</p></td>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -1835,7 +1958,7 @@ the label. Available sets are:</p>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -1875,7 +1998,7 @@ negative value mirrors the text for that dimension.</p></td>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -1915,7 +2038,7 @@ A negative value mirrors the text for that dimension.</p></td>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -1954,7 +2077,7 @@ A negative value mirrors the text for that dimension.</p></td>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -2049,7 +2172,7 @@ degrees).</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line588">line 588</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line617">line 617</a>
     </li></ul></dd>
     
 
@@ -2133,7 +2256,7 @@ degrees).</p></td>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -2143,7 +2266,7 @@ degrees).</p></td>
 
             
 
-            <td class="description last"><p>Position along the <strong>x</strong> axis (in centimeters)</p></td>
+            <td class="description last"><p>Position along the <code>x</code> axis (in centimeters)</p></td>
         </tr>
 
     
@@ -2156,7 +2279,7 @@ degrees).</p></td>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
@@ -2166,7 +2289,7 @@ degrees).</p></td>
 
             
 
-            <td class="description last"><p>Position along the <strong>y</strong> axis (in centimeters)</p></td>
+            <td class="description last"><p>Position along the <code>y</code> axis (in centimeters)</p></td>
         </tr>
 
     
@@ -2215,7 +2338,7 @@ degrees).</p></td>
 
     
 
-    <h4 class="name" id="queue"><span class="type-signature"></span>queue<span class="signature">(mnemonic, params, callback<span class="signature-attributes">opt</span>, waitForResponse<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
+    <h4 class="name" id="queue"><span class="type-signature"></span>queue<span class="signature">(mnemonic, params<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>, waitForResponse<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
 
     
 
@@ -2227,7 +2350,7 @@ degrees).</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line630">line 630</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line661">line 661</a>
     </li></ul></dd>
     
 
@@ -2316,7 +2439,7 @@ appended to the 2-letter mnemonic and separated by commas.</p>
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 
 
             
@@ -2351,13 +2474,16 @@ appended to the 2-letter mnemonic and separated by commas.</p>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 |
 
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 |
 
-<span class="param-type">Array</span>
+<span class="param-type">Array.&lt;number></span>
+|
+
+<span class="param-type">Array.&lt;string></span>
 
 
             
@@ -2365,6 +2491,8 @@ appended to the 2-letter mnemonic and separated by commas.</p>
 
             
                 <td class="attributes">
+                
+                    &lt;optional><br>
                 
 
                 
@@ -2375,6 +2503,8 @@ appended to the 2-letter mnemonic and separated by commas.</p>
 
             
                 <td class="default">
+                
+                    <code>[]</code>
                 
                 </td>
             
@@ -2432,7 +2562,7 @@ as parameter(s) for the instruction.</p></td>
             <td class="type">
             
                 
-<span class="param-type">Boolean</span>
+<span class="param-type">boolean</span>
 
 
             
@@ -2507,7 +2637,7 @@ as parameter(s) for the instruction.</p></td>
 
     
 
-    <h4 class="name" id="send"><span class="type-signature"></span>send<span class="signature">(instruction, callback<span class="signature-attributes">opt</span>, waitForResponse<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
+    <h4 class="name" id="send"><span class="type-signature"></span>send<span class="signature">(instruction, callback<span class="signature-attributes">opt, nullable</span>, waitForResponse<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
 
     
 
@@ -2519,7 +2649,7 @@ as parameter(s) for the instruction.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line313">line 313</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line343">line 343</a>
     </li></ul></dd>
     
 
@@ -2608,7 +2738,7 @@ terminated with a semicolon.</p>
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 
 
             
@@ -2656,6 +2786,8 @@ terminated with a semicolon.</p>
                 
 
                 
+                    &lt;nullable><br>
+                
 
                 
                 </td>
@@ -2664,13 +2796,13 @@ terminated with a semicolon.</p>
             
                 <td class="default">
                 
-                    <code>null</code>
-                
                 </td>
             
 
             <td class="description last"><p>A function to call once the data has been sent to the device
-(default) or when an answer has been received from the device.</p></td>
+(default) or when an answer has been received from the device. If the callback is used with
+<code>waitForResponse=true</code>, the fucntion will receive a single parameter containing the data received
+from the device.</p></td>
         </tr>
 
     
@@ -2683,7 +2815,7 @@ terminated with a semicolon.</p>
             <td class="type">
             
                 
-<span class="param-type">Boolean</span>
+<span class="param-type">boolean</span>
 
 
             
@@ -2759,7 +2891,7 @@ when a response is received.</p></td>
 
     
 
-    <h4 class="name" id="setVelocity"><span class="type-signature"></span>setVelocity<span class="signature">(velocity)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
+    <h4 class="name" id="setVelocity"><span class="type-signature"></span>setVelocity<span class="signature">(velocity<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
 
     
 
@@ -2771,7 +2903,7 @@ when a response is received.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line604">line 604</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line636">line 636</a>
     </li></ul></dd>
     
 
@@ -2812,8 +2944,10 @@ when a response is received.</p></td>
 
 <div class="description">
     <p>Sets the velocity of the plotting pen. When the velocity <code>parameter</code> is set to <code>1</code>, the velocity
-will be at its maximum of 38.1cm/s (default). When the <code>velocity</code> parameter is set to 0.1, the
+will be at its maximum of 38.1cm/s (default). So, if you set the <code>velocity</code> parameter to 0.1, the
 actual velocity will be 3.81cm/s.</p>
+<p>Any value equal or lower than 0 and any value above 1 will trigger the use of the default
+velocity.</p>
 </div>
 
 
@@ -2839,7 +2973,11 @@ actual velocity will be 3.81cm/s.</p>
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
+        
+        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -2857,14 +2995,30 @@ actual velocity will be 3.81cm/s.</p>
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>1.0</code>
+                
+                </td>
             
 
             <td class="description last"><p>A decimal number between 0 and 1.</p></td>
@@ -2917,6 +3071,254 @@ actual velocity will be 3.81cm/s.</p>
     
 
     
+        <h3 class="subsection-title">Events</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id="event:error">error</h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line317">line 317</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>message</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The error message</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>port</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The serial port upon which the connection was attempted</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description">
+    <p>Event emitted when an error occurs. The specified function will receive an object with
+information about the error.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="event:ready">ready</h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line223">line 223</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Event emitted when a serial connection is successfully established to the device.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
 </article>
 
 </section>
@@ -2929,7 +3331,7 @@ actual velocity will be 3.81cm/s.</p>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.2</a> on Wed Oct 26 2016 21:08:46 GMT-0400 (EDT) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.2</a> on Wed Oct 26 2016 22:58:59 GMT-0400 (EDT) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
