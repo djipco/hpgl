@@ -4,17 +4,45 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 
 /**
- * The `hpgl` library makes it possible to interact with plotters and printers that support the
- * *Hewlett-Packard Graphics Language* (a.k.a. *hpgl*). This language is the de facto standard for
- * most plotters.
+ * @file The `hpgl` library makes it possible to interact with plotters and printers that support
+ * the *Hewlett-Packard Graphics Language* (a.k.a. **hpgl**). This language is the *de facto*
+ * standard for most plotters.
  *
- * @module hpgl
+ * @author Jean-Philippe Côté
+ * @example
+ *
+ * // Import a transport library compatible with the 'serialport' module. In this case, we use
+ * // 'browser-serialport'.
+ * var SerialPort = require("browser-serialport").SerialPort;
+ *
+ * // Import this library's Plotter object.
+ * var Plotter = nw.require("../src/hpgl.js").Plotter;
+ *
+ * // Prepare a transport to be used by the Plotter object (3rd argument must be 'false' so no
+ * // connection attempt is made automatically).
+ * var transport = new SerialPort("/dev/tty.usbserial", {}, false);
+ *
+ * // Instantiate the PLotter object.
+ * var plotter = new Plotter();
+ *
+ * // Assign a listener for the 'ready' event anc connect to the physical device.
+ * plotter
+ *   .on("ready", onReady)
+ *   .connect(transport);
+ *
+ * // When the plotter is ready, move to position and write some text.
+ * function onReady () {
+ *   plotter
+ *     .moveTo(12, 2)
+ *     .drawText("Hello, World!")
+ * }
  */
 module.exports = {};
 
 /**
  * The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those
- * made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol.
+ * made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol
+ * (Calcomp, for example).
  *
  * #### Transport Layer
  *
@@ -31,8 +59,7 @@ module.exports = {};
  * positive `y` goes down. Some plotters work differently but I found it easier to stick with the
  * computer screen standard.
  *
- * @class Plotter
- * @constructor
+ * @class
  */
 var Plotter = function() {
 
@@ -43,19 +70,6 @@ var Plotter = function() {
     A4: {long: 11040, short: 7721},
     A3: {long: 16158, short: 11040}
   };
-  this._synchronousInstructions = [
-    "OA",
-    "OC",
-    "OD",
-    "OE",
-    "OF",
-    "OH",
-    "OI",
-    "OO",
-    "OP",
-    "OS",
-    "OW",
-  ];
   this._queue = [];
   this._queueTimeOutId = 0;
   this._paper = "A";
@@ -66,9 +80,7 @@ var Plotter = function() {
    * The interval (in milliseconds) to wait before sending a new instruction (so as to not overflow
    * the serial connection).
    *
-   * @property queueDelay
-   * @type {int}
-   * @default 100
+   * @member {number}
    */
   this.queueDelay = 50;
 
@@ -76,25 +88,34 @@ var Plotter = function() {
    * The model name as reported by the device. Only available after the `ready` event has been
    * fired.
    *
-   * @property model
-   * @type {String}
+   * @member {string}
+   * @readOnly
    */
   this.model = undefined;
 
   /**
-   * The device's capabilities:
+   * An object that is used for serial communication. This object must adhere to the `serialport`
+   * object's interface.
    *
-   *  -
-   *
-   * @property capabilities
-   * @type {Object}
+   * @member {Object}
+   * @readOnly
    */
-  this.capabilities = undefined;
+  this.transport = undefined;
+
+  /**
+   * A 2-position array containing the number of plotter units per millimiter on the `x` and `y`
+   * axis, respectively.
+   *
+   * @member {number[]}
+   * @readOnly
+   */
+  this.unitsPerMillimiter = undefined;
 
   /**
    * [read-only] Array of all the paper sizes supported by the device
-   * @property supportedPapers
-   * @type {String[]}
+   *
+   * @member {string[]}
+   * @name Plotter#supportedPapers
    * @readOnly
    */
   Object.defineProperty(this, 'supportedPapers', {
@@ -113,30 +134,21 @@ var Plotter = function() {
 util.inherits(Plotter, EventEmitter);
 
 /**
- * Opens a serial connection to the device.
+ * Opens a serial connection to the device using the specified transport layer.
  *
- * @method connect
- * @param {Object} transport A transport object compatible with the `serialport` API interface.
+ * @param {Object} transport - A transport object compatible with the `serialport` API interface.
  * @param {Object} [options]
- * @param {String} [options.paper="A"] The paper size to use. Choices are:
+ * @param {string} [options.paper="A"] - The paper size to use. Choices are:
  *   - *A* (a.k.a "letter")
  *   - *B* (a.k.a "tabloid")
  *   - *A4*
  *   - *A3*
- * @param {String} [options.orientation="landscape"] The orientation of the paper: *landscape* or
+ * @param {string} [options.orientation="landscape"] - The orientation of the paper: *landscape* or
  * *portrait*.
- * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
+ * @returns {Plotter}
  */
 Plotter.prototype.connect = function(transport, options = {}) {
 
-  /**
-   * An object that is used for serial communication. This object must adhere to the `serialport`
-   * object's interface.
-   *
-   * @property transport
-   * @type {Object}
-   */
   this.transport = transport;
 
   // Assign different paper size if specified
@@ -166,12 +178,11 @@ Plotter.prototype.connect = function(transport, options = {}) {
       // Retrieve device model
       this.queue("OI", [], (data) => {
         this.model = data;
-        console.log("Response OI: " + data);
       }, true);
 
       // Retrieve capabilities
-      this.queue("OO", [], (data) => {
-        console.log("Response OF: " + data);
+      this.queue("OF", [], (data) => {
+        this.unitsPerMillimiter = data.split(",", 2);
       }, true);
 
       // Resets the device to its 'power on' status (same as DF plus: pen is raised, errors are
@@ -203,7 +214,6 @@ Plotter.prototype.connect = function(transport, options = {}) {
           this.queue("IW");       // reset plotting window
         }
 
-
       }
 
       // Instead of using the SC instruction to scale for millimiters, we are using our own
@@ -212,7 +222,7 @@ Plotter.prototype.connect = function(transport, options = {}) {
 
       /**
        * Event emitted when a serial connection is successfully established to the device.
-       * @event ready
+       * @event Plotter#ready
        */
       setTimeout(function () {
         this.emit("ready");
@@ -228,10 +238,12 @@ Plotter.prototype.connect = function(transport, options = {}) {
  * Converts centimeters to plotter units. According to the documentation, a plotter unit is
  * equivalent to 0.02488 millimeters.
  *
+ * THIS METHOD SHOULD USE WHAT IS RETURNED BY OF and put in this.unitsPerMillimiter
+ *
  * @private
  * @method _toPlotterUnits
- * @param {Number} cm The centimeter value to convert.
- * @return {int} The converted value rounded to the closest **integer**.
+ * @param {number} cm The centimeter value to convert.
+ * @return {Number} The converted value rounded to the closest **integer**.
  */
 Plotter.prototype._toPlotterUnits = function(cm) {
   return Math.round(cm / 0.002488);
@@ -244,8 +256,8 @@ Plotter.prototype._toPlotterUnits = function(cm) {
  *
  * @private
  * @method _toHpglCoordinates
- * @param {Number} x The x coordinate of the point (must be expressed in plotter units).
- * @param {Number} y The y coordinate of the point (must be expressed in plotter units).
+ * @param {number} x The `x` coordinate of the point (must be expressed in plotter units).
+ * @param {number} y The `y` coordinate of the point (must be expressed in plotter units).
  * @return {Object} An object whose **x** and **y** properties have been transformed.
  */
 Plotter.prototype._toHpglCoordinates = function(x, y) {
@@ -300,30 +312,33 @@ Plotter.prototype._onData = function(data) {
  */
 Plotter.prototype._onTransportError = function(error) {
 
+  error.port = this.transport.path;
+
   /**
    * Event emitted when an error occurs. The specified function will receive an object with
    * information about the error.
    *
-   * @event ready
-   * @param {Object} error
+   * @event Plotter#error
+   * @type {object]
+   * @property {string} message The error message
+   * @property {string} port The serial port upon which the connection was attempted
    */
   this.emit("error", error);
 
 };
 
 /**
- *
  * Immediately sends an HPGL instruction down the serial port. The instruction is automatically
  * terminated with a semicolon.
  *
- * @method send
- * @param {String} instruction The instruction to send (unterminated).
- * @param {Function} [callback=null] A function to call once the data has been sent to the device
- * (default) or when an answer has been received from the device.
- * @param {Boolean} [waitForResponse=false] Whether to execute the callback when the data is sent or
+ * @param {string} instruction The instruction to send (unterminated).
+ * @param {?Function} [callback] A function to call once the data has been sent to the device
+ * (default) or when an answer has been received from the device. If the callback is used with
+ * `waitForResponse=true`, the fucntion will receive a single parameter containing the data received
+ * from the device.
+ * @param {boolean} [waitForResponse=false] Whether to execute the callback when the data is sent or
  * when a response is received.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
  */
 Plotter.prototype.send = function(instruction, callback = null, waitForResponse = false) {
 
@@ -365,10 +380,9 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  * @todo text direction (double check with orientation)
  * @todo charsets
  *
- * @method drawText
- * @param {String} text The text to write
+ * @param {string} text The text to write
  * @param {Object} [options]
- * @param {Number} [options.characterSet=0] The numerical ID of the character set to use to print
+ * @param {number} [options.characterSet=0] The numerical ID of the character set to use to print
  * the label. Available sets are:
  *  - 0: ANSI
  *  - 1: 9825 Character Set
@@ -389,15 +403,14 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  *  - 37: ISO Spanish
  *  - 38: ISO Portuguese
  *  - 39: ISO Norway, Version 2 (sic)
- * @param {Number} [options.characterWidth=0.187] The width, in centimeters, to draw the text at. A
+ * @param {number} [options.characterWidth=0.187] The width, in centimeters, to draw the text at. A
  * negative value mirrors the text for that dimension.
- * @param {Number} [options.characterHeight=0.269] The height, in centimeters, to draw the text at.
+ * @param {number} [options.characterHeight=0.269] The height, in centimeters, to draw the text at.
  * A negative value mirrors the text for that dimension.
- * @param {Number} [options.rotation=0] The rotation to apply to the text (in degrees).
- * @param {Number} [options.slant=0] The slant (italic) with which characters are lettered (in
+ * @param {number} [options.rotation=0] The rotation to apply to the text (in degrees).
+ * @param {number} [options.slant=0] The slant (italic) with which characters are lettered (in
  * degrees).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
  */
 Plotter.prototype.drawText = function(text, options = {}) {
 
@@ -460,7 +473,7 @@ Plotter.prototype.drawText = function(text, options = {}) {
  *
  * @private
  * @method _toHpglInteger
- * @param {Number} value The text to write
+ * @param {number} value The text to write
  * @returns {int} The converted integer.
  */
 Plotter.prototype._toHpglInteger = function(value) {
@@ -483,8 +496,8 @@ Plotter.prototype._toHpglInteger = function(value) {
  *
  * @private
  * @method _toHpglDecimal
- * @param {Number} value The text to write
- * @returns {Number} The converted float.
+ * @param {number} value The text to write
+ * @returns {number} The converted float.
  */
 Plotter.prototype._toHpglDecimal = function(value) {
 
@@ -503,13 +516,11 @@ Plotter.prototype._toHpglDecimal = function(value) {
 /**
  * Draws a circle whose center is at the current location of the pen.
  *
- * @method drawCircle
- * @param {Number} [radius=1] The circle's radius (in centimeters).
- * @param {Number} [angle=5]  An integer between -180 and 180 degrees representing the chord angle.
- * The most commonly used values are 0-180. In this case, the smaller the angle is, the smoother the
+ * @param {number} [radius=1] The circle's radius (in centimeters).
+ * @param {number} [angle=5]  An integer between -180° and 180° representing the chord angle. The
+ * most commonly used values are 0-180. In this case, the smaller the angle is, the smoother the
  * circle will be. Negative values make the circle start at 180 degrees instead of 0.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
  */
 Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
   this.queue("CI", [this._toPlotterUnits(radius), Math.round(angle)]);
@@ -519,11 +530,9 @@ Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
 /**
  * Draws a line from the current position to the specified destination position.
  *
- * @method drawLine
- * @param {Number} destX The `x` coordinate of the end of the line (in cm).
- * @param {Number} destY The `y` coordinate of the end of the line (in cm).
+ * @param {number} destX The `x` coordinate of the end of the line (in cm).
+ * @param {number} destY The `y` coordinate of the end of the line (in cm).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
  */
 Plotter.prototype.drawLine = function(destX, destY) {
 
@@ -536,14 +545,11 @@ Plotter.prototype.drawLine = function(destX, destY) {
  * Draws a series of lines starting at the current pen position and going, in turn, to all x/y pairs
  * specified in the array.
  *
- * @method drawLines
- * @param {Array} positions An array of line-end ositions in the form `[x1, y1, x2, y2, ...]`
+ * @param {number[]} positions An array of line-end positions in the form `[x1, y1, x2, y2, ...]`
  * @param {Object} [options]
- * @param {int} [options.linePattern=7] Integer between 0 and 7. Value 0 prints dots at extermities
+ * @param {number} [options.linePattern=7] Integer between 0 and 7. Value 0 prints dots at extermities
  * only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a solid line.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
- *
  *
  * @todo add linePatternLength option
  */
@@ -588,18 +594,15 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
 /**
  * Draws a rectangle from the current position to the specified destination position.
  *
- * @method drawRectangle
- * @param {Number} destX The `x` coordinate of the end of the line (in cm).
- * @param {Number} destY The `y` coordinate of the end of the line (in cm).
- * @param {Boolean} liftPenWhenDone Whether to automatically lift the pen when done p;otting the
- * line.
+ * @todo validate input
+ *
+ * @param {number} destX The `x` coordinate of the second point of the rectangle (in cm).
+ * @param {number} destY The `y` coordinate of the second point of the rectangle (in cm).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
  */
-Plotter.prototype.drawRectangle = function(destX, destY, liftPenWhenDone = false) {
+Plotter.prototype.drawRectangle = function(destX, destY) {
 
   this.queue("EA", [this._toPlotterUnits(destX), this._toPlotterUnits(destY)]);
-  // if (liftPenWhenDone) { this.queue("PU"); }
   return this;
 
 };
@@ -607,11 +610,9 @@ Plotter.prototype.drawRectangle = function(destX, destY, liftPenWhenDone = false
 /**
  * Lifts the pen and moves it to the specified x and y coordinates.
  *
- * @method moveTo
- * @param {Number} x Position along the **x** axis (in centimeters)
- * @param {Number} y Position along the **y** axis (in centimeters)
+ * @param {number} x Position along the `x` axis (in centimeters)
+ * @param {number} y Position along the `y` axis (in centimeters)
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
  */
 Plotter.prototype.moveTo = function(x, y) {
 
@@ -623,13 +624,14 @@ Plotter.prototype.moveTo = function(x, y) {
 
 /**
  * Sets the velocity of the plotting pen. When the velocity `parameter` is set to `1`, the velocity
- * will be at its maximum of 38.1cm/s (default). When the `velocity` parameter is set to 0.1, the
+ * will be at its maximum of 38.1cm/s (default). So, if you set the `velocity` parameter to 0.1, the
  * actual velocity will be 3.81cm/s.
  *
- * @method setVelocity
- * @param {Number} velocity A decimal number between 0 and 1.
+ * Any value equal or lower than 0 and any value above 1 will trigger the use of the default
+ * velocity.
+ *
+ * @param {number} [velocity=1.0] A decimal number between 0 and 1.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
  */
 Plotter.prototype.setVelocity = function(velocity = 1.0) {
 
@@ -646,18 +648,15 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
 };
 
 /**
- *
  * Queues an HPGL instruction to be sent to the serial port. If any parameters are present, they are
  * appended to the 2-letter mnemonic and separated by commas.
  *
- * @method queue
- * @param {String} mnemonic 2-letter code for the HPGL command to send
- * @param {Number|String|Array} params A string, a number or an or array of string or numbers to use
+ * @param {string} mnemonic 2-letter code for the HPGL command to send
+ * @param {number|string|number[]|string[]} [params=[]] A string, a number or an or array of string or numbers to use
  * as parameter(s) for the instruction.
- * @param {Function=null} callback
- * @param {Boolean=false} waitForResponse
+ * @param {Function} [callback=null]
+ * @param {boolean} [waitForResponse=false]
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
- * @chainable
  */
 Plotter.prototype.queue = function(
   mnemonic, params = [], callback = null, waitForResponse = false
