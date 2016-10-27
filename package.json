@@ -21,12 +21,13 @@
   "homepage": "https://github.com/cotejp/hpgl",
   "license": "MIT",
   "devDependencies": {
+    "docdash": "^0.4.0",
     "grunt": "^1.0.1",
     "grunt-bumpup": "^0.6.3",
     "grunt-contrib-uglify": "^2.0.0",
-    "grunt-contrib-yuidoc": "^1.0.0",
     "grunt-gh-pages": "^2.0.0",
     "grunt-git": "^1.0.1",
+    "grunt-jsdoc": "^2.1.0",
     "grunt-release": "^0.14.0"
   }
 }

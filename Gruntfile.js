@@ -31,17 +31,14 @@ module.exports = function (grunt) {
       }
     },
 
-    // Generate doc
-    yuidoc: {
-      compile: {
-        name: '<%= pkg.name %>',
-        version: '<%= pkg.version %>',
-        description: '<%= pkg.description %>',
-        url: '<%= pkg.url %>',
+    // // Generate doc
+    jsdoc : {
+      dist : {
+        src: ['./src/*.js'],
         options: {
-          outdir: './docs',
-          linkNatives: true,
-          paths: ['./src/']
+          destination: './docs',
+          template : "./jsdoc/docdash",
+          configure : "./jsdoc/jsdoc.json"
         }
       }
     },
@@ -82,13 +79,13 @@ module.exports = function (grunt) {
   // grunt.loadNpmTasks('grunt-contrib-compress');
   // grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks("grunt-contrib-uglify");
-  grunt.loadNpmTasks("grunt-contrib-yuidoc");
   grunt.loadNpmTasks('grunt-gh-pages');
   grunt.loadNpmTasks('grunt-git');
   grunt.loadNpmTasks('grunt-release');
+  grunt.loadNpmTasks('grunt-jsdoc');
 
   grunt.registerTask('publish', ['publish:prerelease']);
-  grunt.registerTask("publish:prerelease", ['bumpup:prerelease', 'uglify', 'yuidoc', 'gitcommit:commitupdated', 'gh-pages', 'release']);
+  grunt.registerTask("publish:prerelease", ['bumpup:prerelease', 'uglify', 'jsdoc', 'gitcommit:commitupdated', 'gh-pages', 'release']);
   grunt.registerTask("publish:patch", ['bumpup:patch', 'yuidoc', 'release']);
   grunt.registerTask('publish:minor', ['bumpup:minor', 'yuidoc', 'release']);
   grunt.registerTask('publish:major', ['bumpup:major', 'yuidoc', 'release']);
