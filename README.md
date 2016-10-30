@@ -13,13 +13,13 @@ Graphics Language* (a.k.a. **hpgl**). This language is the *de facto* standard f
 So far, the library has only beed tested with an 
 [HP 7475a plotter](http://hpmuseum.net/display_item.php?hw=74). If you have success with other makes
 or models, [let me know](https://twitter.com/jpcote). Beware that some HP plotters are only equipped 
-with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a serial 
+with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a **serial**
 interface.
 
 The library is currently being developed using the 
 [browser-serialport](https://www.npmjs.com/package/browser-serialport) Node.js module. This module
 only works inside [Chrome Apps](https://developer.chrome.com/apps/about_apps) and 
-[NW.js apps](http://nwjs.io/). However, since `browser-serialport` adheres to the
+[NW.js](http://nwjs.io/) apps. However, since `browser-serialport` adheres to the
 [serialport](https://www.npmjs.com/package/serialport) module API, it should theoretically work with 
 that module also (not tested yet!).
 
@@ -27,11 +27,11 @@ that module also (not tested yet!).
 
 To get started, you will need a few pieces of hardware:
 
-- HPGL-compatible plotter with a serial interface
-- USB-to-Serial adapter (unless your computer has a serial port)
-- Male DB-25 to female DB-9 cable (a.k.a. null modem cable)
-- Pens that fit your plotter
-- Paper
+- HPGL-compatible plotter with a serial interface;
+- USB-to-Serial adapter (unless your computer has a serial port);
+- Male DB-25 to female DB-9 cable (a.k.a. null modem cable);
+- Pens that fit your plotter;
+- Paper.
 
 Your plotter needs to be set to a line speed of 9600 baud with 
 [8-N-1](https://en.wikipedia.org/wiki/8-N-1) settings. Chances are high this is already the case. If
@@ -48,17 +48,17 @@ As stated earlier, this particular example uses the `browser-serialport` Node.js
 // 'browser-serialport'.
 var SerialPort = require("browser-serialport").SerialPort;
 
-// Import this library's Plotter object.
+// Import the Plotter object from the library
 var Plotter = nw.require("../src/hpgl.js").Plotter;
 
 // Prepare a transport to be used by the Plotter object (3rd argument must be 'false' so no
 // connection attempt is made automatically).
 var transport = new SerialPort("/dev/tty.usbserial", {}, false);
 
-// Instantiate the PLotter object.
+// Instantiate the Plotter object.
 var plotter = new Plotter();
 
-// Assign a listener for the 'ready' event anc connect to the physical device.
+// Assign a listener for the 'ready' event and connect to the physical device.
 plotter
   .on("ready", onReady)
   .connect(transport);
@@ -67,7 +67,7 @@ plotter
 function onReady () {
   plotter
     .moveTo(12, 2)
-    .drawText("Hello, World!")
+    .drawText("Hello, World!");
 }
 ```
 ### Documentation
