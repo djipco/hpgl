@@ -1,12 +1,12 @@
 # hpgl
 **A Node.js library to control HPGL-compatible plotters**
 
-> **This library is still in early stages of development. It should not be used in production.**
-
 ### About
 
 The `hpgl` library makes it possible to interact with plotters that support the *Hewlett-Packard 
 Graphics Language* (a.k.a. **hpgl**). This language is the *de facto* standard for most plotters. 
+
+**This library is still in early stages of development. It should not be used in production.**
 
 ### Compatibility
 
