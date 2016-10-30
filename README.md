@@ -43,32 +43,33 @@ documentation.
 Here is an example of how you would use the `Plotter` object from the library to draw some text. 
 As stated earlier, this particular example uses the `browser-serialport` Node.js module.
 
-    // Import a transport library compatible with the 'serialport' module. In this case, we use
-    // 'browser-serialport'.
-    var SerialPort = require("browser-serialport").SerialPort;
- 
-    // Import this library's Plotter object.
-    var Plotter = nw.require("../src/hpgl.js").Plotter;
- 
-    // Prepare a transport to be used by the Plotter object (3rd argument must be 'false' so no
-    // connection attempt is made automatically).
-    var transport = new SerialPort("/dev/tty.usbserial", {}, false);
- 
-    // Instantiate the PLotter object.
-    var plotter = new Plotter();
- 
-    // Assign a listener for the 'ready' event anc connect to the physical device.
-    plotter
-      .on("ready", onReady)
-      .connect(transport);
- 
-    // When the plotter is ready, move to position and write some text.
-    function onReady () {
-      plotter
-        .moveTo(12, 2)
-        .drawText("Hello, World!")
-    }
+```javascript
+// Import a transport library compatible with the 'serialport' module. In this case, we use
+// 'browser-serialport'.
+var SerialPort = require("browser-serialport").SerialPort;
 
+// Import this library's Plotter object.
+var Plotter = nw.require("../src/hpgl.js").Plotter;
+
+// Prepare a transport to be used by the Plotter object (3rd argument must be 'false' so no
+// connection attempt is made automatically).
+var transport = new SerialPort("/dev/tty.usbserial", {}, false);
+
+// Instantiate the PLotter object.
+var plotter = new Plotter();
+
+// Assign a listener for the 'ready' event anc connect to the physical device.
+plotter
+  .on("ready", onReady)
+  .connect(transport);
+
+// When the plotter is ready, move to position and write some text.
+function onReady () {
+  plotter
+    .moveTo(12, 2)
+    .drawText("Hello, World!")
+}
+```
 ### Documentation
 
 I'm trying hard to maintain an up-to-date [API documentation](https://cotejp.github.io/hpgl/). If 
