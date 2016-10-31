@@ -3,40 +3,6 @@
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 
-/**
- * @file The `hpgl` library makes it possible to interact with plotters and printers that support
- * the *Hewlett-Packard Graphics Language* (a.k.a. **hpgl**). This language is the *de facto*
- * standard for most plotters.
- *
- * @author Jean-Philippe Côté
- * @example
- *
- * // Import a transport library compatible with the 'serialport' module. In this case, we use
- * // 'browser-serialport'.
- * var SerialPort = require("browser-serialport").SerialPort;
- *
- * // Import this library's Plotter object.
- * var Plotter = nw.require("../src/hpgl.js").Plotter;
- *
- * // Prepare a transport to be used by the Plotter object (3rd argument must be 'false' so no
- * // connection attempt is made automatically).
- * var transport = new SerialPort("/dev/tty.usbserial", {}, false);
- *
- * // Instantiate the PLotter object.
- * var plotter = new Plotter();
- *
- * // Assign a listener for the 'ready' event anc connect to the physical device.
- * plotter
- *   .on("ready", onReady)
- *   .connect(transport);
- *
- * // When the plotter is ready, move to position and write some text.
- * function onReady () {
- *   plotter
- *     .moveTo(12, 2)
- *     .drawText("Hello, World!")
- * }
- */
 module.exports = {};
 
 /**
@@ -44,20 +10,7 @@ module.exports = {};
  * made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol
  * (Calcomp, for example).
  *
- * #### Transport Layer
- *
- * By default, this library uses the Node.js [serialport](https://www.npmjs.com/package/serialport)
- * module for serial communication. This module offers native support on Mac, Linux and Windows. The
- * library can also use the [browser-serialport](https://www.npmjs.com/package/browser-serialport)
- * module which uses the `chrome.serial` API (only available in Chrome Apps and NW.js). For
- * debugging purposes, it can also use the
- * [virtual-serialport](https://www.npmjs.com/package/virtual-serialport).
- *
- * #### Coordinate Sytem
- *
- * The coordinate system is anchored in the top-left of the paper sheet. Positive `x` goes right and
- * positive `y` goes down. Some plotters work differently but I found it easier to stick with the
- * computer screen standard.
+ * @todo take into account different devices (plotting areas, orientation, etc.)
  *
  * @class
  */
@@ -75,18 +28,29 @@ var Plotter = function() {
   this._paper = "A";
   this._orientation = "landscape";
   this._buffer  = "";
+  this._maxConnectionDelay = 2000;
+
+  /**
+   * The size of the device's buffer in bytes (characters). A single instruction cannot be larger
+   * than that. Only available once `this.ready` is `true`.
+   *
+   * @member {number}
+   * @readOnly
+   */
+  this.bufferSize = undefined;
 
   /**
    * The interval (in milliseconds) to wait before sending a new instruction (so as to not overflow
    * the serial connection).
+   *
+   * @todo do we still need that?
    *
    * @member {number}
    */
   this.queueDelay = 50;
 
   /**
-   * The model name as reported by the device. Only available after the `ready` event has been
-   * fired.
+   * The device's model name. Only available once `this.ready` is `true`.
    *
    * @member {string}
    * @readOnly
@@ -94,7 +58,7 @@ var Plotter = function() {
   this.model = undefined;
 
   /**
-   * An object that is used for serial communication. This object must adhere to the `serialport`
+   * The object that is used for serial communication. This object must adhere to the `serialport`
    * object's interface.
    *
    * @member {Object}
@@ -103,13 +67,27 @@ var Plotter = function() {
   this.transport = undefined;
 
   /**
-   * A 2-position array containing the number of plotter units per millimiter on the `x` and `y`
-   * axis, respectively.
+   * Indicates whether the device is ready or not. The device is ready only after having been
+   * successfully connected by using the [Plotter.connect()]{@link Plotter#connect} function.
+   * Instructions should not be sent to the device prior to it being ready.
    *
-   * @member {number[]}
+   * The [Plotter]{@link Plotter} object triggers the [ready]{@link Plotter#event:ready} event when
+   * its ready.
+   *
+   * @member {Boolean}
    * @readOnly
    */
-  this.unitsPerMillimiter = undefined;
+  this.ready = false;
+
+  /**
+   * An object detailing the device's hardware resolution.
+   *
+   * @member {Object}
+   * @property {number} x Number of plotter units per millimiter on the **x** axis
+   * @property {number} y Number of plotter units per millimiter on the **y** axis
+   * @readOnly
+   */
+  this.unitsPerMillimiter = {};
 
   /**
    * [read-only] Array of all the paper sizes supported by the device
@@ -145,18 +123,19 @@ util.inherits(Plotter, EventEmitter);
  *   - *A3*
  * @param {string} [options.orientation="landscape"] - The orientation of the paper: *landscape* or
  * *portrait*.
- * @returns {Plotter}
+ * @param {Function} [callback] - A function to trigger when the connect operation has completed.
+ * This function will receive an `error` parameter is an error occured.
  */
-Plotter.prototype.connect = function(transport, options = {}) {
+Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
   this.transport = transport;
 
-  // Assign different paper size if specified
+  // Save different paper size if specified
   if ( options.paper && this.supportedPapers.includes(options.paper.toUpperCase()) ) {
     this._paper = options.paper.toUpperCase();
   }
 
-  // Assign different orientation if specified
+  // Save different orientation if specified
   if (
     options.orientation &&
     ["landscape", "portrait"].includes(options.orientation.toLowerCase())
@@ -164,73 +143,106 @@ Plotter.prototype.connect = function(transport, options = {}) {
     this._orientation = options.orientation.toLowerCase();
   }
 
-  this.transport.open(function (error) {
+  // Try to open transport layer
+  this.transport.open((error) => {
 
+    // If the connection attempt was unsuccessful, we are done!
     if (error) {
+      if (callback) { callback.call(this, error); }
+      this._onError(error);
+      return;
+    }
 
-      this._onTransportError(error);
+    this.transport.on('data', this._onData.bind(this));
+    this.transport.on('error', this._onError.bind(this));
+
+    // Reset the device to its 'power on' status (same as DF plus: pen is raised, errors are
+    // cleared, rotation set to 0, scaling points reset).
+    this.queue("IN");
+
+    // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
+    // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
+    // retrieve buffer size.
+    this.queue(String.fromCharCode(27) + ".E", [], () => {}, true);
+    this.queue(String.fromCharCode(27) + ".L", [], (data) => {
+      this.bufferSize = data;
+    }, true);
+
+    // Retrieve device model
+    this.queue("OI", [], (data) => {
+      this.model = data;
+    }, true);
+
+    // Retrieve device resolution
+    this.queue("OF", [], (data) => {
+      [this.unitsPerMillimiter.x, this.unitsPerMillimiter.y] = data.split(",", 2);
+    }, true);
+
+    // Select paper size. Basically, this tells the device which paper orientation to use. A4 and
+    // A (letter) use the same orientation while A3 and B (tabloid) use the other orientation.
+    if ( ["B", "A3"].includes(this._paper) ) {
+      this.queue("PS", 0);
+    } else {
+      this.queue("PS", 127);
+    }
+
+    // Set the desired orientation
+    if (this._orientation === "portrait") {
+
+      if ( ["A", "A4"].includes(this._paper) ) {
+        this.queue("RO", 90);   // rotate to 0
+        this.queue("IP");       // reassign P1 and P2
+        this.queue("IW");       // reset plotting window
+      }
 
     } else {
 
-      this.transport.on('data', this._onData.bind(this));
-      this.transport.on('error', this._onTransportError.bind(this));
-
-      // Retrieve device model
-      this.queue("OI", [], (data) => {
-        this.model = data;
-      }, true);
-
-      // Retrieve capabilities
-      this.queue("OF", [], (data) => {
-        this.unitsPerMillimiter = data.split(",", 2);
-      }, true);
-
-      // Resets the device to its 'power on' status (same as DF plus: pen is raised, errors are
-      // cleared, rotation set to 0, scaling points reset).
-      this.queue("IN");
-
-      // Select paper size. Basically, this tells the device which paper orientation to use. A4 and
-      // A (letter) use the same orientation while A3 and B (tabloid) use the other orientation.
       if ( ["B", "A3"].includes(this._paper) ) {
-        this.queue("PS", 0);
-      } else {
-        this.queue("PS", 127);
+        this.queue("RO", 90);   // rotate to 0
+        this.queue("IP");       // reassign P1 and P2
+        this.queue("IW");       // reset plotting window
       }
-
-      // Set the desired orientation
-      if (this._orientation === "portrait") {
-
-        if ( ["A", "A4"].includes(this._paper) ) {
-          this.queue("RO", 90);   // rotate to 0
-          this.queue("IP");       // reassign P1 and P2
-          this.queue("IW");       // reset plotting window
-        }
-
-      } else {
-
-        if ( ["B", "A3"].includes(this._paper) ) {
-          this.queue("RO", 90);   // rotate to 0
-          this.queue("IP");       // reassign P1 and P2
-          this.queue("IW");       // reset plotting window
-        }
-
-      }
-
-      // Instead of using the SC instruction to scale for millimiters, we are using our own
-      // conversion function. The decision is motivated by the fact that SC onky accepts integers as
-      // parameters which makes it imprecise.
-
-      /**
-       * Event emitted when a serial connection is successfully established to the device.
-       * @event Plotter#ready
-       */
-      setTimeout(function () {
-        this.emit("ready");
-      }.bind(this), 50);
 
     }
 
-  }.bind(this));
+    // Instead of using the SC instruction to scale for millimiters, we are using our own
+    // conversion function. The decision is motivated by the fact that SC onky accepts integers as
+    // parameters which makes it imprecise. SHOULD WE STICK WITH THAT OR USE, THE RES REPORTED
+    //BY DEVICE ?!
+
+    // Wait for buffer size, model and resolution information to be retrieved before triggering
+    // user callback. If it takes too long, report error.
+    let start = Date.now();
+
+    let intervalId = setInterval(() => {
+
+      if (this.bufferSize && this.model && this.unitsPerMillimiter.x) {
+
+        clearInterval(intervalId);
+        this.ready = true;
+        if (callback) { callback.call(this); }
+
+        /**
+         * Event emitted when the device is ready.
+         * @event Plotter#ready
+         */
+        this.emit("ready");
+
+      } else if (start + this._maxConnectionDelay < Date.now()) {
+
+        clearInterval(intervalId);
+        if (callback) {
+          callback.call(
+            this,
+            new Error("Could not retrieve mandatory startup information from the device.")
+          );
+        }
+
+      }
+
+    }, 100);
+
+  });
 
 };
 
@@ -296,32 +308,36 @@ Plotter.prototype._toHpglCoordinates = function(x, y) {
 Plotter.prototype._onData = function(data) {
 
   if (data.toString() === "\r") {
-    // console.log("Receive: " + this._buffer);
+
+    /**
+     * Event emitted when data is received from the device.
+     * @event Plotter#data
+     * @param {string} data The data received.
+    */
     this.emit("data", this._buffer);
     this._buffer = "";
+
   } else {
+
     this._buffer += data.toString();
+
   }
 
 };
 
 /**
  * @private
- * @method _onTransportError
+ * @method _onError
  * @param {Object} error An object containing information about the error.
  */
-Plotter.prototype._onTransportError = function(error) {
-
-  error.port = this.transport.path;
+Plotter.prototype._onError = function(error) {
 
   /**
    * Event emitted when an error occurs. The specified function will receive an object with
    * information about the error.
    *
    * @event Plotter#error
-   * @type {object]
-   * @property {string} message The error message
-   * @property {string} port The serial port upon which the connection was attempted
+   * @param {Object} error object containing details about the error
    */
   this.emit("error", error);
 
@@ -342,6 +358,10 @@ Plotter.prototype._onTransportError = function(error) {
  */
 Plotter.prototype.send = function(instruction, callback = null, waitForResponse = false) {
 
+  // if (!this.ready) {
+  //   throw new Error("The device cannot receive instructions before its `ready` property is `true`");
+  // }
+
   // Add termination character. A semicolon is used unless we are printing a label (which requires
   // a special termination char: ETX).
   if (instruction.substring(0, 2) === "LB") {
@@ -351,6 +371,13 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
   }
 
   console.log("Send: " + instruction);
+
+  // // Check instruction length
+  // if (instruction.length > this.bufferSize) {
+  //   throw new RangeError(
+  //     "The maximum size for a single instruction is " + this.bufferSize + " bytes (characters)."
+  //   );
+  // }
 
   // Send the instruction. Wait for printer response if required
   if (waitForResponse) {
@@ -375,13 +402,13 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
 };
 
 /**
- * Draws a text label.
+ * Draws a text label. Note: the `characterSet` option is currently not working.
  *
  * @todo text direction (double check with orientation)
  * @todo charsets
  *
  * @param {string} text The text to write
- * @param {Object} [options]
+ * @param {Object} [options] Options to control how the text is drawn.
  * @param {number} [options.characterSet=0] The numerical ID of the character set to use to print
  * the label. Available sets are:
  *  - 0: ANSI
@@ -445,7 +472,6 @@ Plotter.prototype.drawText = function(text, options = {}) {
       this._toHpglDecimal( Math.sin(radRotation) )
     ]
   );
-
 
   // Assign correct rotation angle
   options.slant = parseFloat(options.slant);
@@ -692,6 +718,11 @@ Plotter.prototype.queue = function(
 Plotter.prototype._processQueue = function() {
 
   console.log("Process queue");
+
+  // Retrieve currently available buffer space
+  // this.queue(String.fromCharCode(27) + ".B", [], (data) => {
+  //   console.log(data);
+  // }, true);
 
   // Make sure any pending timeout is cancelled
   clearTimeout(this._queueTimeOutId);

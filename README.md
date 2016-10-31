@@ -6,7 +6,7 @@
 The `hpgl` library makes it possible to interact with plotters that support the *Hewlett-Packard 
 Graphics Language* (a.k.a. **hpgl**). This language is the *de facto* standard for most plotters. 
 
-**This library is still in early stages of development. It should not be used in production.**
+**Warning: This library is still in early stages of development. It should not be used in production.**
 
 ### Compatibility
 
@@ -21,7 +21,14 @@ The library is currently being developed using the
 only works inside [Chrome Apps](https://developer.chrome.com/apps/about_apps) and 
 [NW.js](http://nwjs.io/) apps. However, since `browser-serialport` adheres to the
 [serialport](https://www.npmjs.com/package/serialport) module API, it should theoretically work with 
-that module also (not tested yet!).
+that module also (not tested yet!). For debugging purposes, it should also work with the 
+[virtual-serialport](https://www.npmjs.com/package/virtual-serialport) module.
+
+### Coordinate Sytem
+
+The plotting coordinate system is anchored in the top-left corner, just like a computer screen. 
+This means positive `x` goes right and positive `y` goes down. By default, plotters usually work 
+differently, but I find it easier to stick with the computer screen standard.
 
 ### Getting Started
 
@@ -72,5 +79,5 @@ function onReady () {
 ```
 ### Documentation
 
-I'm trying hard to maintain an up-to-date [API documentation](https://cotejp.github.io/hpgl/). If 
-you find errors, please [file an issue](https://github.com/cotejp/hpgl/issues).
+I will try to maintain an up-to-date [API documentation](https://cotejp.github.io/hpgl/). If you 
+find errors, please [file an issue](https://github.com/cotejp/hpgl/issues).
