@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul>
 </nav>
 
 <div id="main">
@@ -45,139 +45,69 @@
     
 
 
-
-
-
-
-
-
-
-
-<section>
-
-<header>
-    
-        <h2>
-        hpgl.js
-        </h2>
-        
-    
-</header>
-
-<article>
-    <div class="container-overview">
-    
-        
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line6">line 6</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-author">Author:</dt>
-    <dd class="tag-author">
-        <ul>
-            <li>Jean-Philippe Côté</li>
-        </ul>
-    </dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-        
-            <div class="description"><p>The <code>hpgl</code> library makes it possible to interact with plotters and printers that support
-the <em>Hewlett-Packard Graphics Language</em> (a.k.a. <strong>hpgl</strong>). This language is the <em>de facto</em>
-standard for most plotters.</p></div>
-        
-
-        
-            <h3>Example</h3>
-            
-    <pre class="prettyprint"><code>// Import a transport library compatible with the 'serialport' module. In this case, we use
+    <section class="readme">
+        <article><h1>hpgl</h1><p><strong>A Node.js library to control HPGL-compatible plotters</strong></p>
+<h3>About</h3><p>The <code>hpgl</code> library makes it possible to interact with plotters that support the <em>Hewlett-Packard 
+Graphics Language</em> (a.k.a. <strong>hpgl</strong>). This language is the <em>de facto</em> standard for most plotters. </p>
+<p><strong>Warning: This library is still in early stages of development. It should not be used in production.</strong></p>
+<h3>Compatibility</h3><p>So far, the library has only beed tested with an 
+<a href="http://hpmuseum.net/display_item.php?hw=74">HP 7475a plotter</a>. If you have success with other makes
+or models, <a href="https://twitter.com/jpcote">let me know</a>. Beware that some HP plotters are only equipped 
+with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a <strong>serial</strong>
+interface.</p>
+<p>The library is currently being developed using the 
+<a href="https://www.npmjs.com/package/browser-serialport">browser-serialport</a> Node.js module. This module
+only works inside <a href="https://developer.chrome.com/apps/about_apps">Chrome Apps</a> and 
+<a href="http://nwjs.io/">NW.js</a> apps. However, since <code>browser-serialport</code> adheres to the
+<a href="https://www.npmjs.com/package/serialport">serialport</a> module API, it should theoretically work with 
+that module also (not tested yet!). For debugging purposes, it should also work with the 
+<a href="https://www.npmjs.com/package/virtual-serialport">virtual-serialport</a> module.</p>
+<h3>Coordinate Sytem</h3><p>The plotting coordinate system is anchored in the top-left corner, just like a computer screen. 
+This means positive <code>x</code> goes right and positive <code>y</code> goes down. By default, plotters usually work 
+differently, but I find it easier to stick with the computer screen standard.</p>
+<h3>Getting Started</h3><p>To get started, you will need a few pieces of hardware:</p>
+<ul>
+<li>HPGL-compatible plotter with a serial interface;</li>
+<li>USB-to-Serial adapter (unless your computer has a serial port);</li>
+<li>Male DB-25 to female DB-9 cable (a.k.a. null modem cable);</li>
+<li>Pens that fit your plotter;</li>
+<li>Paper.</li>
+</ul>
+<p>Your plotter needs to be set to a line speed of 9600 baud with 
+<a href="https://en.wikipedia.org/wiki/8-N-1">8-N-1</a> settings. Chances are high this is already the case. If
+not, you may need to adjust some dip switches on your device. Refer to the manufacturers's 
+documentation.</p>
+<h3>Example</h3><p>Here is an example of how you would use the <code>Plotter</code> object from the library to draw some text. 
+As stated earlier, this particular example uses the <code>browser-serialport</code> Node.js module.</p>
+<pre class="prettyprint source lang-javascript"><code>// Import a transport library compatible with the 'serialport' module. In this case, we use
 // 'browser-serialport'.
-var SerialPort = require("browser-serialport").SerialPort;
+var SerialPort = require(&quot;browser-serialport&quot;).SerialPort;
 
-// Import this library's Plotter object.
-var Plotter = nw.require("../src/hpgl.js").Plotter;
+// Import the Plotter object from the library
+var Plotter = nw.require(&quot;../src/hpgl.js&quot;).Plotter;
 
 // Prepare a transport to be used by the Plotter object (3rd argument must be 'false' so no
 // connection attempt is made automatically).
-var transport = new SerialPort("/dev/tty.usbserial", {}, false);
+var transport = new SerialPort(&quot;/dev/tty.usbserial&quot;, {}, false);
 
-// Instantiate the PLotter object.
+// Instantiate the Plotter object.
 var plotter = new Plotter();
 
-// Assign a listener for the 'ready' event anc connect to the physical device.
+// Assign a listener for the 'ready' event and connect to the physical device.
 plotter
-  .on("ready", onReady)
+  .on(&quot;ready&quot;, onReady)
   .connect(transport);
 
 // When the plotter is ready, move to position and write some text.
 function onReady () {
   plotter
     .moveTo(12, 2)
-    .drawText("Hello, World!")
-}</code></pre>
+    .drawText(&quot;Hello, World!&quot;);
+}</code></pre><h3>Documentation</h3><p>I will try to maintain an up-to-date <a href="https://cotejp.github.io/hpgl/">API documentation</a>. If you 
+find errors, please <a href="https://github.com/cotejp/hpgl/issues">file an issue</a>.</p></article>
+    </section>
 
-        
-    
-    </div>
 
-    
-
-    
-
-    
-
-     
-
-    
-
-    
-
-    
-
-    
-
-    
-</article>
-
-</section>
 
 
 
@@ -186,8 +116,12 @@ function onReady () {
 
 <br class="clear">
 
-<footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.2</a> on Wed Oct 26 2016 22:58:59 GMT-0400 (EDT) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+<footer style="font-style: normal; font-size: 0.9em">
+
+  <hr>
+  <b>hpgl v0.5.0-alpha.5</b> /
+  ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
+
 </footer>
 
 <script>prettyPrint();</script>
