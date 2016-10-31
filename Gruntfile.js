@@ -38,7 +38,9 @@ module.exports = function (grunt) {
         options: {
           destination: './docs',
           template : "./jsdoc/docdash",
-          configure : "./jsdoc/jsdoc.json"
+          configure : "./jsdoc/jsdoc.json",
+          readme: "./README.md",
+          query: "name=<%= pkg.name %>&version=<%= pkg.version %>&author=<%= pkg.author %>"
         }
       }
     },
