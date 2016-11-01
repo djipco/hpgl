@@ -30,9 +30,47 @@ var Plotter = function() {
   this._buffer  = "";
   this._maxConnectionDelay = 2000;
 
+  this._charsets = {
+
+    // ISO 646 French (FR1)
+    34: {
+      "!": 33,
+      '"': 34,
+      "£": 35,
+      "$": 36,
+      "’": 39,
+      ",": 44,
+      "à": 64,
+      "°": 91,
+      "ç": 92,
+      "§": 93,
+      "^": 94,
+      "_": 95,
+      "µ": 96,
+      "é": 123,
+      "ù": 124,
+      "è": 125,
+      "¨": 126,
+
+      // circumflex
+      "â": [97, 8, 94],
+      "ê": [101, 8, 94],
+      "ô": [111, 8, 94],
+      "û": [117, 8, 94],
+
+      // diaresis
+      "ä": [97, 8, 126],
+      "ë": [101, 8, 126],
+      "ö": [111, 8, 126],
+      "ü": [117, 8, 126]
+    }
+
+  };
+
   /**
-   * The size of the device's buffer in bytes (characters). A single instruction cannot be larger
-   * than that. Only available once `this.ready` is `true`.
+   * The size of the device's buffer in bytes (characters). A single instruction sent to the device
+   * cannot be larger than that value. Note: it is only available after the
+   * [ready]{@link Plotter#event:ready} event has been fired.
    *
    * @member {number}
    * @readOnly
@@ -40,17 +78,17 @@ var Plotter = function() {
   this.bufferSize = undefined;
 
   /**
-   * The interval (in milliseconds) to wait before sending a new instruction (so as to not overflow
-   * the serial connection).
+   * Delay between calls to `_processQueue()`.
    *
-   * @todo do we still need that?
-   *
+   * @todo This needs to be thoroughly checked!!
+   * @private
    * @member {number}
    */
-  this.queueDelay = 50;
+  this._queueDelay = 100;
 
   /**
-   * The device's model name. Only available once `this.ready` is `true`.
+   * The device's reported model name. Note: it is only available after the
+   * [ready]{@link Plotter#event:ready} event has been fired.
    *
    * @member {string}
    * @readOnly
@@ -58,8 +96,13 @@ var Plotter = function() {
   this.model = undefined;
 
   /**
-   * The object that is used for serial communication. This object must adhere to the `serialport`
-   * object's interface.
+   * The object that is used for serial communication. This object must adhere to the
+   * [serialport](https://www.npmjs.com/package/serialport) module interface. Typically, it is one
+   * of: [serialport](https://www.npmjs.com/package/serialport),
+   * [browser-serialport](https://www.npmjs.com/package/browser-serialport) or
+   * [virtual-serialport](https://www.npmjs.com/package/virtual-serialport)
+   *
+   * @todo Must test with serialport and virtual-serialport
    *
    * @member {Object}
    * @readOnly
@@ -80,17 +123,20 @@ var Plotter = function() {
   this.ready = false;
 
   /**
-   * An object detailing the device's hardware resolution.
+   * An object detailing the hardware resolution reported by the connected device. Note: it is only
+   * available after the [ready]{@link Plotter#event:ready} event has been fired.
    *
    * @member {Object}
    * @property {number} x Number of plotter units per millimiter on the **x** axis
    * @property {number} y Number of plotter units per millimiter on the **y** axis
    * @readOnly
    */
-  this.unitsPerMillimiter = {};
+  this.resolution = {};
 
   /**
-   * [read-only] Array of all the paper sizes supported by the device
+   * An array of all the paper sizes supported by the device.
+   *
+   * @todo this needs to be mapped inside the HP7475a object
    *
    * @member {string[]}
    * @name Plotter#supportedPapers
@@ -112,10 +158,15 @@ var Plotter = function() {
 util.inherits(Plotter, EventEmitter);
 
 /**
- * Opens a serial connection to the device using the specified transport layer.
+ * Opens a serial connection to the device using the specified transport layer. Currently, only the
+ * [browser-serialport](https://www.npmjs.com/package/browser-serialport) module has been tested.
  *
- * @param {Object} transport - A transport object compatible with the `serialport` API interface.
- * @param {Object} [options]
+ * @param {Object} transport - A transport object compatible with the
+ * [serialport](https://www.npmjs.com/package/serialport) API interface.
+ * Typically, it is one of: [serialport](https://www.npmjs.com/package/serialport),
+ * [browser-serialport](https://www.npmjs.com/package/browser-serialport) or
+ * [virtual-serialport](https://www.npmjs.com/package/virtual-serialport).
+ * @param {Object} [options={}] Options to use while setting up the device.
  * @param {string} [options.paper="A"] - The paper size to use. Choices are:
  *   - *A* (a.k.a "letter")
  *   - *B* (a.k.a "tabloid")
@@ -123,8 +174,10 @@ util.inherits(Plotter, EventEmitter);
  *   - *A3*
  * @param {string} [options.orientation="landscape"] - The orientation of the paper: *landscape* or
  * *portrait*.
- * @param {Function} [callback] - A function to trigger when the connect operation has completed.
+ * @param {Function} [callback=null] - A function to trigger when the connect operation has completed.
  * This function will receive an `error` parameter is an error occured.
+ *
+ * @todo Paper sizes must be mapped to the actual device.
  */
 Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
@@ -157,8 +210,9 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
     this.transport.on('error', this._onError.bind(this));
 
     // Reset the device to its 'power on' status (same as DF plus: pen is raised, errors are
-    // cleared, rotation set to 0, scaling points reset).
-    this.queue("IN");
+    // cleared, rotation set to 0, scaling points reset). Must be done first and without being
+    // queued.
+    this.send("IN");
 
     // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
     // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
@@ -175,7 +229,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     // Retrieve device resolution
     this.queue("OF", [], (data) => {
-      [this.unitsPerMillimiter.x, this.unitsPerMillimiter.y] = data.split(",", 2);
+      [this.resolution.x, this.resolution.y] = data.split(",", 2);
     }, true);
 
     // Select paper size. Basically, this tells the device which paper orientation to use. A4 and
@@ -216,7 +270,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     let intervalId = setInterval(() => {
 
-      if (this.bufferSize && this.model && this.unitsPerMillimiter.x) {
+      if (this.bufferSize && this.model && this.resolution.x) {
 
         clearInterval(intervalId);
         this.ready = true;
@@ -250,7 +304,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
  * Converts centimeters to plotter units. According to the documentation, a plotter unit is
  * equivalent to 0.02488 millimeters.
  *
- * THIS METHOD SHOULD USE WHAT IS RETURNED BY OF and put in this.unitsPerMillimiter
+ * THIS METHOD SHOULD USE WHAT IS RETURNED BY OF and put in this.resolution
  *
  * @private
  * @method _toPlotterUnits
@@ -307,6 +361,8 @@ Plotter.prototype._toHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
+  // console.log("_onData: " + data);
+
   if (data.toString() === "\r") {
 
     /**
@@ -344,16 +400,20 @@ Plotter.prototype._onError = function(error) {
 };
 
 /**
- * Immediately sends an HPGL instruction down the serial port. The instruction is automatically
+ * Immediately sends a raw HPGL instruction down the serial port. The instruction is automatically
  * terminated with a semicolon.
  *
- * @param {string} instruction The instruction to send (unterminated).
- * @param {?Function} [callback] A function to call once the data has been sent to the device
- * (default) or when an answer has been received from the device. If the callback is used with
- * `waitForResponse=true`, the fucntion will receive a single parameter containing the data received
- * from the device.
- * @param {boolean} [waitForResponse=false] Whether to execute the callback when the data is sent or
- * when a response is received.
+ * Unless you are very familiar with HPGL, this method should not be used directly. Instead, you can
+ * use friendlier methods such as: [drawLines()]{@link Plotter#drawLines},
+ * [drawText()]{@link Plotter#drawText}, [drawCircle()]{@link Plotter#drawCircle}, etc.
+ *
+ * @param {string} instruction The raw instruction to send (unterminated).
+ * @param {Function} [callback=null] A function to call once the data has been sent to the device
+ * (default) or when an answer has been received from the device. If `waitForResponse` is `true`,
+ * the callback function will receive a single parameter containing the data received from the
+ * device.
+ * @param {boolean} [waitForResponse=false] Whether to execute the callback function immediately
+ * after the data has been sent or only after an answer has been received from the device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.send = function(instruction, callback = null, waitForResponse = false) {
@@ -370,25 +430,27 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
     instruction += ";";
   }
 
-  console.log("Send: " + instruction);
-
-  // // Check instruction length
-  // if (instruction.length > this.bufferSize) {
-  //   throw new RangeError(
-  //     "The maximum size for a single instruction is " + this.bufferSize + " bytes (characters)."
-  //   );
-  // }
+  // Check maximum instruction length
+  if (instruction.length > this.bufferSize) {
+    throw new RangeError(
+      "The maximum size for a single instruction is " + this.bufferSize + " bytes (characters)."
+    );
+  }
 
   // Send the instruction. Wait for printer response if required
   if (waitForResponse) {
 
+    console.log("Send and wait " + instruction);
+
     this.once("data", (data) => {
-      // console.log("data2");
+      console.log("Received: " + data);
       if (typeof callback === "function") callback(data);
     });
     this.transport.write(instruction);
 
   } else {
+
+    console.log("Send " + instruction);
 
     this.transport.write(instruction, (results) => {
       if (typeof callback === "function") callback(results);
@@ -396,40 +458,42 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
 
   }
 
-
   return this;
 
 };
 
 /**
- * Draws a text label. Note: the `characterSet` option is currently not working.
+ * Draws the specified text.
  *
  * @todo text direction (double check with orientation)
- * @todo charsets
+ * @todo Add the missing character sets.
  *
  * @param {string} text The text to write
- * @param {Object} [options] Options to control how the text is drawn.
- * @param {number} [options.characterSet=0] The numerical ID of the character set to use to print
- * the label. Available sets are:
+ * @param {Object} [options={}] Options to control how the text is drawn.
+ * @param {number} [options.charset=0] The numerical ID of the character set to use to print
+ * the label. These sets are defined by the [IS0 646](https://en.wikipedia.org/wiki/ISO/IEC_646)
+ * standard.
+ *
+ * Currently, only the **ANSI** and the **ISO French** sets are available:
  *  - 0: ANSI
- *  - 1: 9825 Character Set
- *  - 2: French/German
- *  - 3: Scandinavian
- *  - 4: Spanish/Latin American
- *  - 6: JIS
- *  - 7: Roman Extensions
- *  - 8: Katakana
- *  - 9: ISO Internation Reference Version
- *  - 30: ISO Swedish
- *  - 31: ISO Swedish for Names
- *  - 32: ISO Norway, Version 1 (sic)
- *  - 33: ISO German
+ *  - ~~1: 9825 Character Set~~
+ *  - ~~2: French/German~~
+ *  - ~~3: Scandinavian~~
+ *  - ~~4: Spanish/Latin American~~
+ *  - ~~6: JIS~~
+ *  - ~~7: Roman Extensions~~
+ *  - ~~8: Katakana~~
+ *  - ~~9: ISO Internation Reference Version~~
+ *  - ~~30: ISO Swedish~~
+ *  - ~~31: ISO Swedish for Names~~
+ *  - ~~32: ISO Norway, Version 1 (sic)~~
+ *  - ~~33: ISO German~~
  *  - 34: ISO French
- *  - 35: ISO United Kingdom (sic)
- *  - 36: ISO Italian
- *  - 37: ISO Spanish
- *  - 38: ISO Portuguese
- *  - 39: ISO Norway, Version 2 (sic)
+ *  - ~~35: ISO United Kingdom (sic)~~
+ *  - ~~36: ISO Italian~~
+ *  - ~~37: ISO Spanish~~
+ *  - ~~38: ISO Portuguese~~
+ *  - ~~39: ISO Norway, Version 2 (sic)~~
  * @param {number} [options.characterWidth=0.187] The width, in centimeters, to draw the text at. A
  * negative value mirrors the text for that dimension.
  * @param {number} [options.characterHeight=0.269] The height, in centimeters, to draw the text at.
@@ -441,13 +505,16 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  */
 Plotter.prototype.drawText = function(text, options = {}) {
 
+  // this._toIso646(text, options.charset);
+  // return;
+
   // Defaults
-  if (!options.characterSet) options.characterSet = 0;
+  if (!options.charset) options.charset = 0;
   if (!options.characterWidth) options.characterWidth = .187;
   if (!options.characterHeight) options.characterHeight = .269;
 
   // Define the standard character set (CS) and select it (SS)
-  this.queue("CS", options.characterSet);
+  this.queue("CS", options.charset);
   this.queue("SS");
 
   // Assign character width and height
@@ -480,10 +547,8 @@ Plotter.prototype.drawText = function(text, options = {}) {
   let radSlant = options.slant * Math.PI / 180;
   this.queue("SL", this._toHpglDecimal( Math.tan(radSlant) ) );
 
-
-
-
-  this.queue("LB", text);
+  // Send label command
+  this.queue("LB", this._toIso646(text, options.charset));
 
 
   // @todo: DI, DR, SI, SR and SL
@@ -492,6 +557,47 @@ Plotter.prototype.drawText = function(text, options = {}) {
 
 };
 
+/**
+ * Converts a UTF-8 string to an ISO 646 character set.
+ *
+ * @private
+ * @method _toIso646
+ * @param {string} text The text to write
+ * @param {number} [charset=0] The ISO 646 character set to convert the text to.
+ * @returns {string} The converted text.
+ */
+Plotter.prototype._toIso646 = function(text, charset = 0) {
+
+  // If no encoding is needed, bail out early.
+  if (charset === 0) { return text; }
+
+  let converted = text.split("").map((char) => {
+
+    console.log(this);
+
+    let found = this._charsets[charset][char];
+
+    if (found) {
+
+      if (!Array.isArray(found)) { found = [found]; }
+
+      let encoded = "";
+
+      found.forEach((element) => {
+        encoded += String.fromCharCode(element);
+      });
+
+      return encoded;
+
+    } else {
+      return char;
+    }
+
+  });
+
+  return converted.join("");
+
+};
 
 /**
  * Converts a numerical value to an integer that matches HPGL's requirements (must be between
@@ -545,7 +651,7 @@ Plotter.prototype._toHpglDecimal = function(value) {
  * @param {number} [radius=1] The circle's radius (in centimeters).
  * @param {number} [angle=5]  An integer between -180° and 180° representing the chord angle. The
  * most commonly used values are 0-180. In this case, the smaller the angle is, the smoother the
- * circle will be. Negative values make the circle start at 180 degrees instead of 0.
+ * circle will be. Negative values make the circle start at 180° instead of 0°.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
@@ -554,10 +660,10 @@ Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
 };
 
 /**
- * Draws a line from the current position to the specified destination position.
+ * Draws a line from the current pen position to the specified destination position.
  *
- * @param {number} destX The `x` coordinate of the end of the line (in cm).
- * @param {number} destY The `y` coordinate of the end of the line (in cm).
+ * @param {number} destX The `x` coordinate of the point where the the line should end (in cm).
+ * @param {number} destY The `y` coordinate of the point where the the line should end (in cm).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.drawLine = function(destX, destY) {
@@ -571,10 +677,12 @@ Plotter.prototype.drawLine = function(destX, destY) {
  * Draws a series of lines starting at the current pen position and going, in turn, to all x/y pairs
  * specified in the array.
  *
- * @param {number[]} positions An array of line-end positions in the form `[x1, y1, x2, y2, ...]`
- * @param {Object} [options]
- * @param {number} [options.linePattern=7] Integer between 0 and 7. Value 0 prints dots at extermities
- * only. Values 1 to 6 prints various types of dotted lines. Value 7 (default) is a solid line.
+ * @param {number[]} [positions=[]] An array of line-end positions in the form
+ * `[x1, y1, x2, y2, ...]`.
+ * @param {Object} [options={}]
+ * @param {number} [options.linePattern=7] Integer between `0` and `7`. Value `0` only prints dots
+ * at line extremities only. Values `1` to `6` prints various types of dotted lines. Value `7`
+ * (default) is a solid line.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  *
  * @todo add linePatternLength option
@@ -620,10 +728,10 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
 /**
  * Draws a rectangle from the current position to the specified destination position.
  *
- * @todo validate input
+ * @todo Validate input
  *
- * @param {number} destX The `x` coordinate of the second point of the rectangle (in cm).
- * @param {number} destY The `y` coordinate of the second point of the rectangle (in cm).
+ * @param {number} destX The `x` coordinate of the target point of the rectangle (in cm).
+ * @param {number} destY The `y` coordinate of the target point of the rectangle (in cm).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.drawRectangle = function(destX, destY) {
@@ -634,7 +742,7 @@ Plotter.prototype.drawRectangle = function(destX, destY) {
 };
 
 /**
- * Lifts the pen and moves it to the specified x and y coordinates.
+ * Lifts the pen and moves it to the specified `x` and `y` coordinates.
  *
  * @param {number} x Position along the `x` axis (in centimeters)
  * @param {number} y Position along the `y` axis (in centimeters)
@@ -650,13 +758,13 @@ Plotter.prototype.moveTo = function(x, y) {
 
 /**
  * Sets the velocity of the plotting pen. When the velocity `parameter` is set to `1`, the velocity
- * will be at its maximum of 38.1cm/s (default). So, if you set the `velocity` parameter to 0.1, the
- * actual velocity will be 3.81cm/s.
+ * will be at its maximum of 38.1cm/s (default). So, if you set the `velocity` parameter to `0.1`,
+ * the actual velocity will be 3.81cm/s.
  *
- * Any value equal or lower than 0 and any value above 1 will trigger the use of the default
+ * Any value equal or lower than `0` and any value above `1` will trigger the use of the default
  * velocity.
  *
- * @param {number} [velocity=1.0] A decimal number between 0 and 1.
+ * @param {number} [velocity=1.0] A decimal number between `0` and `1`.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.setVelocity = function(velocity = 1.0) {
@@ -674,14 +782,19 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
 };
 
 /**
- * Queues an HPGL instruction to be sent to the serial port. If any parameters are present, they are
- * appended to the 2-letter mnemonic and separated by commas.
+ * Queues an HPGL instruction to be sent to the device via the serial port. If any parameters are
+ * present, they are appended to the 2-letter mnemonic and separated by commas.
+ *
+ * Unless you are very familiar with HPGL, this method should not be used directly. Instead, you can
+ * use friendlier methods such as: [drawLines()]{@link Plotter#drawLines},
+ * [drawText()]{@link Plotter#drawText}, [drawCircle()]{@link Plotter#drawCircle}, etc.
  *
  * @param {string} mnemonic 2-letter code for the HPGL command to send
- * @param {number|string|number[]|string[]} [params=[]] A string, a number or an or array of string or numbers to use
- * as parameter(s) for the instruction.
+ * @param {number|string|number[]|string[]} [params=[]] A string, a number or an or array of string
+ * or numbers to use as parameter(s) for the instruction.
  * @param {Function} [callback=null]
- * @param {boolean} [waitForResponse=false]
+ * @param {boolean} [waitForResponse=false] Whether to execute the callback function immediately
+ * after the data has been sent or only after an answer has been received from the device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.queue = function(
@@ -702,7 +815,8 @@ Plotter.prototype.queue = function(
 
   // If the queue is not set for execution, set it.
   if (this._queueTimeOutId === 0) {
-    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
+    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
+    // this._processQueue();
   }
 
   return this;
@@ -719,31 +833,47 @@ Plotter.prototype._processQueue = function() {
 
   console.log("Process queue");
 
-  // Retrieve currently available buffer space
-  // this.queue(String.fromCharCode(27) + ".B", [], (data) => {
-  //   console.log(data);
-  // }, true);
-
-  // Make sure any pending timeout is cancelled
+  // Make sure any pending timeout is cancelled. We will add a new one if necessary. Exit if no
+  // commands are pending.
   clearTimeout(this._queueTimeOutId);
   this._queueTimeOutId = 0;
+  if (this._queue.length < 1) { return; }
 
-  // If the queue is not empty, send oldest available instruction (and keep it for later check)
-  if (this._queue.length > 0) {
-    var command = this._queue.shift();
-    this.send(command.instruction, command.callback, command.waitForResponse);
-  }
+  console.log("Send buffer size request.");
 
-  // If the command must wait for a response, we have to hold the queue until then. Otherwise, if
-  // more commands are in the queue, process them.
-  if (command.waitForResponse) {
-    this.once("data", () => {
-      // console.log("data");
-      this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
-    })
-  } else if (this._queue.length > 0) {
-    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
-  }
+  // Before sending the command, we send a request to know the available buffer space on the device.
+  this.send(String.fromCharCode(27) + ".B", (data) => {
+
+    // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
+    // delay processing until later.
+    if (this._queue[0].instruction.length < data) {
+
+      console.log("Enough size.");
+
+      // Send oldest available instruction first (and keep it for later check)
+      var command = this._queue.shift();
+      this.send(command.instruction, command.callback, command.waitForResponse);
+
+      // If the command must wait for a response, we have to hold the queue until then. Otherwise,
+      // if more commands are in the queue, process them.
+      if (command.waitForResponse) {
+        this.once("data", () => {
+          // console.log("data");
+          this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
+        })
+      } else if (this._queue.length > 0) {
+        this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
+        // this._processQueue();
+      }
+
+    } else {
+
+      console.log("Not enough size.");
+
+      this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
+    }
+
+  }, true);
 
 };
 
