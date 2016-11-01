@@ -1,33 +1,43 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>hpgl.js - Documentation</title>
 
-hpgl v0.5.0-alpha.7
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+</head>
+<body>
 
-A Node.js library to communicate with HPGL-compatible plotters and printers.
-https://github.com/cotejp/hpgl
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">hpgl.js</h1>
+    
+
+    
 
 
-The MIT License (MIT)
 
-Copyright (c) 2016, Jean-Philippe Côté
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-associated documentation files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial
-portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
-OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-*/
-
-'use strict';
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>'use strict';
 
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
@@ -245,7 +255,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
   // Save different paper size if specified
   if (
-    options.paper &&
+    options.paper &amp;&amp;
     this.characteristics.medias.list.includes(options.paper.toUpperCase())
   ) {
     this.paper = options.paper.toUpperCase();
@@ -253,7 +263,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
   // Save different orientation if specified
   if (
-    options.orientation &&
+    options.orientation &amp;&amp;
     ["landscape", "portrait"].includes(options.orientation.toLowerCase())
   ) {
     this.orientation = options.orientation.toLowerCase();
@@ -331,9 +341,9 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
     let intervalId = setInterval(() => {
 
       if (
-        this.characteristics &&
-        this.characteristics.buffer &&
-        this.characteristics.model &&
+        this.characteristics &amp;&amp;
+        this.characteristics.buffer &amp;&amp;
+        this.characteristics.model &amp;&amp;
         this.characteristics.resolution.x
       ) {
 
@@ -347,7 +357,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
          */
         this.emit("ready");
 
-      } else if (start + this._maxConnectionDelay < Date.now()) {
+      } else if (start + this._maxConnectionDelay &lt; Date.now()) {
 
         clearInterval(intervalId);
         if (callback) {
@@ -528,8 +538,8 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
   // Check maximum instruction length (we must first check if the buffer size is available because
   // it will not be for the very first instruction which is "IN".
   if (
-    this.characteristics &&
-    this.characteristics.buffer &&
+    this.characteristics &amp;&amp;
+    this.characteristics.buffer &amp;&amp;
     instruction.length > this.characteristics.buffer
   ) {
     throw new RangeError(
@@ -711,7 +721,7 @@ Plotter.prototype._toHpglInteger = function(value) {
 
   if (value > 32767) {
     value = 32767;
-  } else if (value < -32768) {
+  } else if (value &lt; -32768) {
     value = -32768;
   }
 
@@ -732,7 +742,7 @@ Plotter.prototype._toHpglDecimal = function(value) {
 
   value = parseFloat(value);
 
-  if (value < -128) {
+  if (value &lt; -128) {
     value = -128;
   } else if (value > 127.9999) {
     value = 127.9999;
@@ -791,7 +801,7 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
   // Check validity of line pattern
   options.linePattern = parseInt(options.linePattern);
 
-  if (isNaN(options.linePattern) || options.linePattern < 0 || options.linePattern > 7) {
+  if (isNaN(options.linePattern) || options.linePattern &lt; 0 || options.linePattern > 7) {
     options.linePattern = 7;
   }
 
@@ -802,7 +812,7 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
   }
 
 
-  for (var i = 0; i < positions.length; i += 2) {
+  for (var i = 0; i &lt; positions.length; i += 2) {
 
     let x = this._toPlotterUnits(positions[i]);
     let y = this._toPlotterUnits(positions[i+1]);
@@ -868,7 +878,7 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
 
   velocity = parseFloat(velocity);
 
-  if (isNaN(velocity) || velocity <= 0 || velocity > 38.1) {
+  if (isNaN(velocity) || velocity &lt;= 0 || velocity > 38.1) {
     velocity = 38.1;
   }
 
@@ -932,14 +942,14 @@ Plotter.prototype._processQueue = function() {
   // commands are pending.
   clearTimeout(this._queueTimeOutId);
   this._queueTimeOutId = 0;
-  if (this._queue.length < 1) { return; }
+  if (this._queue.length &lt; 1) { return; }
 
   // Before sending the command, we send a request to know the available buffer space on the device.
   this.send(String.fromCharCode(27) + ".B", (data) => {
 
     // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
     // delay processing until later.
-    if (this._queue[0].instruction.length < data) {
+    if (this._queue[0].instruction.length &lt; data) {
 
       // console.log("Enough size.");
 
@@ -971,3 +981,26 @@ Plotter.prototype._processQueue = function() {
 };
 
 module.exports.Plotter = Plotter;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer style="font-style: normal; font-size: 0.9em">
+
+  <hr>
+  <b>hpgl v0.5.0-alpha.7</b> /
+  ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
+
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
