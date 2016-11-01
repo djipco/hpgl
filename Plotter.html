@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul>
 </nav>
 
 <div id="main">
@@ -65,7 +65,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line17">line 17</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line83">line 83</a>
     </li></ul></dd>
     
 
@@ -102,6 +102,12 @@
     <dd class="tag-todo">
         <ul>
             <li>take into account different devices (plotting areas, orientation, etc.)</li>
+        
+            <li>create getter that returns the size of the plottable area</li>
+        
+            <li>the whole processQUeue mechanism needs to be looked at in details</li>
+        
+            <li>use ESC.O to know if device is ready (pinch wheel down,. etc.)</li>
         </ul>
     </dd>
     
@@ -159,7 +165,7 @@ made by HP starting in the 1980s. Various other makers also use or support the H
 
         
             
-<h4 class="name" id="bufferSize"><span class="type-signature">(readonly) </span>bufferSize<span class="type-signature"> :number</span></h4>
+<h4 class="name" id="characteristics"><span class="type-signature">(readonly) </span>characteristics<span class="type-signature"></span></h4>
 
 
 
@@ -170,7 +176,501 @@ made by HP starting in the 1980s. Various other makers also use or support the H
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line78">line 78</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line158">line 158</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>characteristics</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>An object containing device-specific characteristics. Note:
+this is only available after the <a href="Plotter.html#event:ready">ready</a> event has been fired.</p>
+                <h6>Properties</h6>
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>brand</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The device's manufacturer.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>model</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The device's model.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>buffer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The device's buffer size in bytes (characters).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>medias</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Medias supported by the device</p>
+                <h6>Properties</h6>
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>list</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Array of all the supported media types.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>~media~</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Details for each media. There will be one
+such object for all available media type.</p>
+                <h6>Properties</h6>
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>long</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Length of the plottable area along the
+long side (in plotter units).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>short</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Length of the plottable area along the
+short side (in plotter units).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>orientation</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Default orientation for that
+media (<strong>landscape</strong> or <strong>portrait</strong>).</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>resolution</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Hardware resolution information</p>
+                <h6>Properties</h6>
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The number of plotter units per millimiter on
+the <code>x</code> axis.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>y</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The number of plotter units per millimiter on
+the <code>y</code> axis.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="orientation"><span class="type-signature">(readonly) </span>orientation<span class="type-signature"> :string</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line123">line 123</a>
     </li></ul></dd>
     
 
@@ -210,9 +710,9 @@ made by HP starting in the 1980s. Various other makers also use or support the H
 
 
 <div class="description">
-    <p>The size of the device's buffer in bytes (characters). A single instruction sent to the device
-cannot be larger than that value. Note: it is only available after the
-<a href="Plotter.html#event:ready">ready</a> event has been fired.</p>
+    <p>The paper orientation currently selected (portrait or landscape). Paper orientation is assigned
+during the connection to the device (with the <a href="Plotter.html#connect">connect()</a> function).
+Currently, it cannot be changed on the fly.</p>
 </div>
 
 
@@ -221,7 +721,7 @@ cannot be larger than that value. Note: it is only available after the
     <ul>
         <li>
             
-<span class="param-type">number</span>
+<span class="param-type">string</span>
 
 
         </li>
@@ -234,7 +734,7 @@ cannot be larger than that value. Note: it is only available after the
 
         
             
-<h4 class="name" id="model"><span class="type-signature">(readonly) </span>model<span class="type-signature"> :string</span></h4>
+<h4 class="name" id="paper"><span class="type-signature">(readonly) </span>paper<span class="type-signature"> :string</span></h4>
 
 
 
@@ -245,7 +745,7 @@ cannot be larger than that value. Note: it is only available after the
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line96">line 96</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line133">line 133</a>
     </li></ul></dd>
     
 
@@ -285,8 +785,9 @@ cannot be larger than that value. Note: it is only available after the
 
 
 <div class="description">
-    <p>The device's reported model name. Note: it is only available after the
-<a href="Plotter.html#event:ready">ready</a> event has been fired.</p>
+    <p>The format of paper currently selected (A4, letter, B, etc.). Paper format is assigned during
+the connection to the device (with the <a href="Plotter.html#connect">connect()</a> function). Currently,
+it cannot be changed on the fly.</p>
 </div>
 
 
@@ -319,7 +820,7 @@ cannot be larger than that value. Note: it is only available after the
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line123">line 123</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line185">line 185</a>
     </li></ul></dd>
     
 
@@ -385,235 +886,6 @@ its ready.</p>
 
         
             
-<h4 class="name" id="resolution"><span class="type-signature">(readonly) </span>resolution<span class="type-signature"> :Object</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line134">line 134</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-    <h5 class="subsection-title">Properties:</h5>
-
-    
-
-<table class="props">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>x</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Number of plotter units per millimiter on the <strong>x</strong> axis</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>y</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Number of plotter units per millimiter on the <strong>y</strong> axis</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<div class="description">
-    <p>An object detailing the hardware resolution reported by the connected device. Note: it is only
-available after the <a href="Plotter.html#event:ready">ready</a> event has been fired.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Object</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="supportedPapers"><span class="type-signature">(readonly) </span>supportedPapers<span class="type-signature"> :Array.&lt;string></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line136">line 136</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-todo">To Do:</dt>
-    <dd class="tag-todo">
-        <ul>
-            <li>this needs to be mapped inside the HP7475a object</li>
-        </ul>
-    </dd>
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>An array of all the paper sizes supported by the device.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Array.&lt;string></span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
 <h4 class="name" id="transport"><span class="type-signature">(readonly) </span>transport<span class="type-signature"> :Object</span></h4>
 
 
@@ -625,7 +897,7 @@ available after the <a href="Plotter.html#event:ready">ready</a> event has been 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line110">line 110</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line172">line 172</a>
     </li></ul></dd>
     
 
@@ -719,7 +991,7 @@ of: <a href="https://www.npmjs.com/package/serialport">serialport</a>,
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line182">line 182</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line213">line 213</a>
     </li></ul></dd>
     
 
@@ -1062,6 +1334,141 @@ This function will receive an <code>error</code> parameter is an error occured.<
 
     
 
+    <h4 class="name" id="disconnect"><span class="type-signature"></span>disconnect<span class="signature">(callback)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line370">line 370</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Disconnects from the hardware device. This will cancel ongoing and upcoming plotting instructions
+and close the serial connection. The device will be returned to its default state.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A function to execute once the disconnection is complete. If an error
+occurs, this function will receive an error object as its parameter.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
     <h4 class="name" id="drawCircle"><span class="type-signature"></span>drawCircle<span class="signature">(radius<span class="signature-attributes">opt</span>, angle<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
 
     
@@ -1074,7 +1481,7 @@ This function will receive an <code>error</code> parameter is an error occured.<
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line657">line 657</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line725">line 725</a>
     </li></ul></dd>
     
 
@@ -1290,7 +1697,7 @@ circle will be. Negative values make the circle start at 180° instead of 0°.</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line669">line 669</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line737">line 737</a>
     </li></ul></dd>
     
 
@@ -1468,7 +1875,7 @@ circle will be. Negative values make the circle start at 180° instead of 0°.</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line690">line 690</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line758">line 758</a>
     </li></ul></dd>
     
 
@@ -1762,7 +2169,7 @@ at line extremities only. Values <code>1</code> to <code>6</code> prints various
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line737">line 737</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line805">line 805</a>
     </li></ul></dd>
     
 
@@ -1798,7 +2205,7 @@ at line extremities only. Values <code>1</code> to <code>6</code> prints various
     <dt class="tag-todo">To Do:</dt>
     <dd class="tag-todo">
         <ul>
-            <li>Validate input</li>
+            <li>Validate input ?</li>
         </ul>
     </dd>
     
@@ -1947,7 +2354,7 @@ at line extremities only. Values <code>1</code> to <code>6</code> prints various
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line506">line 506</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line578">line 578</a>
     </li></ul></dd>
     
 
@@ -2418,7 +2825,7 @@ degrees).</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line751">line 751</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line819">line 819</a>
     </li></ul></dd>
     
 
@@ -2596,7 +3003,7 @@ degrees).</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line800">line 800</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line868">line 868</a>
     </li></ul></dd>
     
 
@@ -2899,7 +3306,7 @@ after the data has been sent or only after an answer has been received from the 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line419">line 419</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line485">line 485</a>
     </li></ul></dd>
     
 
@@ -3156,7 +3563,7 @@ after the data has been sent or only after an answer has been received from the 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line770">line 770</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line838">line 838</a>
     </li></ul></dd>
     
 
@@ -3343,7 +3750,7 @@ velocity.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line368">line 368</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line435">line 435</a>
     </li></ul></dd>
     
 
@@ -3476,7 +3883,7 @@ velocity.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line391">line 391</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line457">line 457</a>
     </li></ul></dd>
     
 
@@ -3610,7 +4017,7 @@ information about the error.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line279">line 279</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line315">line 315</a>
     </li></ul></dd>
     
 
@@ -3693,7 +4100,7 @@ information about the error.</p>
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.5.0-alpha.6</b> /
+  <b>hpgl v0.5.0-alpha.7</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
