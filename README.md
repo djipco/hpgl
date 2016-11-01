@@ -21,8 +21,7 @@ The library is currently being developed using the
 only works inside [Chrome Apps](https://developer.chrome.com/apps/about_apps) and 
 [NW.js](http://nwjs.io/) apps. However, since `browser-serialport` adheres to the
 [serialport](https://www.npmjs.com/package/serialport) module API, it should theoretically work with 
-that module also (not tested yet!). For debugging purposes, it should also work with the 
-[virtual-serialport](https://www.npmjs.com/package/virtual-serialport) module.
+that module also (not tested yet!).
 
 ### Coordinate Sytem
 
