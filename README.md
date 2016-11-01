@@ -79,5 +79,6 @@ function onReady () {
 ```
 ### Documentation
 
-I will try to maintain an up-to-date [API documentation](https://cotejp.github.io/hpgl/). If you 
-find errors, please [file an issue](https://github.com/cotejp/hpgl/issues).
+I will try to maintain an up-to-date [API documentation](https://cotejp.github.io/hpgl/). A good 
+place to start is the [Plotter class](https://cotejp.github.io/hpgl/Plotter.html). If you find 
+errors, please [file an issue](https://github.com/cotejp/hpgl/issues).
