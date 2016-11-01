@@ -1,0 +1,21 @@
+{
+  "tags": {
+    "allowUnknownTags": true
+  },
+  "plugins": [
+    "plugins/markdown"
+  ],
+  "opts": {
+    "encoding": "utf8",
+    "recurse": true,
+    "verbose": true
+  },
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false
+  },
+  "docdash": {
+    "static": true,
+    "sort": true
+  }
+}
