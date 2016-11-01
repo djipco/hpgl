@@ -5,95 +5,157 @@ var EventEmitter = require('events').EventEmitter;
 
 module.exports = {};
 
+// @todo move into its own class (composed into Plotter).
+var models = {
+
+  // The undefined values are expected to be fetched from the device at startup.
+  "7475A": {
+    brand: "HP",
+    model: undefined,
+    buffer: undefined,
+    medias: {
+      list: ["A", "B", "A4", "A3"],
+      A: {long: 10365, short: 7962, orientation: "landscape"},
+      B: {long: 16640, short: 10365, orientation: "portrait"},
+      A4: {long: 11040, short: 7721, orientation: "landscape"},
+      A3: {long: 16158, short: 11040, orientation: "portrait"}
+    },
+    resolution: {
+      x: undefined,
+      y: undefined
+    }
+  },
+
+  "7550A": {
+
+  }
+};
+
+var charsets = {
+
+  // ISO 646 French (FR1)
+  34: {
+    "!": 33,
+    '"': 34,
+    "£": 35,
+    "$": 36,
+    "’": 39,
+    ",": 44,
+    "à": 64,
+    "°": 91,
+    "ç": 92,
+    "§": 93,
+    "^": 94,
+    "_": 95,
+    "µ": 96,
+    "é": 123,
+    "ù": 124,
+    "è": 125,
+    "¨": 126,
+
+    // circumflex
+    "â": [97, 8, 94],
+    "ê": [101, 8, 94],
+    "ô": [111, 8, 94],
+    "û": [117, 8, 94],
+
+    // diaresis
+    "ä": [97, 8, 126],
+    "ë": [101, 8, 126],
+    "ö": [111, 8, 126],
+    "ü": [117, 8, 126]
+  }
+
+};
+
 /**
  * The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those
  * made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol
  * (Calcomp, for example).
  *
  * @todo take into account different devices (plotting areas, orientation, etc.)
+ * @todo create getter that returns the size of the plottable area
+ * @todo the whole processQUeue mechanism needs to be looked at in details
+ * @todo use ESC.O to know if device is ready (pinch wheel down,. etc.)
  *
  * @class
  */
 var Plotter = function() {
 
-  // Private properties
-  this._plottingAreas = {
-    A: {long: 10365, short: 7962},
-    B: {long: 16640, short: 10365},
-    A4: {long: 11040, short: 7721},
-    A3: {long: 16158, short: 11040}
-  };
+  /**
+   * @private
+   * @member {Array}
+   */
   this._queue = [];
+
+  /**
+   * @private
+   * @member {number}
+   */
   this._queueTimeOutId = 0;
-  this._paper = "A";
-  this._orientation = "landscape";
+
+  /**
+   * @private
+   * @member {string}
+   */
   this._buffer  = "";
+
+  /**
+   * @private
+   * @member {number}
+   */
   this._maxConnectionDelay = 2000;
 
-  this._charsets = {
-
-    // ISO 646 French (FR1)
-    34: {
-      "!": 33,
-      '"': 34,
-      "£": 35,
-      "$": 36,
-      "’": 39,
-      ",": 44,
-      "à": 64,
-      "°": 91,
-      "ç": 92,
-      "§": 93,
-      "^": 94,
-      "_": 95,
-      "µ": 96,
-      "é": 123,
-      "ù": 124,
-      "è": 125,
-      "¨": 126,
-
-      // circumflex
-      "â": [97, 8, 94],
-      "ê": [101, 8, 94],
-      "ô": [111, 8, 94],
-      "û": [117, 8, 94],
-
-      // diaresis
-      "ä": [97, 8, 126],
-      "ë": [101, 8, 126],
-      "ö": [111, 8, 126],
-      "ü": [117, 8, 126]
-    }
-
-  };
-
   /**
-   * The size of the device's buffer in bytes (characters). A single instruction sent to the device
-   * cannot be larger than that value. Note: it is only available after the
-   * [ready]{@link Plotter#event:ready} event has been fired.
-   *
-   * @member {number}
-   * @readOnly
-   */
-  this.bufferSize = undefined;
-
-  /**
-   * Delay between calls to `_processQueue()`.
-   *
-   * @todo This needs to be thoroughly checked!!
    * @private
    * @member {number}
    */
   this._queueDelay = 100;
 
   /**
-   * The device's reported model name. Note: it is only available after the
-   * [ready]{@link Plotter#event:ready} event has been fired.
+   * The paper orientation currently selected (portrait or landscape). Paper orientation is assigned
+   * during the connection to the device (with the [connect()]{@link Plotter#connect} function).
+   * Currently, it cannot be changed on the fly.
    *
-   * @member {string}
+   * @type {string}
+   * @readonly
+   */
+  this.orientation = "landscape";
+
+  /**
+   * The format of paper currently selected (A4, letter, B, etc.). Paper format is assigned during
+   * the connection to the device (with the [connect()]{@link Plotter#connect} function). Currently,
+   * it cannot be changed on the fly.
+   *
+   * @type {string}
+   * @readonly
+   */
+  this.paper = "A";
+
+  /**
+   * @property {Object} characteristics An object containing device-specific characteristics. Note:
+   * this is only available after the [ready]{@link Plotter#event:ready} event has been fired.
+   * @property {string} characteristics.brand The device's manufacturer.
+   * @property {string} characteristics.model The device's model.
+   * @property {number} characteristics.buffer The device's buffer size in bytes (characters).
+   * @property {Object} characteristics.medias Medias supported by the device
+   * @property {string[]} characteristics.medias.list Array of all the supported media types.
+   * @property {Object} characteristics.medias.~media~ Details for each media. There will be one
+   * such object for all available media type.
+   * @property {number} characteristics.medias.~media~.long Length of the plottable area along the
+   * long side (in plotter units).
+   * @property {number} characteristics.medias.~media~.short Length of the plottable area along the
+   * short side (in plotter units).
+   * @property {string} characteristics.medias.~media~.orientation Default orientation for that
+   * media (**landscape** or **portrait**).
+   * @property {Object} characteristics.resolution Hardware resolution information
+   * @property {number} characteristics.resolution.x The number of plotter units per millimiter on
+   * the `x` axis.
+   * @property {number} characteristics.resolution.y The number of plotter units per millimiter on
+   * the `y` axis.
    * @readOnly
    */
-  this.model = undefined;
+  this.characteristics = undefined;
 
   /**
    * The object that is used for serial communication. This object must adhere to the
@@ -121,37 +183,6 @@ var Plotter = function() {
    * @readOnly
    */
   this.ready = false;
-
-  /**
-   * An object detailing the hardware resolution reported by the connected device. Note: it is only
-   * available after the [ready]{@link Plotter#event:ready} event has been fired.
-   *
-   * @member {Object}
-   * @property {number} x Number of plotter units per millimiter on the **x** axis
-   * @property {number} y Number of plotter units per millimiter on the **y** axis
-   * @readOnly
-   */
-  this.resolution = {};
-
-  /**
-   * An array of all the paper sizes supported by the device.
-   *
-   * @todo this needs to be mapped inside the HP7475a object
-   *
-   * @member {string[]}
-   * @name Plotter#supportedPapers
-   * @readOnly
-   */
-  Object.defineProperty(this, 'supportedPapers', {
-    enumerable: true,
-    writable: false,
-    value: [
-      'A',  // letter
-      'B',  // tabloid
-      'A4',
-      'A3'
-    ]
-  });
 
 };
 
@@ -184,8 +215,11 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
   this.transport = transport;
 
   // Save different paper size if specified
-  if ( options.paper && this.supportedPapers.includes(options.paper.toUpperCase()) ) {
-    this._paper = options.paper.toUpperCase();
+  if (
+    options.paper &&
+    this.characteristics.medias.list.includes(options.paper.toUpperCase())
+  ) {
+    this.paper = options.paper.toUpperCase();
   }
 
   // Save different orientation if specified
@@ -193,7 +227,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
     options.orientation &&
     ["landscape", "portrait"].includes(options.orientation.toLowerCase())
   ) {
-    this._orientation = options.orientation.toLowerCase();
+    this.orientation = options.orientation.toLowerCase();
   }
 
   // Try to open transport layer
@@ -214,36 +248,38 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
     // queued.
     this.send("IN");
 
+    // Retrieve device model. This must be done before the other instructions because they depend
+    // on the characteristics property being set.
+    this.queue("OI", [], (data) => {
+      this.characteristics = models[data];
+      this.characteristics.model = data;
+    }, true);
+
     // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
     // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
     // retrieve buffer size.
     this.queue(String.fromCharCode(27) + ".E", [], () => {}, true);
     this.queue(String.fromCharCode(27) + ".L", [], (data) => {
-      this.bufferSize = data;
-    }, true);
-
-    // Retrieve device model
-    this.queue("OI", [], (data) => {
-      this.model = data;
+      this.characteristics.buffer = data;
     }, true);
 
     // Retrieve device resolution
     this.queue("OF", [], (data) => {
-      [this.resolution.x, this.resolution.y] = data.split(",", 2);
+      [this.characteristics.resolution.x, this.characteristics.resolution.y] = data.split(",", 2);
     }, true);
 
     // Select paper size. Basically, this tells the device which paper orientation to use. A4 and
     // A (letter) use the same orientation while A3 and B (tabloid) use the other orientation.
-    if ( ["B", "A3"].includes(this._paper) ) {
+    if ( ["B", "A3"].includes(this.paper) ) {
       this.queue("PS", 0);
     } else {
       this.queue("PS", 127);
     }
 
     // Set the desired orientation
-    if (this._orientation === "portrait") {
+    if (this.orientation === "portrait") {
 
-      if ( ["A", "A4"].includes(this._paper) ) {
+      if ( ["A", "A4"].includes(this.paper) ) {
         this.queue("RO", 90);   // rotate to 0
         this.queue("IP");       // reassign P1 and P2
         this.queue("IW");       // reset plotting window
@@ -251,18 +287,13 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     } else {
 
-      if ( ["B", "A3"].includes(this._paper) ) {
+      if ( ["B", "A3"].includes(this.paper) ) {
         this.queue("RO", 90);   // rotate to 0
         this.queue("IP");       // reassign P1 and P2
         this.queue("IW");       // reset plotting window
       }
 
     }
-
-    // Instead of using the SC instruction to scale for millimiters, we are using our own
-    // conversion function. The decision is motivated by the fact that SC onky accepts integers as
-    // parameters which makes it imprecise. SHOULD WE STICK WITH THAT OR USE, THE RES REPORTED
-    //BY DEVICE ?!
 
     // Wait for buffer size, model and resolution information to be retrieved before triggering
     // user callback. If it takes too long, report error.
@@ -270,7 +301,12 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     let intervalId = setInterval(() => {
 
-      if (this.bufferSize && this.model && this.resolution.x) {
+      if (
+        this.characteristics &&
+        this.characteristics.buffer &&
+        this.characteristics.model &&
+        this.characteristics.resolution.x
+      ) {
 
         clearInterval(intervalId);
         this.ready = true;
@@ -301,18 +337,52 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 };
 
 /**
- * Converts centimeters to plotter units. According to the documentation, a plotter unit is
- * equivalent to 0.02488 millimeters.
+ * Converts a centimeter or inches value to its plotter units equivalent.
  *
- * THIS METHOD SHOULD USE WHAT IS RETURNED BY OF and put in this.resolution
+ * The device's reported resolution is used to do the conversion. Since the reported resolution can
+ * be a little different than the actual resolution there may be very small differences in the
+ * rendering. For example, the HP7475A reports an `x` resolution of 40 units / millimiter while the
+ * actual resolution is about 40.2 units / millimiter.
  *
  * @private
  * @method _toPlotterUnits
- * @param {number} cm The centimeter value to convert.
+ * @param {number} value The value to convert.
+ * @param {Boolean} [metric=true] If true, value is considered to be in centimeters. Otherwise, it
+ * is considered to be in decimal inches.
  * @return {Number} The converted value rounded to the closest **integer**.
  */
-Plotter.prototype._toPlotterUnits = function(cm) {
-  return Math.round(cm / 0.002488);
+Plotter.prototype._toPlotterUnits = function(value, metric = true) {
+
+  if (metric) {
+    return Math.round(value * 10 * this.characteristics.resolution.x);
+  } else {
+    return Math.round(value * 3.937007874015748 * this.characteristics.resolution.x);
+  }
+
+};
+
+/**
+ * Disconnects from the hardware device. This will cancel ongoing and upcoming plotting instructions
+ * and close the serial connection. The device will be returned to its default state.
+ *
+ * @param {Function} callback A function to execute once the disconnection is complete. If an error
+ * occurs, this function will receive an error object as its parameter.
+ */
+Plotter.prototype.disconnect = function(callback = null) {
+
+  if ( !this.transport || !this.transport.isOpen() ) {
+    callback();
+  }
+
+  // Abort graphic instruction
+  this.send(String.fromCharCode(27) + ".K");
+
+  this.send("IN", () => {
+    this.transport.close((error) => {
+      if (callback) { callback(error); }
+    });
+  });
+
 };
 
 /**
@@ -330,18 +400,18 @@ Plotter.prototype._toHpglCoordinates = function(x, y) {
 
   let point = {x: Math.round(x), y: Math.round(y)};
 
-  if ( ["A", "A4"].includes(this._paper) ) {
+  if ( ["A", "A4"].includes(this.paper) ) {
 
-    if (this._orientation === "portrait") {
-      point.x = this._plottingAreas[this._paper].short - x;
+    if (this.orientation === "portrait") {
+      point.x = this.characteristics.medias[this.paper].short - x;
     } else {
-      point.y = this._plottingAreas[this._paper].short - y;
+      point.y = this.characteristics.medias[this.paper].short - y;
     }
 
 
-  } else if ( ["B", "A3"].includes(this._paper) ) {
+  } else if ( ["B", "A3"].includes(this.paper) ) {
 
-    if (this._orientation === "portrait") {
+    if (this.orientation === "portrait") {
       point.y = x;
       point.x = y;
     } else {
@@ -429,15 +499,22 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
   } else {
     instruction += ";";
   }
-
-  // Check maximum instruction length
-  if (instruction.length > this.bufferSize) {
+console.log("instruction: " + instruction);
+  // Check maximum instruction length (we must first check if the buffer size is available because
+  // it will not be for the very first instruction which is "IN".
+  if (
+    this.characteristics &&
+    this.characteristics.buffer &&
+    instruction.length > this.characteristics.buffer
+  ) {
     throw new RangeError(
-      "The maximum size for a single instruction is " + this.bufferSize + " bytes (characters)."
+      "The maximum size for a single instruction is " + this.characteristics.buffer +
+      " bytes (characters)."
     );
   }
 
   // Send the instruction. Wait for printer response if required
+  console.log("waitForResponse: " + waitForResponse);
   if (waitForResponse) {
 
     console.log("Send and wait " + instruction);
@@ -573,9 +650,7 @@ Plotter.prototype._toIso646 = function(text, charset = 0) {
 
   let converted = text.split("").map((char) => {
 
-    console.log(this);
-
-    let found = this._charsets[charset][char];
+    let found = charsets[charset][char];
 
     if (found) {
 
