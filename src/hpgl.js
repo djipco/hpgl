@@ -345,7 +345,6 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
  * actual resolution is about 40.2 units / millimiter.
  *
  * @private
- * @method _toPlotterUnits
  * @param {number} value The value to convert.
  * @param {Boolean} [metric=true] If true, value is considered to be in centimeters. Otherwise, it
  * is considered to be in decimal inches.
@@ -391,7 +390,6 @@ Plotter.prototype.disconnect = function(callback = null) {
  * takes into account the desired orientation and the paper size.
  *
  * @private
- * @method _toHpglCoordinates
  * @param {number} x The `x` coordinate of the point (must be expressed in plotter units).
  * @param {number} y The `y` coordinate of the point (must be expressed in plotter units).
  * @return {Object} An object whose **x** and **y** properties have been transformed.
@@ -427,7 +425,6 @@ Plotter.prototype._toHpglCoordinates = function(x, y) {
 /**
  * @private
  * @param {Object} data
- * @method _onData
  */
 Plotter.prototype._onData = function(data) {
 
@@ -453,7 +450,6 @@ Plotter.prototype._onData = function(data) {
 
 /**
  * @private
- * @method _onError
  * @param {Object} error An object containing information about the error.
  */
 Plotter.prototype._onError = function(error) {
@@ -638,7 +634,6 @@ Plotter.prototype.drawText = function(text, options = {}) {
  * Converts a UTF-8 string to an ISO 646 character set.
  *
  * @private
- * @method _toIso646
  * @param {string} text The text to write
  * @param {number} [charset=0] The ISO 646 character set to convert the text to.
  * @returns {string} The converted text.
@@ -679,7 +674,6 @@ Plotter.prototype._toIso646 = function(text, charset = 0) {
  * -32768 and 32767).
  *
  * @private
- * @method _toHpglInteger
  * @param {number} value The text to write
  * @returns {int} The converted integer.
  */
@@ -699,12 +693,12 @@ Plotter.prototype._toHpglInteger = function(value) {
 
 /**
  * Converts a numerical value to floating-point decimal value respecting HPGL's requirements (must
- * be between -128 and 127.9999 and must a maximum of 4 decimal places).
+ * be between -128 and 127.9999 and must a maximum of 4 decimal places). The return value is
+ * actually a string.
  *
  * @private
- * @method _toHpglDecimal
  * @param {number} value The text to write
- * @returns {number} The converted float.
+ * @returns {string} The converted float.
  */
 Plotter.prototype._toHpglDecimal = function(value) {
 
@@ -902,7 +896,6 @@ Plotter.prototype.queue = function(
  * The queue is comprised of objects:...
  *
  * @private
- * @method _processQueue
  */
 Plotter.prototype._processQueue = function() {
 
