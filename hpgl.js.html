@@ -117,14 +117,13 @@ var Plotter = function() {
   this.bufferSize = undefined;
 
   /**
-   * The interval (in milliseconds) to wait before sending a new instruction (so as to not overflow
-   * the serial connection).
+   * Delay between calls to `_processQueue()`.
    *
-   * @todo do we still need that?
-   *
+   * @todo This needs to be thoroughly checked!!
+   * @private
    * @member {number}
    */
-  this.queueDelay = 50;
+  this._queueDelay = 100;
 
   /**
    * The device's reported model name. Note: it is only available after the
@@ -250,8 +249,9 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
     this.transport.on('error', this._onError.bind(this));
 
     // Reset the device to its 'power on' status (same as DF plus: pen is raised, errors are
-    // cleared, rotation set to 0, scaling points reset).
-    this.queue("IN");
+    // cleared, rotation set to 0, scaling points reset). Must be done first and without being
+    // queued.
+    this.send("IN");
 
     // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
     // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
@@ -400,6 +400,8 @@ Plotter.prototype._toHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
+  // console.log("_onData: " + data);
+
   if (data.toString() === "\r") {
 
     /**
@@ -467,31 +469,33 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
     instruction += ";";
   }
 
-  console.log("Send: " + instruction);
-
-  // // Check instruction length
-  // if (instruction.length > this.bufferSize) {
-  //   throw new RangeError(
-  //     "The maximum size for a single instruction is " + this.bufferSize + " bytes (characters)."
-  //   );
-  // }
+  // Check maximum instruction length
+  if (instruction.length > this.bufferSize) {
+    throw new RangeError(
+      "The maximum size for a single instruction is " + this.bufferSize + " bytes (characters)."
+    );
+  }
 
   // Send the instruction. Wait for printer response if required
   if (waitForResponse) {
 
+    console.log("Send and wait " + instruction);
+
     this.once("data", (data) => {
+      console.log("Received: " + data);
       if (typeof callback === "function") callback(data);
     });
     this.transport.write(instruction);
 
   } else {
 
+    console.log("Send " + instruction);
+
     this.transport.write(instruction, (results) => {
       if (typeof callback === "function") callback(results);
     });
 
   }
-
 
   return this;
 
@@ -850,7 +854,8 @@ Plotter.prototype.queue = function(
 
   // If the queue is not set for execution, set it.
   if (this._queueTimeOutId === 0) {
-    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
+    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
+    // this._processQueue();
   }
 
   return this;
@@ -867,31 +872,47 @@ Plotter.prototype._processQueue = function() {
 
   console.log("Process queue");
 
-  // Retrieve currently available buffer space
-  // this.queue(String.fromCharCode(27) + ".B", [], (data) => {
-  //   console.log(data);
-  // }, true);
-
-  // Make sure any pending timeout is cancelled
+  // Make sure any pending timeout is cancelled. We will add a new one if necessary. Exit if no
+  // commands are pending.
   clearTimeout(this._queueTimeOutId);
   this._queueTimeOutId = 0;
+  if (this._queue.length &lt; 1) { return; }
 
-  // If the queue is not empty, send oldest available instruction (and keep it for later check)
-  if (this._queue.length > 0) {
-    var command = this._queue.shift();
-    this.send(command.instruction, command.callback, command.waitForResponse);
-  }
+  console.log("Send buffer size request.");
 
-  // If the command must wait for a response, we have to hold the queue until then. Otherwise, if
-  // more commands are in the queue, process them.
-  if (command.waitForResponse) {
-    this.once("data", () => {
-      // console.log("data");
-      this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
-    })
-  } else if (this._queue.length > 0) {
-    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.queueDelay);
-  }
+  // Before sending the command, we send a request to know the available buffer space on the device.
+  this.send(String.fromCharCode(27) + ".B", (data) => {
+
+    // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
+    // delay processing until later.
+    if (this._queue[0].instruction.length &lt; data) {
+
+      console.log("Enough size.");
+
+      // Send oldest available instruction first (and keep it for later check)
+      var command = this._queue.shift();
+      this.send(command.instruction, command.callback, command.waitForResponse);
+
+      // If the command must wait for a response, we have to hold the queue until then. Otherwise,
+      // if more commands are in the queue, process them.
+      if (command.waitForResponse) {
+        this.once("data", () => {
+          // console.log("data");
+          this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
+        })
+      } else if (this._queue.length > 0) {
+        this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
+        // this._processQueue();
+      }
+
+    } else {
+
+      console.log("Not enough size.");
+
+      this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
+    }
+
+  }, true);
 
 };
 
@@ -910,7 +931,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.5.0-alpha.5</b> /
+  <b>hpgl v0.5.0-alpha.6</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
