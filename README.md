@@ -6,22 +6,26 @@
 The `hpgl` library makes it possible to interact with plotters that support the *Hewlett-Packard 
 Graphics Language* (a.k.a. **hpgl**). This language is the *de facto* standard for most plotters. 
 
-**Warning: This library is still in early stages of development. It should not be used in production.**
+**Warning: This library is still in early stages of development. It should not be used in 
+production.**
 
 ### Compatibility
+
+This library relies on external modules for serial communication. To use it in a pure Node.js, 
+environment, you will need to install and use the 
+[serialport](https://www.npmjs.com/package/serialport) module. If you want to use this library 
+inside [Chrome Apps](https://developer.chrome.com/apps/about_apps) or [NW.js](http://nwjs.io/)
+applications, you will need the 
+[browser-serialport](https://www.npmjs.com/package/browser-serialport) module instead. 
+
+> *Note: it is possible to use `node-serialport` within NW.js and Electron projects but it needs to 
+> be specifically recompiled for those environment.*
 
 So far, the library has only beed tested with an 
 [HP 7475a plotter](http://hpmuseum.net/display_item.php?hw=74). If you have success with other makes
 or models, [let me know](https://twitter.com/jpcote). Beware that some HP plotters are only equipped 
 with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a **serial**
-interface.
-
-The library is currently being developed using the 
-[browser-serialport](https://www.npmjs.com/package/browser-serialport) Node.js module. This module
-only works inside [Chrome Apps](https://developer.chrome.com/apps/about_apps) and 
-[NW.js](http://nwjs.io/) apps. However, since `browser-serialport` adheres to the
-[serialport](https://www.npmjs.com/package/serialport) module API, it should theoretically work with 
-that module also (not tested yet!).
+interface (RS-232-C).
 
 ### Coordinate Sytem
 
@@ -46,38 +50,58 @@ documentation.
 
 ### Example
 
-Here is an example of how you would use the `Plotter` object from the library to draw some text. 
-As stated earlier, this particular example uses the `browser-serialport` Node.js module.
+The first thing you need to do to get plotting is instantiate the object used for serial 
+communication. If you are working on a Node.js project using the `serialport` module, this is how 
+you would do it:
 
 ```javascript
-// Import a transport library compatible with the 'serialport' module. In this case, we use
-// 'browser-serialport'.
-var SerialPort = require("browser-serialport").SerialPort;
+// Import the 'serialport' module and instantiate it. Do not forget to set 'autoOpen' to false in 
+// the options.
+const SerialPort = require("serialport");
+var transport = new SerialPort("/dev/tty.usbserial", {autoOpen: false});
 
-// Import the Plotter object from the library
-var Plotter = nw.require("../src/hpgl.js").Plotter;
+```
 
-// Prepare a transport to be used by the Plotter object (3rd argument must be 'false' so no
-// connection attempt is made automatically).
+If you are working on a Chrome or NW.js application, the procedure is slightly different:
+
+```javascript
+// Import the 'browser-serialport' module and instantiate it. Pass 'false' as the third parameter of
+// the SerialPort constructor so no automatic connection attempt is made.
+const SerialPort = require("browser-serialport").SerialPort;
 var transport = new SerialPort("/dev/tty.usbserial", {}, false);
+```
 
-// Instantiate the Plotter object.
+Once the `transport` variable is ready, the remainining of the code is exactly the same no matter
+which transport you use. For example, here is the code necessary to draw "Hello, World!".
+
+```javascript
+
+// Import the 'Plotter' class and instantiate it
+const Plotter = require("hpgl").Plotter;
 var plotter = new Plotter();
 
-// Assign a listener for the 'ready' event and connect to the physical device.
-plotter
-  .on("ready", onReady)
-  .connect(transport);
+// Connect the device and add a callback to draw some text.
+plotter.connect(transport, {}, function(error) {
 
-// When the plotter is ready, move to position and write some text.
-function onReady () {
-  plotter
-    .moveTo(12, 2)
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  this
+    .moveTo(1, 1)
     .drawText("Hello, World!");
-}
+
+});
 ```
+
+As you can see above, you first need to create a `Plotter` object and call its `connect()` method 
+passing in the `transport` variable, some optionnal settings and a function to trigger once the 
+device is ready. Note that `this` is bound to the `Plotter` object and that plotting methods are 
+chainable.
+
 ### Documentation
 
 I will try to maintain an up-to-date [API documentation](https://cotejp.github.io/hpgl/). A good 
 place to start is the [Plotter class](https://cotejp.github.io/hpgl/Plotter.html). If you find 
-errors, please [file an issue](https://github.com/cotejp/hpgl/issues).
+errors, please [file an issue](https://github.com/cotejp/hpgl/issues) on GitHub.
