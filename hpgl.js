@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.5.0-alpha.7
+hpgl v0.5.0-alpha.8
 
 A Node.js library to communicate with HPGL-compatible plotters and printers.
 https://github.com/cotejp/hpgl
@@ -398,9 +398,11 @@ Plotter.prototype._toPlotterUnits = function(value, metric = true) {
  */
 Plotter.prototype.disconnect = function(callback = null) {
 
-  if ( !this.transport || !this.transport.isOpen() ) {
+  if ( !this.transport || this.transport.connectionId === -1 ) {
     callback();
   }
+
+  console.log(this.transport);
 
   // Abort graphic instruction
   this.send(String.fromCharCode(27) + ".K");
@@ -457,7 +459,7 @@ Plotter.prototype._toHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
-  // console.log("_onData: " + data);
+  console.log("_onData: " + data);
 
   if (data.toString() === "\r") {
 
@@ -541,17 +543,17 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
   // Send the instruction. Wait for printer response if required
   if (waitForResponse) {
 
-    // console.log("Send and wait " + instruction);
+    console.log("Send and wait " + instruction);
 
     this.once("data", (data) => {
-      // console.log("Received: " + data);
+      console.log("Received: " + data);
       if (typeof callback === "function") callback(data);
     });
     this.transport.write(instruction);
 
   } else {
 
-    // console.log("Send " + instruction);
+    console.log("Send " + instruction);
 
     this.transport.write(instruction, (results) => {
       if (typeof callback === "function") callback(results);
@@ -827,13 +829,15 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
  *
  * @todo Validate input ?
  *
- * @param {number} destX The `x` coordinate of the target point of the rectangle (in cm).
- * @param {number} destY The `y` coordinate of the target point of the rectangle (in cm).
+ * @param {number} width The width of the rectangle (in cm).
+ * @param {number} height The height of the rectangle (in cm).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawRectangle = function(destX, destY) {
+Plotter.prototype.drawRectangle = function(width, height) {
 
-  this.queue("EA", [this._toPlotterUnits(destX), this._toPlotterUnits(destY)]);
+  let target = this._toHpglCoordinates(this._toPlotterUnits(width), this._toPlotterUnits(height));
+
+  this.queue("ER", [target.x, target.y]);
   return this;
 
 };
@@ -908,7 +912,7 @@ Plotter.prototype.queue = function(
     waitForResponse: waitForResponse
   });
 
-  // console.log("Queue: " + mnemonic + params.join(","));
+  console.log("Queue: " + mnemonic + params.join(","));
 
   // If the queue is not set for execution, set it.
   if (this._queueTimeOutId === 0) {
@@ -926,7 +930,7 @@ Plotter.prototype.queue = function(
  */
 Plotter.prototype._processQueue = function() {
 
-  // console.log("Process queue");
+  console.log("Process queue");
 
   // Make sure any pending timeout is cancelled. We will add a new one if necessary. Exit if no
   // commands are pending.
@@ -941,7 +945,7 @@ Plotter.prototype._processQueue = function() {
     // delay processing until later.
     if (this._queue[0].instruction.length < data) {
 
-      // console.log("Enough size.");
+      console.log("Enough size.");
 
       // Send oldest available instruction first (and keep it for later check)
       var command = this._queue.shift();
@@ -951,7 +955,7 @@ Plotter.prototype._processQueue = function() {
       // if more commands are in the queue, process them.
       if (command.waitForResponse) {
         this.once("data", () => {
-          // console.log("data");
+          console.log("data");
           this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
         })
       } else if (this._queue.length > 0) {
@@ -961,7 +965,7 @@ Plotter.prototype._processQueue = function() {
 
     } else {
 
-      // console.log("Not enough size.");
+      console.log("Not enough size.");
 
       this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
     }
