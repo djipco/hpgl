@@ -369,9 +369,11 @@ Plotter.prototype._toPlotterUnits = function(value, metric = true) {
  */
 Plotter.prototype.disconnect = function(callback = null) {
 
-  if ( !this.transport || !this.transport.isOpen() ) {
+  if ( !this.transport || this.transport.connectionId === -1 ) {
     callback();
   }
+
+  console.log(this.transport);
 
   // Abort graphic instruction
   this.send(String.fromCharCode(27) + ".K");
@@ -428,7 +430,7 @@ Plotter.prototype._toHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
-  // console.log("_onData: " + data);
+  console.log("_onData: " + data);
 
   if (data.toString() === "\r") {
 
@@ -495,7 +497,7 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
   } else {
     instruction += ";";
   }
-console.log("instruction: " + instruction);
+
   // Check maximum instruction length (we must first check if the buffer size is available because
   // it will not be for the very first instruction which is "IN".
   if (
@@ -510,7 +512,6 @@ console.log("instruction: " + instruction);
   }
 
   // Send the instruction. Wait for printer response if required
-  console.log("waitForResponse: " + waitForResponse);
   if (waitForResponse) {
 
     console.log("Send and wait " + instruction);
@@ -797,15 +798,17 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
 /**
  * Draws a rectangle from the current position to the specified destination position.
  *
- * @todo Validate input
+ * @todo Validate input ?
  *
- * @param {number} destX The `x` coordinate of the target point of the rectangle (in cm).
- * @param {number} destY The `y` coordinate of the target point of the rectangle (in cm).
+ * @param {number} width The width of the rectangle (in cm).
+ * @param {number} height The height of the rectangle (in cm).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawRectangle = function(destX, destY) {
+Plotter.prototype.drawRectangle = function(width, height) {
 
-  this.queue("EA", [this._toPlotterUnits(destX), this._toPlotterUnits(destY)]);
+  let target = this._toHpglCoordinates(this._toPlotterUnits(width), this._toPlotterUnits(height));
+
+  this.queue("ER", [target.x, target.y]);
   return this;
 
 };
@@ -885,7 +888,6 @@ Plotter.prototype.queue = function(
   // If the queue is not set for execution, set it.
   if (this._queueTimeOutId === 0) {
     this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
-    // this._processQueue();
   }
 
   return this;
@@ -907,8 +909,6 @@ Plotter.prototype._processQueue = function() {
   this._queueTimeOutId = 0;
   if (this._queue.length < 1) { return; }
 
-  console.log("Send buffer size request.");
-
   // Before sending the command, we send a request to know the available buffer space on the device.
   this.send(String.fromCharCode(27) + ".B", (data) => {
 
@@ -926,7 +926,7 @@ Plotter.prototype._processQueue = function() {
       // if more commands are in the queue, process them.
       if (command.waitForResponse) {
         this.once("data", () => {
-          // console.log("data");
+          console.log("data");
           this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
         })
       } else if (this._queue.length > 0) {
