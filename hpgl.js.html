@@ -44,31 +44,93 @@ var EventEmitter = require('events').EventEmitter;
 
 module.exports = {};
 
+var orientations = ["portrait", "landscape"];
+
 // @todo move into its own class (composed into Plotter).
 var models = {
 
   // The undefined values are expected to be fetched from the device at startup.
+  "7470A": {
+    papers: {
+      list: ["A4", "US"],
+      A4: {long: 10900, short: 7650, orientation: "landscape"},
+      US: {long: 10300, short: 7650, orientation: "landscape"}
+    },
+    instructions: [
+      "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "IM", "IN", "IP",
+      "IW", "LB", "LT", "OA", "OC", "OD", "OE", "OF", "OI", "OO", "OP", "OS", "OW", "PA", "PD",
+      "PR", "PU", "SA", "SC", "SI", "SL", "SM", "SP", "SR", "SS", "TL", "UC", "VS", "XT", "YT"
+    ]
+  },
+
   "7475A": {
     brand: "HP",
     model: undefined,
     buffer: undefined,
-    medias: {
+    papers: {
       list: ["A", "B", "A4", "A3"],
-      A: {long: 10365, short: 7962, orientation: "landscape"},
-      B: {long: 16640, short: 10365, orientation: "portrait"},
-      A4: {long: 11040, short: 7721, orientation: "landscape"},
-      A3: {long: 16158, short: 11040, orientation: "portrait"}
+      A: {long: 10365, short: 7962, orientation: "landscape", psCode: 127},
+      B: {long: 16640, short: 10365, orientation: "portrait", psCode: 0},
+      A4: {long: 11040, short: 7721, orientation: "landscape", psCode: 127},
+      A3: {long: 16158, short: 11040, orientation: "portrait", psCode: 0}
     },
     resolution: {
       x: undefined,
       y: undefined
-    }
+    },
+    instructions: [
+      "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "EA", "ER", "EW",
+      "FT", "IM", "IN", "IP", "IW", "LB", "LT", "OA", "OC", "OD", "OE", "OF", "OH", "OI", "OO",
+      "OP", "OS", "OW", "PA", "PD", "PR", "PS", "PT", "PU", "RA", "RO", "RR", "SA", "SC", "SI",
+      "SL", "SM", "SP", "SR", "SS", "TL", "UC", "VS", "WG", "XT", "YT"
+    ]
   },
 
+  // 12800 bytes memory
   "7550A": {
+    brand: "HP",
+    model: undefined,
+    buffer: undefined,
+    papers: {
+      list: ["A", "B", "A4", "A3"],
+      A4: {long: 10870, short: 7600, orientation: "landscape"},
+      A3: {long: 15970, short: 10870, orientation: "landscape"},
+      A: {long: 10170, short: 7840, orientation: "landscape"},
+      B: {long: 16450, short: 10170, orientation: "landscape"}
+    },
+    resolution: {
+      x: undefined,
+      y: undefined
+    },
+    instructions: [
+      "AA", "AP", "AR", "AS", "BF", "BL", "CA", "CI", "CM", "CP", "CS", "CT", "CV", "DC", "DF",
+      "DI", "DL", "DP", "DR", "DS", "DT", "EA", "EP", "ER", "ES", "EW", "FP", "FS", "FT", "GC",
+      "GM", "IM", "IN", "IP", "IV", "IW", "KY", "LB", "LO", "LT", "NR", "OA", "OC", "OD", "OE",
+      "OF", "OG", "OH", "OI", "OK", "OL", "OO", "OP", "OS", "OT", "OW", "PA", "PB", "PD", "PG",
+      "PM", "PR", "PT", "PU", "RA", "RO", "RP", "RR", "SA", "SC", "SI", "SL", "SM", "SP", "SR",
+      "SS", "TL", "UC", "UF", "VS", "WD", "WG", "XT", "YT"
+    ]
+  },
 
-  }
+  "7580A": {},
+  "7585A": {},
+  "7585B": {},
+  "7586B": {}
+
+
 };
+
+/*
+  HPGL Pen Plotters (http://www.winline.com/outdevs.html)
+
+ HP 7220C
+ HP ColorPro, HP 7470, HP 7475A, HP 7550A
+ HP DraftPro (7570A), HP DraftPro DXL (7575A), HP DraftPro EXL (7576A)
+ HP 7580A, HP 7580B, HP 7585A, HP 7585B, HP 7586B
+ HP DraftMaster I (7595A), HP DraftMaster II (7596A)
+ IOLINE LP 3700, IOLINE LP 4000
+ Generic HPGL plotter driver supports Hewlett Packard, Océ, Calcomp, Mutoh, Graphtec, Summagraphics, IOLINE, ENCAD, Benson, Schlumberger, Aristo, Zünd and most other HPGL devices.
+ */
 
 var charsets = {
 
@@ -177,15 +239,15 @@ var Plotter = function() {
    * @property {string} characteristics.brand The device's manufacturer.
    * @property {string} characteristics.model The device's model.
    * @property {number} characteristics.buffer The device's buffer size in bytes (characters).
-   * @property {Object} characteristics.medias Medias supported by the device
-   * @property {string[]} characteristics.medias.list Array of all the supported media types.
-   * @property {Object} characteristics.medias.~media~ Details for each media. There will be one
+   * @property {Object} characteristics.papers Papers supported by the device
+   * @property {string[]} characteristics.papers.list Array of all the supported media types.
+   * @property {Object} characteristics.papers.~media~ Details for each media. There will be one
    * such object for all available media type.
-   * @property {number} characteristics.medias.~media~.long Length of the plottable area along the
+   * @property {number} characteristics.papers.~media~.long Length of the plottable area along the
    * long side (in plotter units).
-   * @property {number} characteristics.medias.~media~.short Length of the plottable area along the
+   * @property {number} characteristics.papers.~media~.short Length of the plottable area along the
    * short side (in plotter units).
-   * @property {string} characteristics.medias.~media~.orientation Default orientation for that
+   * @property {string} characteristics.papers.~media~.orientation Default orientation for that
    * media (**landscape** or **portrait**).
    * @property {Object} characteristics.resolution Hardware resolution information
    * @property {number} characteristics.resolution.x The number of plotter units per millimiter on
@@ -238,10 +300,10 @@ util.inherits(Plotter, EventEmitter);
  * [virtual-serialport](https://www.npmjs.com/package/virtual-serialport).
  * @param {Object} [options={}] Options to use while setting up the device.
  * @param {string} [options.paper="A"] - The paper size to use. Choices are:
- *   - *A* (a.k.a "letter")
- *   - *B* (a.k.a "tabloid")
- *   - *A4*
- *   - *A3*
+ *   - **A**: ANSI A (8.5"x11", a.k.a "letter")
+ *   - **B**: ANSI B (11"x17", a.k.a "tabloid")
+ *   - **A4**: ISO A4 (210mm × 297mm)
+ *   - **A3**: ISO A3 (297mm × 420mm)
  * @param {string} [options.orientation="landscape"] - The orientation of the paper: *landscape* or
  * *portrait*.
  * @param {Function} [callback=null] - A function to trigger when the connect operation has completed.
@@ -252,22 +314,6 @@ util.inherits(Plotter, EventEmitter);
 Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
   this.transport = transport;
-
-  // Save different paper size if specified
-  if (
-    options.paper &amp;&amp;
-    this.characteristics.medias.list.includes(options.paper.toUpperCase())
-  ) {
-    this.paper = options.paper.toUpperCase();
-  }
-
-  // Save different orientation if specified
-  if (
-    options.orientation &amp;&amp;
-    ["landscape", "portrait"].includes(options.orientation.toLowerCase())
-  ) {
-    this.orientation = options.orientation.toLowerCase();
-  }
 
   // Try to open transport layer
   this.transport.open((error) => {
@@ -292,47 +338,102 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
     this.queue("OI", [], (data) => {
       this.characteristics = models[data];
       this.characteristics.model = data;
-    }, true);
 
-    // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
-    // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
-    // retrieve buffer size.
-    this.queue(String.fromCharCode(27) + ".E", [], () => {}, true);
-    this.queue(String.fromCharCode(27) + ".L", [], (data) => {
-      this.characteristics.buffer = data;
-    }, true);
 
-    // Retrieve device resolution
-    this.queue("OF", [], (data) => {
-      [this.characteristics.resolution.x, this.characteristics.resolution.y] = data.split(",", 2);
-    }, true);
 
-    // Select paper size. Basically, this tells the device which paper orientation to use. A4 and
-    // A (letter) use the same orientation while A3 and B (tabloid) use the other orientation.
-    if ( ["B", "A3"].includes(this.paper) ) {
-      this.queue("PS", 0);
-    } else {
-      this.queue("PS", 127);
-    }
-
-    // Set the desired orientation
-    if (this.orientation === "portrait") {
-
-      if ( ["A", "A4"].includes(this.paper) ) {
-        this.queue("RO", 90);   // rotate to 0
-        this.queue("IP");       // reassign P1 and P2
-        this.queue("IW");       // reset plotting window
+      // As soon as we know the model, we can use the 'papers' and 'orientation' properties.
+      if (
+        options.paper &amp;&amp;
+        this.characteristics.papers.list.includes(options.paper.toUpperCase())
+      ) {
+        this.paper = options.paper.toUpperCase();
       }
 
-    } else {
-
-      if ( ["B", "A3"].includes(this.paper) ) {
-        this.queue("RO", 90);   // rotate to 0
-        this.queue("IP");       // reassign P1 and P2
-        this.queue("IW");       // reset plotting window
+      // Save different orientation if specified
+      if (
+        options.orientation &amp;&amp;
+        orientations.includes(options.orientation.toLowerCase())
+      ) {
+        this.orientation = options.orientation.toLowerCase();
       }
 
-    }
+
+
+
+      // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
+      // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
+      // retrieve buffer size.
+      this.queue(String.fromCharCode(27) + ".E", [], () => {}, true);
+      this.queue(String.fromCharCode(27) + ".L", [], (data) => {
+        this.characteristics.buffer = data;
+      }, true);
+
+      // Retrieve device resolution
+      this.queue("OF", [], (data) => {
+        [this.characteristics.resolution.x, this.characteristics.resolution.y] = data.split(",", 2);
+
+
+
+
+
+
+        // The device's default orientation changes according to paper size. For example, on the
+        // HP7475A, paper sizes A (letter) and A4 use a 'landscape' orientation whereas paper sizes B
+        // (tabloid) and A3 use a 'portrait' orientation... So, if we want some sort of standard we must
+        // rotate the orientation to whatever is requested (no matter the paper size). Other devices
+        // (7470A, for example) only have one orientation).
+
+
+
+        // Inform device of the paper size we wish to use. This is not necessary on devices that use the
+        // same orientation for all paper sizes. It should be noted that, on some devices, this affects
+        // orientation (see below).
+        if (this.characteristics.papers[this.paper].psCode) {
+          this.queue("PS", this.characteristics.papers[this.paper].psCode);
+        }
+
+        // Check if the user-requested orientation, matches the device's current orientation (which may
+        // depend on paper selection).
+        if (this.orientation !== this.characteristics.papers[this.paper].orientation) {
+
+          // Check if the device supports rotation (not all do)
+          if ( this.characteristics.instructions.includes("RO") ) {
+            this.queue("RO", 90);   // rotate to other orientation
+            this.queue("IP");       // reassign P1 and P2
+            this.queue("IW");       // reset plotting window
+          } else {
+            throw new Error("The device does not support the '" + this.orientation + "' orientation.");
+          }
+
+        }
+
+        // At this point, the paper and orientation should be fine BUT the origin is still in the bottom
+        // left corner.
+
+
+
+
+
+
+
+      }, true);
+
+
+
+
+    }, true);
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Wait for buffer size, model and resolution information to be retrieved before triggering
     // user callback. If it takes too long, report error.
@@ -426,9 +527,9 @@ Plotter.prototype.disconnect = function(callback = null) {
 };
 
 /**
- * Converts a point (x, y) whose origin is in the usual top-left to a point following the HPGL
- * coordinates system. The input coordinates must be expressed in plotter units since this function
- * takes into account the desired orientation and the paper size.
+ * Converts a point in 2D space (x, y) whose origin is in the top-left corner (+x going right, +y
+ * going down) to the HPGL coordinates system which has its origin in the bottom-left corner (+x
+ * going right, + y going up).
  *
  * @private
  * @param {number} x The `x` coordinate of the point (must be expressed in plotter units).
@@ -437,29 +538,13 @@ Plotter.prototype.disconnect = function(callback = null) {
  */
 Plotter.prototype._toHpglCoordinates = function(x, y) {
 
-  let point = {x: Math.round(x), y: Math.round(y)};
-
-  if ( ["A", "A4"].includes(this.paper) ) {
-
-    if (this.orientation === "portrait") {
-      point.x = this.characteristics.medias[this.paper].short - x;
-    } else {
-      point.y = this.characteristics.medias[this.paper].short - y;
-    }
-
-
-  } else if ( ["B", "A3"].includes(this.paper) ) {
-
-    if (this.orientation === "portrait") {
-      point.y = x;
-      point.x = y;
-    } else {
-
-    }
-
+  if (this.orientation === "landscape") {
+    y = this.characteristics.papers[this.paper].short - y;
+  } else {
+    x = this.characteristics.papers[this.paper].short - x;
   }
 
-  return point;
+  return {x: x, y: y};
 
 };
 
@@ -999,7 +1084,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.5.0-alpha.8</b> /
+  <b>hpgl v0.5.0-alpha.9</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
