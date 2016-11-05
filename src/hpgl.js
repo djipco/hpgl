@@ -312,8 +312,9 @@ var Plotter = function() {
 util.inherits(Plotter, EventEmitter);
 
 /**
- * Opens a serial connection to the device using the specified transport layer. Currently, only the
- * [browser-serialport](https://www.npmjs.com/package/browser-serialport) module has been tested.
+ * Opens a serial connection to the device using the specified serial transport layer. The following
+ * serial modules are supported: [serialport](https://www.npmjs.com/package/serialport) and
+ * [browser-serialport](https://www.npmjs.com/package/browser-serialport).
  *
  * @param {Object} transport - A transport object compatible with the
  * [serialport](https://www.npmjs.com/package/serialport) API interface.
@@ -328,10 +329,13 @@ util.inherits(Plotter, EventEmitter);
  *   - **A3**: ISO A3 (297mm × 420mm)
  * @param {string} [options.orientation="landscape"] - The orientation of the paper: *landscape* or
  * *portrait*.
- * @param {Function} [callback=null] - A function to trigger when the connect operation has completed.
- * This function will receive an `error` parameter is an error occured.
+ * @param {number} [options.penThickness=0.3] - The drawing pen's thickness in millimiters (between
+ * 0.1mm and 5mm).
+ * @param {Function} [callback=null] - A function to trigger when the connect operation has
+ * completed. This function will receive an `error` parameter is an error occured.
  *
- * @todo Paper sizes must be mapped to the actual device.
+ * @todo clean up this mess
+ *
  */
 Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
