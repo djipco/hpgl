@@ -1,6 +1,10 @@
 # hpgl
 **A Node.js library to control HPGL-compatible plotters**
 
+[![npm](https://img.shields.io/npm/v/hpgl.svg)](https://www.npmjs.com/package/hpgl)
+[![npm](https://img.shields.io/npm/dt/hpgl.svg)](https://www.npmjs.com/package/hpgl)
+[![Beerpay](https://beerpay.io/cotejp/hpgl/badge.svg?style=flat)](https://beerpay.io/cotejp/hpgl) 
+
 ### About
 
 The `hpgl` library makes it possible to interact with plotters that support the *Hewlett-Packard 
@@ -105,3 +109,11 @@ chainable.
 I will try to maintain an up-to-date [API documentation](https://cotejp.github.io/hpgl/). A good 
 place to start is the [Plotter class](https://cotejp.github.io/hpgl/Plotter.html). If you find 
 errors, please [file an issue](https://github.com/cotejp/hpgl/issues) on GitHub.
+
+## Support the Project
+
+If you find this library useful, you can **[buy me a drink](https://beerpay.io/cotejp/hpgl)** as a token of your appreciation. This would automatically make you awesome.
+
+[![Beerpay](https://beerpay.io/cotejp/hpgl/badge.svg?style=beer-square)](https://beerpay.io/cotejp/hpgl)
+
+Cheers!
