@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.5.0-alpha.10
+hpgl v0.5.0-alpha.11
 
 A Node.js library to communicate with HPGL-compatible plotters and printers.
 https://github.com/cotejp/hpgl
@@ -36,11 +36,56 @@ module.exports = {};
 
 var orientations = ["portrait", "landscape"];
 
-// @todo move into its own class (composed into Plotter).
-var models = {
+/**
+ * The `Models` class is basically an enumeration class that provides information about all the
+ * devices (only a few plotters for now) that are supported by the library.
+ *
+ * >Note: the only plotter that was tested so far is the **HP 7475A**. We are assuming the others
+ * >are going to work based on the documentation we found for them.
+ *
+ * If you have a plotter that is not listed here, [contact the author](https://twitter.com/jpcote)
+ * to see if we can add support for your device. Adding support for a new model simply involves
+ * retrieving the information such as the one found in this class for other devices.
+ *
+ * @todo should this even be exported?
+ *
+ * @class
+ */
+var Models = {
 
   // The undefined values are expected to be fetched from the device at startup.
+
+  /**
+   * Characteristics of the plotter
+   *
+   * @todo how can i move this inside the Models documentation without screwing up everything?
+   *
+   * @typedef {object} PlotterCharacteristics
+   * @property {string} brand - Name of the manufacturer of the device.
+   * @property {number} buffer - Size of the device's buffer in bytes (characters).
+   * @property {string[]} instructions - An array of all the 2-letter HPGL instruction codes
+   * supported by the device.
+   * @property {string} model - Model of the device. The library attempts to retrieve that
+   * information from the device itself.
+   * @property {Object} papers - Supported paper formats
+   * @property {string[]} papers.list - Array of all paper formats supported by the device.
+   * @property {number} papers.~format~ - Information about a specific paper format. Substitute
+   * `~format~` with the actual format from the `papers.list` array: **A3**, **A4**, **A**, **B**,
+   * **C**, etc.
+   * @property {number} papers.~format~.long - The length of the long side of the plottable are.
+   * @property {number} papers.~format~.short - The length of the short side of the plottable are.
+   * @property {string} papers.~format~.orientation - The default paper orientation for that format
+   * (`landscape` or `portrait`).
+   * @property {number} papers.~format~.psCode - The paper size (**PS**) code for that paper.
+   */
+
+  /**
+   * @type {PlotterCharacteristics}
+   */
   "7470A": {
+    brand: "HP",
+    model: undefined,
+    buffer: undefined,
     papers: {
       list: ["A4", "US"],
       A4: {long: 10900, short: 7650, orientation: "landscape"},
@@ -53,6 +98,9 @@ var models = {
     ]
   },
 
+  /**
+   * @type {PlotterCharacteristics}
+   */
   "7475A": {
     brand: "HP",
     model: undefined,
@@ -77,6 +125,9 @@ var models = {
   },
 
   // 12800 bytes memory
+  /**
+   * @type {PlotterCharacteristics}
+   */
   "7550A": {
     brand: "HP",
     model: undefined,
@@ -100,15 +151,17 @@ var models = {
       "PM", "PR", "PT", "PU", "RA", "RO", "RP", "RR", "SA", "SC", "SI", "SL", "SM", "SP", "SR",
       "SS", "TL", "UC", "UF", "VS", "WD", "WG", "XT", "YT"
     ]
-  },
+  }
 
-  "7580A": {},
-  "7585A": {},
-  "7585B": {},
-  "7586B": {}
-
+  // "7440A": {}, res: 40,40 // buffer: 60 ou 1024
+  // "7580A": {},
+  // "7585A": {},
+  // "7585B": {},
+  // "7586B": {}
 
 };
+
+module.exports.Models = Models;
 
 /*
   HPGL Pen Plotters (http://www.winline.com/outdevs.html)
@@ -122,7 +175,19 @@ var models = {
  Generic HPGL plotter driver supports Hewlett Packard, Océ, Calcomp, Mutoh, Graphtec, Summagraphics, IOLINE, ENCAD, Benson, Schlumberger, Aristo, Zünd and most other HPGL devices.
  */
 
-var charsets = {
+/*
+
+Cannot use HP-IB plotters such as:
+
+  - 7225B
+  - 9872A
+  -
+
+*/
+
+
+
+var CharacterSets = {
 
   // ISO 646 French (FR1)
   34: {
@@ -164,10 +229,10 @@ var charsets = {
  * made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol
  * (Calcomp, for example).
  *
- * @todo take into account different devices (plotting areas, orientation, etc.)
  * @todo create getter that returns the size of the plottable area
  * @todo the whole processQUeue mechanism needs to be looked at in details
  * @todo use ESC.O to know if device is ready (pinch wheel down,. etc.)
+ * @todo create generic model for when the model is not listed
  *
  * @class
  */
@@ -204,6 +269,12 @@ var Plotter = function() {
   this._queueDelay = 100;
 
   /**
+   * @private
+   * @member {number}
+   */
+  this._penThickness = 0.3;
+
+  /**
    * The paper orientation currently selected (portrait or landscape). Paper orientation is assigned
    * during the connection to the device (with the [connect()]{@link Plotter#connect} function).
    * Currently, it cannot be changed on the fly.
@@ -224,27 +295,31 @@ var Plotter = function() {
   this.paper = "A";
 
   /**
-   * @property {Object} characteristics An object containing device-specific characteristics. Note:
-   * this is only available after the [ready]{@link Plotter#event:ready} event has been fired.
-   * @property {string} characteristics.brand The device's manufacturer.
-   * @property {string} characteristics.model The device's model.
-   * @property {number} characteristics.buffer The device's buffer size in bytes (characters).
-   * @property {Object} characteristics.papers Papers supported by the device
-   * @property {string[]} characteristics.papers.list Array of all the supported media types.
-   * @property {Object} characteristics.papers.~media~ Details for each media. There will be one
-   * such object for all available media type.
-   * @property {number} characteristics.papers.~media~.long Length of the plottable area along the
-   * long side (in plotter units).
-   * @property {number} characteristics.papers.~media~.short Length of the plottable area along the
-   * short side (in plotter units).
-   * @property {string} characteristics.papers.~media~.orientation Default orientation for that
-   * media (**landscape** or **portrait**).
-   * @property {Object} characteristics.resolution Hardware resolution information
-   * @property {number} characteristics.resolution.x The number of plotter units per millimiter on
-   * the `x` axis.
-   * @property {number} characteristics.resolution.y The number of plotter units per millimiter on
-   * the `y` axis.
-   * @readOnly
+   * The thickness of the drawing pen's nib in millimiters. The value must be between 0.1 and 5.
+   * Specifying an invalid value will set the thickness to the default value of 0.3.
+   *
+   * Specifying the pen's thickness is particularly important when trying to shade shapes.
+   *
+   * @member {Number} Plotter#penThickness
+   */
+  Object.defineProperty(this, 'penThickness', {
+
+    get: function() { return this._penThickness; },
+
+    set: function(value) {
+
+      if (value >= 0.1 && value <= 5) {
+        this._penThickness = value;
+      } else {
+        this._penThickness = 0.3
+      }
+    }
+
+  });
+
+  /**
+   * @type {PlotterCharacteristics}
+   * @readonly
    */
   this.characteristics = undefined;
 
@@ -280,8 +355,9 @@ var Plotter = function() {
 util.inherits(Plotter, EventEmitter);
 
 /**
- * Opens a serial connection to the device using the specified transport layer. Currently, only the
- * [browser-serialport](https://www.npmjs.com/package/browser-serialport) module has been tested.
+ * Opens a serial connection to the device using the specified serial transport layer. The following
+ * serial modules are supported: [serialport](https://www.npmjs.com/package/serialport) and
+ * [browser-serialport](https://www.npmjs.com/package/browser-serialport).
  *
  * @param {Object} transport - A transport object compatible with the
  * [serialport](https://www.npmjs.com/package/serialport) API interface.
@@ -296,10 +372,13 @@ util.inherits(Plotter, EventEmitter);
  *   - **A3**: ISO A3 (297mm × 420mm)
  * @param {string} [options.orientation="landscape"] - The orientation of the paper: *landscape* or
  * *portrait*.
- * @param {Function} [callback=null] - A function to trigger when the connect operation has completed.
- * This function will receive an `error` parameter is an error occured.
+ * @param {number} [options.penThickness=0.3] - The drawing pen's thickness in millimiters (between
+ * 0.1mm and 5mm).
+ * @param {Function} [callback=null] - A function to trigger when the connect operation has
+ * completed. This function will receive an `error` parameter is an error occured.
  *
- * @todo Paper sizes must be mapped to the actual device.
+ * @todo clean up this mess
+ *
  */
 Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
@@ -326,7 +405,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
     // Retrieve device model. This must be done before the other instructions because they depend
     // on the characteristics property being set.
     this.queue("OI", [], (data) => {
-      this.characteristics = models[data];
+      this.characteristics = Models[data];
       this.characteristics.model = data;
 
 
@@ -375,12 +454,13 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
 
 
-        // Inform device of the paper size we wish to use. This is not necessary on devices that use the
-        // same orientation for all paper sizes. It should be noted that, on some devices, this affects
-        // orientation (see below).
-        if (this.characteristics.papers[this.paper].psCode) {
-          this.queue("PS", this.characteristics.papers[this.paper].psCode);
-        }
+    // Inform device of the paper size we wish to use. This is not necessary on devices that use the
+    // same orientation for all paper sizes. It should be noted that, on some devices, this affects
+    // orientation (see below).
+    // if (this.characteristics.papers[this.paper].psCode) {
+    if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
+      this.queue("PS", this.characteristics.papers[this.paper].psCode);
+    }
 
         // Check if the user-requested orientation, matches the device's current orientation (which may
         // depend on paper selection).
@@ -395,16 +475,11 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
             throw new Error("The device does not support the '" + this.orientation + "' orientation.");
           }
 
-        }
-
-        // At this point, the paper and orientation should be fine BUT the origin is still in the bottom
-        // left corner.
-
-
-
-
-
-
+    } else {
+      this.queue("RO", 0);   // rotate to default orientation
+      this.queue("IP");       // reassign P1 and P2
+      this.queue("IW");       // reset plotting window
+    }
 
       }, true);
 
@@ -427,6 +502,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     // Wait for buffer size, model and resolution information to be retrieved before triggering
     // user callback. If it takes too long, report error.
+    // @todo change this so we can input buffer, model and res in the Models class and only
     let start = Date.now();
 
     let intervalId = setInterval(() => {
@@ -521,17 +597,43 @@ Plotter.prototype.disconnect = function(callback = null) {
  * going down) to the HPGL coordinates system which has its origin in the bottom-left corner (+x
  * going right, + y going up).
  *
+ * @todo Add the option to use the native HPGL coordinates system (bypass this)
+ *
  * @private
- * @param {number} x The `x` coordinate of the point (must be expressed in plotter units).
- * @param {number} y The `y` coordinate of the point (must be expressed in plotter units).
+ * @param {number} x The `x` coordinate of the point.
+ * @param {number} y The `y` coordinate of the point.
  * @return {Object} An object whose **x** and **y** properties have been transformed.
  */
-Plotter.prototype._toHpglCoordinates = function(x, y) {
+Plotter.prototype._toAbsoluteHpglCoordinates = function(x, y) {
 
   if (this.orientation === "landscape") {
     y = this.characteristics.papers[this.paper].short - y;
   } else {
     x = this.characteristics.papers[this.paper].short - x;
+  }
+
+  return {x: x, y: y};
+
+};
+
+/**
+ * Converts a vector in 2D space (x, y) whose origin is in the top-left corner (+x going right, +y
+ * going down) to the HPGL coordinates system which has its origin in the bottom-left corner (+x
+ * going right, + y going up).
+ *
+ * @todo Add the option to use the native HPGL coordinates system (bypass this)
+ *
+ * @private
+ * @param {number} x The `x` coordinate of the point.
+ * @param {number} y The `y` coordinate of the point.
+ * @return {Object} An object whose **x** and **y** properties have been transformed.
+ */
+Plotter.prototype._toRelativeHpglCoordinates = function(x, y) {
+
+  if (this.orientation === "landscape") {
+    y = -y;
+  } else {
+    x = -x;
   }
 
   return {x: x, y: y};
@@ -570,6 +672,9 @@ Plotter.prototype._onData = function(data) {
  */
 Plotter.prototype._onError = function(error) {
 
+  console.log("ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  console.log(error);
+
   /**
    * Event emitted when an error occurs. The specified function will receive an object with
    * information about the error.
@@ -582,12 +687,16 @@ Plotter.prototype._onError = function(error) {
 };
 
 /**
- * Immediately sends a raw HPGL instruction down the serial port. The instruction is automatically
- * terminated with a semicolon.
+ * Immediately sends a raw HPGL instruction down the serial port. The validity of the instruction's
+ * syntax is not check at all. If you need validation, use the [queue()]{@link Plotter#queue}
+ * function.
  *
  * Unless you are very familiar with HPGL, this method should not be used directly. Instead, you can
  * use friendlier methods such as: [drawLines()]{@link Plotter#drawLines},
  * [drawText()]{@link Plotter#drawText}, [drawCircle()]{@link Plotter#drawCircle}, etc.
+ *
+ * Note: only instructions supported by the target device will be transmitted. Unsupported
+ * instructions will be silently ignored and the callback will not be executed.
  *
  * @param {string} instruction The raw instruction to send (unterminated).
  * @param {Function} [callback=null] A function to call once the data has been sent to the device
@@ -760,7 +869,7 @@ Plotter.prototype._toIso646 = function(text, charset = 0) {
 
   let converted = text.split("").map((char) => {
 
-    let found = charsets[charset][char];
+    let found = CharacterSets[charset][char];
 
     if (found) {
 
@@ -844,15 +953,15 @@ Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
 };
 
 /**
- * Draws a line from the current pen position to the specified destination position.
+ * Draws a line from the current pen position to the specified destination position (x, y).
  *
- * @param {number} destX The `x` coordinate of the point where the the line should end (in cm).
- * @param {number} destY The `y` coordinate of the point where the the line should end (in cm).
+ * @param {number} x The `x` coordinate of the point where the the line should end (in cm).
+ * @param {number} y The `y` coordinate of the point where the the line should end (in cm).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawLine = function(destX, destY) {
+Plotter.prototype.drawLine = function(x, u) {
 
-  this.drawLines([destX, destY]);
+  this.drawLines([x, y]);
   return this;
 
 };
@@ -876,6 +985,7 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
   let positionsPU = [];
 
   // Check validity of line pattern
+  // options.linePattern = options.linePattern || 7;
   options.linePattern = parseInt(options.linePattern);
 
   if (isNaN(options.linePattern) || options.linePattern < 0 || options.linePattern > 7) {
@@ -893,7 +1003,7 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
 
     let x = this._toPlotterUnits(positions[i]);
     let y = this._toPlotterUnits(positions[i+1]);
-    let p = this._toHpglCoordinates(x, y);
+    let p = this._toAbsoluteHpglCoordinates(x, y);
 
     positionsPU.push(p.x, p.y);
 
@@ -910,19 +1020,31 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
 };
 
 /**
- * Draws a rectangle from the current position to the specified destination position.
+ * Draws a rectangle with the specified `width` and `height` starting at the current pen position.
+ * When drawing is done, the pen is returned to the starting point.
  *
- * @todo Validate input ?
+ * If no `height` is specified, the `height` will be equal to the `width`, thus drawing a square.
+ *
+ * @todo Add 'fill' option with RR and FT
  *
  * @param {number} width The width of the rectangle (in cm).
- * @param {number} height The height of the rectangle (in cm).
+ * @param {number} [height] The height of the rectangle (in cm).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.drawRectangle = function(width, height) {
 
-  let target = this._toHpglCoordinates(this._toPlotterUnits(width), this._toPlotterUnits(height));
+  if ( parseFloat(width) ) {
+    if ( !parseFloat(height) ) { height = width; }
+  } else {
+    throw new Error ("The width must be specified.")
+  }
 
+  let target = this._toRelativeHpglCoordinates(
+    this._toPlotterUnits(width),
+    this._toPlotterUnits(height)
+  );
   this.queue("ER", [target.x, target.y]);
+
   return this;
 
 };
@@ -936,7 +1058,7 @@ Plotter.prototype.drawRectangle = function(width, height) {
  */
 Plotter.prototype.moveTo = function(x, y) {
 
-  let point = this._toHpglCoordinates(this._toPlotterUnits(x), this._toPlotterUnits(y));
+  let point = this._toAbsoluteHpglCoordinates(this._toPlotterUnits(x), this._toPlotterUnits(y));
   this.queue("PU", [point.x, point.y]);
   return this;
 
@@ -968,17 +1090,20 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
 };
 
 /**
- * Queues an HPGL instruction to be sent to the device via the serial port. If any parameters are
- * present, they are appended to the 2-letter mnemonic and separated by commas.
+ * Queues an HPGL instruction or an RS-232-C device control command to be sent to the device as soon
+ * as possible. If any parameters are present, they are properly appended to the command.
  *
- * Unless you are very familiar with HPGL, this method should not be used directly. Instead, you can
- * use friendlier methods such as: [drawLines()]{@link Plotter#drawLines},
+ * Unless you are very familiar with HPGL or RS-232-C, you should not use this method directly.
+ * Instead, you can use friendlier methods such as: [drawLines()]{@link Plotter#drawLines},
  * [drawText()]{@link Plotter#drawText}, [drawCircle()]{@link Plotter#drawCircle}, etc.
  *
- * @param {string} mnemonic 2-letter code for the HPGL command to send
- * @param {number|string|number[]|string[]} [params=[]] A string, a number or an or array of string
- * or numbers to use as parameter(s) for the instruction.
- * @param {Function} [callback=null]
+ * @param {string} mnemonic - 2-letter HPGL instruction or 3-byte RS-232-C command.
+ * @param {number|string|number[]|string[]} [params=[]] - A string, a number or an or array of
+ * string or numbers to use as parameter(s) for the instruction.
+ * @param {Function} [callback=null] A function to call once the data has been sent to the device
+ * (default) or when an answer has been received from the device. If `waitForResponse` is `true`,
+ * the callback function will receive a single parameter containing the data received from the
+ * device.
  * @param {boolean} [waitForResponse=false] Whether to execute the callback function immediately
  * after the data has been sent or only after an answer has been received from the device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
