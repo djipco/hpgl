@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.5.0-alpha.11
+hpgl v0.6.0-alpha.1
 
 A Node.js library to communicate with HPGL-compatible plotters and printers.
 https://github.com/cotejp/hpgl
@@ -74,9 +74,8 @@ var Models = {
    * **C**, etc.
    * @property {number} papers.~format~.long - The length of the long side of the plottable are.
    * @property {number} papers.~format~.short - The length of the short side of the plottable are.
-   * @property {string} papers.~format~.orientation - The default paper orientation for that format
-   * (`landscape` or `portrait`).
-   * @property {number} papers.~format~.psCode - The paper size (**PS**) code for that paper.
+   * @property {number} papers.~format~.psCode - The paper size (**PS**) code for that paper (not
+   * necessary on most devices).
    */
 
   /**
@@ -88,8 +87,8 @@ var Models = {
     buffer: undefined,
     papers: {
       list: ["A4", "US"],
-      A4: {long: 10900, short: 7650, orientation: "landscape"},
-      US: {long: 10300, short: 7650, orientation: "landscape"}
+      A4: {long: 10900, short: 7650},
+      US: {long: 10300, short: 7650}
     },
     instructions: [
       "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "IM", "IN", "IP",
@@ -107,10 +106,10 @@ var Models = {
     buffer: undefined,
     papers: {
       list: ["A", "B", "A4", "A3"],
-      A: {long: 10365, short: 7962, orientation: "landscape", psCode: 127},
-      B: {long: 16640, short: 10365, orientation: "portrait", psCode: 0},
-      A4: {long: 11040, short: 7721, orientation: "landscape", psCode: 127},
-      A3: {long: 16158, short: 11040, orientation: "portrait", psCode: 0}
+      A: {long: 10365, short: 7962, psCode: 4},
+      B: {long: 16640, short: 10365, psCode: 0},
+      A4: {long: 11040, short: 7721, psCode: 4},
+      A3: {long: 16158, short: 11040, psCode: 0}
     },
     resolution: {
       x: undefined,
@@ -134,10 +133,10 @@ var Models = {
     buffer: undefined,
     papers: {
       list: ["A", "B", "A4", "A3"],
-      A4: {long: 10870, short: 7600, orientation: "landscape"},
-      A3: {long: 15970, short: 10870, orientation: "landscape"},
-      A: {long: 10170, short: 7840, orientation: "landscape"},
-      B: {long: 16450, short: 10170, orientation: "landscape"}
+      A4: {long: 10870, short: 7600},
+      A3: {long: 15970, short: 10870},
+      A: {long: 10170, short: 7840},
+      B: {long: 16450, short: 10170}
     },
     resolution: {
       x: undefined,
@@ -454,32 +453,32 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
 
 
-    // Inform device of the paper size we wish to use. This is not necessary on devices that use the
-    // same orientation for all paper sizes. It should be noted that, on some devices, this affects
-    // orientation (see below).
-    // if (this.characteristics.papers[this.paper].psCode) {
-    if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
-      this.queue("PS", this.characteristics.papers[this.paper].psCode);
-    }
+        // Inform device of the paper size we wish to use. This is not necessary on devices that use the
+        // same orientation for all paper sizes. It should be noted that, on some devices, this affects
+        // orientation (see below).
+        if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
+          this.queue("PS", this.characteristics.papers[this.paper].psCode);
+        }
 
-        // Check if the user-requested orientation, matches the device's current orientation (which may
-        // depend on paper selection).
-        if (this.orientation !== this.characteristics.papers[this.paper].orientation) {
+        // Check if the user-requested orientation, matches the device's default orientation
+        // (landscape).
+        if (this.orientation === "landscape") {
+
+          this.queue("RO", 0);    // do not rotate (or rotate back to default)
+
+        } else {
 
           // Check if the device supports rotation (not all do)
           if ( this.characteristics.instructions.includes("RO") ) {
             this.queue("RO", 90);   // rotate to other orientation
-            this.queue("IP");       // reassign P1 and P2
-            this.queue("IW");       // reset plotting window
           } else {
             throw new Error("The device does not support the '" + this.orientation + "' orientation.");
           }
 
-    } else {
-      this.queue("RO", 0);   // rotate to default orientation
-      this.queue("IP");       // reassign P1 and P2
-      this.queue("IW");       // reset plotting window
-    }
+        }
+
+        this.queue("IP");       // reassign P1 and P2
+        this.queue("IW");       // reset plotting window
 
       }, true);
 
@@ -646,7 +645,7 @@ Plotter.prototype._toRelativeHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
-  console.log("_onData: " + data);
+  // console.log("_onData: " + data);
 
   if (data.toString() === "\r") {
 
