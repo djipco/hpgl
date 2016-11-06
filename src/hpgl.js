@@ -18,6 +18,8 @@ var orientations = ["portrait", "landscape"];
  * to see if we can add support for your device. Adding support for a new model simply involves
  * retrieving the information such as the one found in this class for other devices.
  *
+ * @todo should this even be exported?
+ *
  * @class
  */
 var Models = {
@@ -26,6 +28,8 @@ var Models = {
 
   /**
    * Characteristics of the plotter
+   *
+   * @todo how can i move this inside the Models documentation without screwing up everything?
    *
    * @typedef {object} PlotterCharacteristics
    * @property {string} brand - Name of the manufacturer of the device.
@@ -41,9 +45,8 @@ var Models = {
    * **C**, etc.
    * @property {number} papers.~format~.long - The length of the long side of the plottable are.
    * @property {number} papers.~format~.short - The length of the short side of the plottable are.
-   * @property {string} papers.~format~.orientation - The default paper orientation for that format
-   * (`landscape` or `portrait`).
-   * @property {number} papers.~format~.psCode - The paper size (**PS**) code for that paper.
+   * @property {number} papers.~format~.psCode - The paper size (**PS**) code for that paper (not
+   * necessary on most devices).
    */
 
   /**
@@ -55,8 +58,8 @@ var Models = {
     buffer: undefined,
     papers: {
       list: ["A4", "US"],
-      A4: {long: 10900, short: 7650, orientation: "landscape"},
-      US: {long: 10300, short: 7650, orientation: "landscape"}
+      A4: {long: 10900, short: 7650},
+      US: {long: 10300, short: 7650}
     },
     instructions: [
       "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "IM", "IN", "IP",
@@ -74,10 +77,10 @@ var Models = {
     buffer: undefined,
     papers: {
       list: ["A", "B", "A4", "A3"],
-      A: {long: 10365, short: 7962, orientation: "landscape", psCode: 127},
-      B: {long: 16640, short: 10365, orientation: "portrait", psCode: 0},
-      A4: {long: 11040, short: 7721, orientation: "landscape", psCode: 127},
-      A3: {long: 16158, short: 11040, orientation: "portrait", psCode: 0}
+      A: {long: 10365, short: 7962, psCode: 4},
+      B: {long: 16640, short: 10365, psCode: 0},
+      A4: {long: 11040, short: 7721, psCode: 4},
+      A3: {long: 16158, short: 11040, psCode: 0}
     },
     resolution: {
       x: undefined,
@@ -101,10 +104,10 @@ var Models = {
     buffer: undefined,
     papers: {
       list: ["A", "B", "A4", "A3"],
-      A4: {long: 10870, short: 7600, orientation: "landscape"},
-      A3: {long: 15970, short: 10870, orientation: "landscape"},
-      A: {long: 10170, short: 7840, orientation: "landscape"},
-      B: {long: 16450, short: 10170, orientation: "landscape"}
+      A4: {long: 10870, short: 7600},
+      A3: {long: 15970, short: 10870},
+      A: {long: 10170, short: 7840},
+      B: {long: 16450, short: 10170}
     },
     resolution: {
       x: undefined,
@@ -120,6 +123,7 @@ var Models = {
     ]
   }
 
+  // "7440A": {}, res: 40,40 // buffer: 60 ou 1024
   // "7580A": {},
   // "7585A": {},
   // "7585B": {},
@@ -141,6 +145,15 @@ module.exports.Models = Models;
  Generic HPGL plotter driver supports Hewlett Packard, Océ, Calcomp, Mutoh, Graphtec, Summagraphics, IOLINE, ENCAD, Benson, Schlumberger, Aristo, Zünd and most other HPGL devices.
  */
 
+/*
+
+Cannot use HP-IB plotters such as:
+
+  - 7225B
+  - 9872A
+  -
+
+*/
 
 
 
@@ -186,10 +199,10 @@ var CharacterSets = {
  * made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol
  * (Calcomp, for example).
  *
- * @todo take into account different devices (plotting areas, orientation, etc.)
  * @todo create getter that returns the size of the plottable area
  * @todo the whole processQUeue mechanism needs to be looked at in details
  * @todo use ESC.O to know if device is ready (pinch wheel down,. etc.)
+ * @todo create generic model for when the model is not listed
  *
  * @class
  */
@@ -411,32 +424,32 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
 
 
-    // Inform device of the paper size we wish to use. This is not necessary on devices that use the
-    // same orientation for all paper sizes. It should be noted that, on some devices, this affects
-    // orientation (see below).
-    // if (this.characteristics.papers[this.paper].psCode) {
-    if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
-      this.queue("PS", this.characteristics.papers[this.paper].psCode);
-    }
+        // Inform device of the paper size we wish to use. This is not necessary on devices that use the
+        // same orientation for all paper sizes. It should be noted that, on some devices, this affects
+        // orientation (see below).
+        if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
+          this.queue("PS", this.characteristics.papers[this.paper].psCode);
+        }
 
-        // Check if the user-requested orientation, matches the device's current orientation (which may
-        // depend on paper selection).
-        if (this.orientation !== this.characteristics.papers[this.paper].orientation) {
+        // Check if the user-requested orientation, matches the device's default orientation
+        // (landscape).
+        if (this.orientation === "landscape") {
+
+          this.queue("RO", 0);    // do not rotate (or rotate back to default)
+
+        } else {
 
           // Check if the device supports rotation (not all do)
           if ( this.characteristics.instructions.includes("RO") ) {
             this.queue("RO", 90);   // rotate to other orientation
-            this.queue("IP");       // reassign P1 and P2
-            this.queue("IW");       // reset plotting window
           } else {
             throw new Error("The device does not support the '" + this.orientation + "' orientation.");
           }
 
-    } else {
-      this.queue("RO", 0);   // rotate to default orientation
-      this.queue("IP");       // reassign P1 and P2
-      this.queue("IW");       // reset plotting window
-    }
+        }
+
+        this.queue("IP");       // reassign P1 and P2
+        this.queue("IW");       // reset plotting window
 
       }, true);
 
@@ -459,6 +472,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     // Wait for buffer size, model and resolution information to be retrieved before triggering
     // user callback. If it takes too long, report error.
+    // @todo change this so we can input buffer, model and res in the Models class and only
     let start = Date.now();
 
     let intervalId = setInterval(() => {
@@ -602,7 +616,7 @@ Plotter.prototype._toRelativeHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
-  console.log("_onData: " + data);
+  // console.log("_onData: " + data);
 
   if (data.toString() === "\r") {
 
