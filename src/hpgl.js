@@ -8,6 +8,26 @@ module.exports = {};
 var orientations = ["portrait", "landscape"];
 
 /**
+ * The `Rectangle` class represents an abstrat rectangle object which posesses a `width`, a `height`
+ * and a position (`x`, `y`).
+ *
+ * @class
+ *
+ * @param x {Number} - Position of the rectangle along the **x** axis.
+ * @param y {Number} - Position of the rectangle along the **y** axis.
+ * @param width {Number} - Width of the rectangle.
+ * @param height {Number} - Height of the rectangle.
+ */
+var Rectangle = function (x = 0, y = 0, width = 0, height = 0) {
+
+  this.x = x;
+  this.y = y;
+  this.width = width;
+  this.height = height;
+
+};
+
+/**
  * The `Models` class is basically an enumeration class that provides information about all the
  * devices (only a few plotters for now) that are supported by the library.
  *
@@ -51,6 +71,7 @@ var Models = {
 
   /**
    * @type {PlotterCharacteristics}
+   * @todo find margin information
    */
   "7470A": {
     brand: "HP",
@@ -77,8 +98,20 @@ var Models = {
     buffer: undefined,
     papers: {
       list: ["A", "B", "A4", "A3"],
-      A: {long: 10365, short: 7962, psCode: 4},
-      B: {long: 16640, short: 10365, psCode: 0},
+      A: {
+        long: 10365, short: 7962, psCode: 4,
+        margins: {
+          landscape: {top: 562, right: 463, bottom: 112, left: 348},
+          portrait: {top: 348, right: 562, bottom: 463, left: 112}
+        }
+      },
+      B: {
+        long: 16640, short: 10365, psCode: 0,
+        margins: {
+          landscape: {top: 463, right: 112, bottom: 348, left: 562},
+          portrait: {top: 112, right: 348, bottom: 562, left: 463}
+        },
+      },
       A4: {long: 11040, short: 7721, psCode: 4},
       A3: {long: 16158, short: 11040, psCode: 0}
     },
@@ -97,6 +130,7 @@ var Models = {
   // 12800 bytes memory
   /**
    * @type {PlotterCharacteristics}
+   * @todo find margin information
    */
   "7550A": {
     brand: "HP",
@@ -179,13 +213,13 @@ var CharacterSets = {
     "è": 125,
     "¨": 126,
 
-    // circumflex
+    // circumflex (we send "a", then "backspace" and then the circumflex accent)
     "â": [97, 8, 94],
     "ê": [101, 8, 94],
     "ô": [111, 8, 94],
     "û": [117, 8, 94],
 
-    // diaresis
+    // diaresis (we send "a", then "backspace" and then the diaresis mark)
     "ä": [97, 8, 126],
     "ë": [101, 8, 126],
     "ö": [111, 8, 126],
@@ -203,6 +237,7 @@ var CharacterSets = {
  * @todo the whole processQUeue mechanism needs to be looked at in details
  * @todo use ESC.O to know if device is ready (pinch wheel down,. etc.)
  * @todo create generic model for when the model is not listed
+ * @todo verify if we can prepopulate the models fields
  *
  * @class
  */
@@ -532,6 +567,23 @@ Plotter.prototype._toPlotterUnits = function(value, metric = true) {
     return Math.round(value * 10 * this.characteristics.resolution.x);
   } else {
     return Math.round(value * 3.937007874015748 * this.characteristics.resolution.x);
+  }
+
+};
+
+/**
+ *
+ * @param value
+ * @param metric
+ * @returns {number}
+ * @private
+ */
+Plotter.prototype._fromPlotterUnits = function(value, metric = true) {
+
+  if (metric) {
+    return value / (10 * this.characteristics.resolution.x);
+  } else {
+    return value / (25.4 * this.characteristics.resolution.x);
   }
 
 };
@@ -929,7 +981,7 @@ Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
  * @param {number} y The `y` coordinate of the point where the the line should end (in cm).
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawLine = function(x, u) {
+Plotter.prototype.drawLine = function(x, y) {
 
   this.drawLines([x, y]);
   return this;
@@ -1056,6 +1108,38 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
   this.queue("VS", this._toHpglDecimal(velocity));
 
   return this;
+
+};
+
+/**
+ * Returns the plottable area for the current paper and orientation.
+ *
+ * @param {Boolean} [metric=true] Whether the
+ * @returns {Rectangle} fff
+ */
+Plotter.prototype.getPlottableArea = function(metric = true) {
+
+  let paper = this.characteristics.papers[this.paper],
+      x = 0,
+      y = 0,
+      width = 0,
+      height = 0;
+
+  if (this.orientation === "portrait") {
+    width = this._fromPlotterUnits(paper.short, metric);
+    height = this._fromPlotterUnits(paper.long, metric);
+  } else {
+    width = this._fromPlotterUnits(paper.long, metric);
+    height = this._fromPlotterUnits(paper.short, metric);
+  }
+
+  // If margins are defined
+  if (paper.margins) {
+    x = this._fromPlotterUnits(paper.margins[this.orientation].left);
+    y = this._fromPlotterUnits(paper.margins[this.orientation].top);
+  }
+
+  return new Rectangle(x, y, width, height);
 
 };
 
