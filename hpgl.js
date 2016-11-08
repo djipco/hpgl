@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.6.0-alpha.2
+hpgl v0.6.0-alpha.3
 
 A Node.js library to communicate with HPGL-compatible plotters and printers.
 https://github.com/cotejp/hpgl
@@ -42,8 +42,8 @@ var orientations = ["portrait", "landscape"];
  *
  * @class
  *
- * @param x {Number} - Position of the rectangle along the **x** axis.
- * @param y {Number} - Position of the rectangle along the **y** axis.
+ * @param x {Number} - Position of the rectangle's top-left corner along the **x** axis.
+ * @param y {Number} - Position of the rectangle's topl-left corner along the **y** axis.
  * @param width {Number} - Width of the rectangle.
  * @param height {Number} - Height of the rectangle.
  */
@@ -67,7 +67,7 @@ var Rectangle = function (x = 0, y = 0, width = 0, height = 0) {
  * to see if we can add support for your device. Adding support for a new model simply involves
  * retrieving the information such as the one found in this class for other devices.
  *
- * @todo should this even be exported?
+ * @todo should this even be exported? allos the user to view the supported modesl ?!
  *
  * @class
  */
@@ -95,6 +95,17 @@ var Models = {
    * @property {number} papers.~format~.long - The length of the long side of the plottable are.
    * @property {number} papers.~format~.short - The length of the short side of the plottable are.
    * @property {number} papers.~format~.psCode - The paper size (**PS**) code for that paper (not
+   * @property {number} papers.~format~.margins - The margins for that paper.
+   * @property {number} papers.~format~.margins.landscape - Margins in **landscape** orientation.
+   * @property {number} papers.~format~.margins.landscape.top - Top margin.
+   * @property {number} papers.~format~.margins.landscape.right - Right margin.
+   * @property {number} papers.~format~.margins.landscape.bottom - Bottom margin.
+   * @property {number} papers.~format~.margins.landscape.left - Left margin.
+   * @property {number} papers.~format~.margins.portrait - Margins in **portrait** orientation.
+   * @property {number} papers.~format~.margins.portrait.top - Top margin.
+   * @property {number} papers.~format~.margins.portrait.right - Right margin.
+   * @property {number} papers.~format~.margins.portrait.bottom - Bottom margin.
+   * @property {number} papers.~format~.margins.portrait.left - Left margin.
    * necessary on most devices).
    */
 
@@ -338,9 +349,9 @@ var Plotter = function() {
    */
   Object.defineProperty(this, 'penThickness', {
 
-    get: function() { return this._penThickness; },
+    get: () => { return this._penThickness; },
 
-    set: function(value) {
+    set: (value) => {
 
       if (value >= 0.1 && value <= 5) {
         this._penThickness = value;
@@ -697,7 +708,7 @@ Plotter.prototype._toRelativeHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
-  // console.log("_onData: " + data);
+  console.log("_onData: " + data);
 
   if (data.toString() === "\r") {
 
@@ -811,7 +822,8 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
 };
 
 /**
- * Draws the specified text.
+ * Draws the specified text at the current pen position. The reference point is at the text's bottom
+ * left.
  *
  * @todo text direction (double check with orientation)
  * @todo Add the missing character sets.
@@ -853,9 +865,6 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  */
 Plotter.prototype.drawText = function(text, options = {}) {
 
-  // this._toIso646(text, options.charset);
-  // return;
-
   // Defaults
   if (!options.charset) options.charset = 0;
   if (!options.characterWidth) options.characterWidth = .187;
@@ -874,11 +883,15 @@ Plotter.prototype.drawText = function(text, options = {}) {
     ]
   );
 
-  // Assign correct rotation angle
+  // If a 'rotation' is requested, it must be adjusted for the paper's orientation
   options.rotation = parseFloat(options.rotation);
   if ( isNaN(options.rotation) ) { options.rotation = 0; }
-
   let radRotation = options.rotation * Math.PI / 180;
+
+  // If we are in portrait mode, we must flip the text 180°.
+  if (this.orientation !== "landscape") {
+    radRotation += Math.PI
+  }
 
   this.queue(
     "DI",
@@ -888,7 +901,7 @@ Plotter.prototype.drawText = function(text, options = {}) {
     ]
   );
 
-  // Assign correct rotation angle
+  // Assign correct slant
   options.slant = parseFloat(options.slant);
   if ( isNaN(options.slant) ) { options.slant = 0; }
 
@@ -897,9 +910,6 @@ Plotter.prototype.drawText = function(text, options = {}) {
 
   // Send label command
   this.queue("LB", this._toIso646(text, options.charset));
-
-
-  // @todo: DI, DR, SI, SR and SL
 
   return this;
 
@@ -1033,7 +1043,8 @@ Plotter.prototype.drawLine = function(x, y) {
  */
 Plotter.prototype.drawLines = function(positions = [], options = {}) {
 
-  let positionsPU = [];
+  // Since this command can be very long, we break it into chunks no larger than the buffer size
+  let chunks = [[]], current = 0;
 
   // Check validity of line pattern
   // options.linePattern = options.linePattern || 7;
@@ -1049,21 +1060,33 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
     this.queue("LT", options.linePattern);
   }
 
-
+  // Positions are converted to plotter units and pushed in chunks no larger than the buffer
   for (var i = 0; i < positions.length; i += 2) {
 
     let x = this._toPlotterUnits(positions[i]);
     let y = this._toPlotterUnits(positions[i+1]);
     let p = this._toAbsoluteHpglCoordinates(x, y);
 
-    positionsPU.push(p.x, p.y);
+    if (chunks[current].join(",").length + 3 > this.characteristics.buffer) {
+      current++;
+      chunks[current] = [];
+    }
+    chunks[current].push(p.x, p.y);
 
   }
 
-  if (positionsPU.length > 0) {
+  // Only queue if there is actual data in the array. We lower the pen, go through each chunk and
+  // then lift the pen up.
+  if (chunks[0].length > 0) {
+
     this.queue("PD");
-    this.queue("PA", positionsPU.join(","));
+
+    chunks.forEach((chunk) => {
+      this.queue("PA", chunk.join(","));
+    });
+
     this.queue("PU");
+
   }
 
   return this;
@@ -1143,8 +1166,9 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
 /**
  * Returns the plottable area for the current paper and orientation.
  *
- * @param {Boolean} [metric=true] Whether the
- * @returns {Rectangle} fff
+ * @param {Boolean} [metric=true] Whether to use metric (cm, default) or imperial values (inches).
+ * @returns {Rectangle} A `Rectangle` object which contains information about the width, the height
+ * and the position (x, y) of the plottable area.
  */
 Plotter.prototype.getPlottableArea = function(metric = true) {
 
@@ -1258,7 +1282,7 @@ Plotter.prototype._processQueue = function() {
 
     } else {
 
-      console.log("Not enough size.");
+      console.log("Not enough size (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
 
       this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
     }
