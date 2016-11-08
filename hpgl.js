@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.6.0-alpha.3
+hpgl v0.6.0-alpha.4
 
 A Node.js library to communicate with HPGL-compatible plotters and printers.
 https://github.com/cotejp/hpgl
@@ -858,9 +858,10 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  * negative value mirrors the text for that dimension.
  * @param {number} [options.characterHeight=0.269] The height, in centimeters, to draw the text at.
  * A negative value mirrors the text for that dimension.
- * @param {number} [options.rotation=0] The rotation to apply to the text (in degrees).
- * @param {number} [options.slant=0] The slant (italic) with which characters are lettered (in
+ * @param {number} [options.rotation=0] The counter-clockwise rotation to apply to the text (in
  * degrees).
+ * @param {number} [options.slant=0] The slant (italic) with which characters are lettered (in
+ * degrees). A typical range of values is between -45° and +45°.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.drawText = function(text, options = {}) {
@@ -1067,7 +1068,15 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
     let y = this._toPlotterUnits(positions[i+1]);
     let p = this._toAbsoluteHpglCoordinates(x, y);
 
-    if (chunks[current].join(",").length + 3 > this.characteristics.buffer) {
+    // Chunks must be smaller than the total buffer size. For each chunk, we send "PA", then the
+    // positions (separated by commas) and finally ";". So, before adding a new position, we must
+    // make sure that this new position does no bring the chunk above the buffer's size. We take the
+    // length for the new position, add 3 bytes for "PA" and ";" and add that to the existing length
+    // of the chunk. If it exceeds the buffer's size, we create a new chunk.
+    if (
+      3 + chunks[current].join(",").length + ("," + p.x + "," + p.y).length
+      > this.characteristics.buffer
+    ) {
       current++;
       chunks[current] = [];
     }
@@ -1262,7 +1271,7 @@ Plotter.prototype._processQueue = function() {
     // delay processing until later.
     if (this._queue[0].instruction.length < data) {
 
-      console.log("Enough size.");
+      console.log("Enough buffer space: " + data);
 
       // Send oldest available instruction first (and keep it for later check)
       var command = this._queue.shift();
@@ -1282,7 +1291,7 @@ Plotter.prototype._processQueue = function() {
 
     } else {
 
-      console.log("Not enough size (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
+      console.log("Not enough buffer space (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
 
       this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
     }
