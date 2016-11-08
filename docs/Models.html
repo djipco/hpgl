@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Models - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li></ul></li><li><a href="Rectangle.html">Rectangle</a></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">Models</h1>
+    
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        Models
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+
+    <h4 class="name" id="Models"><span class="type-signature"></span>new Models<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line45">line 45</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-todo">To Do:</dt>
+    <dd class="tag-todo">
+        <ul>
+            <li>should this even be exported? allos the user to view the supported modesl ?!</li>
+        </ul>
+    </dd>
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>The <code>Models</code> class is basically an enumeration class that provides information about all the
+devices (only a few plotters for now) that are supported by the library.</p>
+<blockquote>
+<p>Note: the only plotter that was tested so far is the <strong>HP 7475A</strong>. We are assuming the others
+are going to work based on the documentation we found for them.</p>
+</blockquote>
+<p>If you have a plotter that is not listed here, <a href="https://twitter.com/jpcote">contact the author</a>
+to see if we can add support for your device. Adding support for a new model simply involves
+retrieving the information such as the one found in this class for other devices.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".7470A"><span class="type-signature">(static) </span>7470A<span class="type-signature"> :<a href="global.html#PlotterCharacteristics">PlotterCharacteristics</a></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line87">line 87</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-todo">To Do:</dt>
+    <dd class="tag-todo">
+        <ul>
+            <li>find margin information</li>
+        </ul>
+    </dd>
+    
+</dl>
+
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="global.html#PlotterCharacteristics">PlotterCharacteristics</a></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".7475A"><span class="type-signature">(static) </span>7475A<span class="type-signature"> :<a href="global.html#PlotterCharacteristics">PlotterCharacteristics</a></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line106">line 106</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="global.html#PlotterCharacteristics">PlotterCharacteristics</a></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".7550A"><span class="type-signature">(static) </span>7550A<span class="type-signature"> :<a href="global.html#PlotterCharacteristics">PlotterCharacteristics</a></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line146">line 146</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-todo">To Do:</dt>
+    <dd class="tag-todo">
+        <ul>
+            <li>find margin information</li>
+        </ul>
+    </dd>
+    
+</dl>
+
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="global.html#PlotterCharacteristics">PlotterCharacteristics</a></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer style="font-style: normal; font-size: 0.9em">
+
+  <hr>
+  <b>hpgl v0.6.0-alpha.3</b> /
+  ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
+
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
