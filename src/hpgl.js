@@ -13,8 +13,8 @@ var orientations = ["portrait", "landscape"];
  *
  * @class
  *
- * @param x {Number} - Position of the rectangle along the **x** axis.
- * @param y {Number} - Position of the rectangle along the **y** axis.
+ * @param x {Number} - Position of the rectangle's top-left corner along the **x** axis.
+ * @param y {Number} - Position of the rectangle's topl-left corner along the **y** axis.
  * @param width {Number} - Width of the rectangle.
  * @param height {Number} - Height of the rectangle.
  */
@@ -668,7 +668,7 @@ Plotter.prototype._toRelativeHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
-  // console.log("_onData: " + data);
+  console.log("_onData: " + data);
 
   if (data.toString() === "\r") {
 
@@ -1004,7 +1004,8 @@ Plotter.prototype.drawLine = function(x, y) {
  */
 Plotter.prototype.drawLines = function(positions = [], options = {}) {
 
-  let positionsPU = [];
+  // Since this command can be very long, we break it into chunks no larger than the buffer size
+  let chunks = [[]], current = 0;
 
   // Check validity of line pattern
   // options.linePattern = options.linePattern || 7;
@@ -1020,21 +1021,33 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
     this.queue("LT", options.linePattern);
   }
 
-
+  // Positions are converted to plotter units and pushed in chunks no larger than the buffer
   for (var i = 0; i < positions.length; i += 2) {
 
     let x = this._toPlotterUnits(positions[i]);
     let y = this._toPlotterUnits(positions[i+1]);
     let p = this._toAbsoluteHpglCoordinates(x, y);
 
-    positionsPU.push(p.x, p.y);
+    if (chunks[current].join(",").length + 3 > this.characteristics.buffer) {
+      current++;
+      chunks[current] = [];
+    }
+    chunks[current].push(p.x, p.y);
 
   }
 
-  if (positionsPU.length > 0) {
+  // Only queue if there is actual data in the array. We lower the pen, go through each chunk and
+  // then lift the pen up.
+  if (chunks[0].length > 0) {
+
     this.queue("PD");
-    this.queue("PA", positionsPU.join(","));
+
+    chunks.forEach((chunk) => {
+      this.queue("PA", chunk.join(","));
+    });
+
     this.queue("PU");
+
   }
 
   return this;
@@ -1114,8 +1127,9 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
 /**
  * Returns the plottable area for the current paper and orientation.
  *
- * @param {Boolean} [metric=true] Whether the
- * @returns {Rectangle} fff
+ * @param {Boolean} [metric=true] Whether to use metric (cm, default) or imperial values (inches).
+ * @returns {Rectangle} A `Rectangle` object which contains information about the width, the height
+ * and the position (x, y) of the plottable area.
  */
 Plotter.prototype.getPlottableArea = function(metric = true) {
 
@@ -1229,7 +1243,7 @@ Plotter.prototype._processQueue = function() {
 
     } else {
 
-      console.log("Not enough size.");
+      console.log("Not enough size (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
 
       this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
     }
