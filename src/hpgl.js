@@ -793,7 +793,8 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
 };
 
 /**
- * Draws the specified text.
+ * Draws the specified text at the current pen position. The reference point is at the text's bottom
+ * left.
  *
  * @todo text direction (double check with orientation)
  * @todo Add the missing character sets.
@@ -835,9 +836,6 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  */
 Plotter.prototype.drawText = function(text, options = {}) {
 
-  // this._toIso646(text, options.charset);
-  // return;
-
   // Defaults
   if (!options.charset) options.charset = 0;
   if (!options.characterWidth) options.characterWidth = .187;
@@ -856,11 +854,15 @@ Plotter.prototype.drawText = function(text, options = {}) {
     ]
   );
 
-  // Assign correct rotation angle
+  // If a 'rotation' is requested, it must be adjusted for the paper's orientation
   options.rotation = parseFloat(options.rotation);
   if ( isNaN(options.rotation) ) { options.rotation = 0; }
-
   let radRotation = options.rotation * Math.PI / 180;
+
+  // If we are in portrait mode, we must flip the text 180°.
+  if (this.orientation !== "landscape") {
+    radRotation += Math.PI
+  }
 
   this.queue(
     "DI",
@@ -870,7 +872,7 @@ Plotter.prototype.drawText = function(text, options = {}) {
     ]
   );
 
-  // Assign correct rotation angle
+  // Assign correct slant
   options.slant = parseFloat(options.slant);
   if ( isNaN(options.slant) ) { options.slant = 0; }
 
@@ -879,9 +881,6 @@ Plotter.prototype.drawText = function(text, options = {}) {
 
   // Send label command
   this.queue("LB", this._toIso646(text, options.charset));
-
-
-  // @todo: DI, DR, SI, SR and SL
 
   return this;
 
