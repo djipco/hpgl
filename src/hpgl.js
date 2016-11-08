@@ -66,6 +66,17 @@ var Models = {
    * @property {number} papers.~format~.long - The length of the long side of the plottable are.
    * @property {number} papers.~format~.short - The length of the short side of the plottable are.
    * @property {number} papers.~format~.psCode - The paper size (**PS**) code for that paper (not
+   * @property {number} papers.~format~.margins - The margins for that paper.
+   * @property {number} papers.~format~.margins.landscape - Margins in **landscape** orientation.
+   * @property {number} papers.~format~.margins.landscape.top - Top margin.
+   * @property {number} papers.~format~.margins.landscape.right - Right margin.
+   * @property {number} papers.~format~.margins.landscape.bottom - Bottom margin.
+   * @property {number} papers.~format~.margins.landscape.left - Left margin.
+   * @property {number} papers.~format~.margins.portrait - Margins in **portrait** orientation.
+   * @property {number} papers.~format~.margins.portrait.top - Top margin.
+   * @property {number} papers.~format~.margins.portrait.right - Right margin.
+   * @property {number} papers.~format~.margins.portrait.bottom - Bottom margin.
+   * @property {number} papers.~format~.margins.portrait.left - Left margin.
    * necessary on most devices).
    */
 
@@ -309,9 +320,9 @@ var Plotter = function() {
    */
   Object.defineProperty(this, 'penThickness', {
 
-    get: function() { return this._penThickness; },
+    get: () => { return this._penThickness; },
 
-    set: function(value) {
+    set: (value) => {
 
       if (value >= 0.1 && value <= 5) {
         this._penThickness = value;
