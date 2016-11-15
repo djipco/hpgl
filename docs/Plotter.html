@@ -2069,7 +2069,7 @@ When drawing is done, the pen is returned to the starting point.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line838">line 838</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line842">line 842</a>
     </li></ul></dd>
     
 
@@ -2258,69 +2258,6 @@ left.</p>
 
         <tr>
             
-                <td class="name"><code>charset</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    <code>0</code>
-                
-                </td>
-            
-
-            <td class="description last"><p>The numerical ID of the character set to use to print
-the label. These sets are defined by the <a href="https://en.wikipedia.org/wiki/ISO/IEC_646">IS0 646</a>
-standard.</p>
-<p>Currently, only the <strong>ANSI</strong> and the <strong>ISO French</strong> sets are available:</p>
-<ul>
-<li>0: ANSI</li>
-<li><del>1: 9825 Character Set</del></li>
-<li><del>2: French/German</del></li>
-<li><del>3: Scandinavian</del></li>
-<li><del>4: Spanish/Latin American</del></li>
-<li><del>6: JIS</del></li>
-<li><del>7: Roman Extensions</del></li>
-<li><del>8: Katakana</del></li>
-<li><del>9: ISO Internation Reference Version</del></li>
-<li><del>30: ISO Swedish</del></li>
-<li><del>31: ISO Swedish for Names</del></li>
-<li><del>32: ISO Norway, Version 1 (sic)</del></li>
-<li><del>33: ISO German</del></li>
-<li>34: ISO French</li>
-<li><del>35: ISO United Kingdom (sic)</del></li>
-<li><del>36: ISO Italian</del></li>
-<li><del>37: ISO Spanish</del></li>
-<li><del>38: ISO Portuguese</del></li>
-<li><del>39: ISO Norway, Version 2 (sic)</del></li>
-</ul></td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>characterWidth</code></td>
             
 
@@ -2353,8 +2290,8 @@ standard.</p>
                 </td>
             
 
-            <td class="description last"><p>The width, in centimeters, to draw the text at. A
-negative value mirrors the text for that dimension.</p></td>
+            <td class="description last"><p>The width, in centimeters, of a single character
+of text. A negative value mirrors the text for that dimension.</p></td>
         </tr>
 
     
@@ -2393,8 +2330,71 @@ negative value mirrors the text for that dimension.</p></td>
                 </td>
             
 
-            <td class="description last"><p>The height, in centimeters, to draw the text at.
-A negative value mirrors the text for that dimension.</p></td>
+            <td class="description last"><p>The height, in centimeters, of a single character
+of text. A negative value mirrors the text for that dimension.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>charset</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>0</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>The numerical ID of the character set to use to print
+the label. These sets are defined by the <a href="https://en.wikipedia.org/wiki/ISO/IEC_646">IS0 646</a>
+standard.</p>
+<p>Currently, only the <strong>ANSI</strong> (0) and the <strong>ISO French</strong> (34) sets are available:</p>
+<ul>
+<li>0: ANSI</li>
+<li><del>1: 9825 Character Set</del></li>
+<li><del>2: French/German</del></li>
+<li><del>3: Scandinavian</del></li>
+<li><del>4: Spanish/Latin American</del></li>
+<li><del>6: JIS</del></li>
+<li><del>7: Roman Extensions</del></li>
+<li><del>8: Katakana</del></li>
+<li><del>9: ISO Internation Reference Version</del></li>
+<li><del>30: ISO Swedish</del></li>
+<li><del>31: ISO Swedish for Names</del></li>
+<li><del>32: ISO Norway, Version 1 (sic)</del></li>
+<li><del>33: ISO German</del></li>
+<li>34: ISO French</li>
+<li><del>35: ISO United Kingdom (sic)</del></li>
+<li><del>36: ISO Italian</del></li>
+<li><del>37: ISO Spanish</del></li>
+<li><del>38: ISO Portuguese</del></li>
+<li><del>39: ISO Norway, Version 2 (sic)</del></li>
+</ul></td>
         </tr>
 
     
@@ -2435,6 +2435,48 @@ A negative value mirrors the text for that dimension.</p></td>
 
             <td class="description last"><p>The counter-clockwise rotation to apply to the text (in
 degrees).</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>scale</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>0</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>The scale factor used to size the characters. For example, a
+<code>scale</code> value of 2.0 doubles the character size while a <code>scale</code> of 0.5 makes it half as big.
+Scaling is applied after the <code>characterWidth</code> and <code>characterHeight</code> parameters are applied (if
+any). A negative value mirrors the character across both dimensions.</p></td>
         </tr>
 
     
@@ -3999,7 +4041,7 @@ information about the error.</p>
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.6.0-alpha.4</b> /
+  <b>hpgl v0.6.0-alpha.5</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>

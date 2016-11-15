@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.6.0-alpha.4
+hpgl v0.6.0-alpha.5
 
 A Node.js library to communicate with HPGL-compatible plotters and printers.
 https://github.com/cotejp/hpgl
@@ -830,11 +830,15 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  *
  * @param {string} text The text to write
  * @param {Object} [options={}] Options to control how the text is drawn.
+ * @param {number} [options.characterWidth=0.187] The width, in centimeters, of a single character
+ * of text. A negative value mirrors the text for that dimension.
+ * @param {number} [options.characterHeight=0.269] The height, in centimeters, of a single character
+ * of text. A negative value mirrors the text for that dimension.
  * @param {number} [options.charset=0] The numerical ID of the character set to use to print
  * the label. These sets are defined by the [IS0 646](https://en.wikipedia.org/wiki/ISO/IEC_646)
  * standard.
  *
- * Currently, only the **ANSI** and the **ISO French** sets are available:
+ * Currently, only the **ANSI** (0) and the **ISO French** (34) sets are available:
  *  - 0: ANSI
  *  - ~~1: 9825 Character Set~~
  *  - ~~2: French/German~~
@@ -854,12 +858,12 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  *  - ~~37: ISO Spanish~~
  *  - ~~38: ISO Portuguese~~
  *  - ~~39: ISO Norway, Version 2 (sic)~~
- * @param {number} [options.characterWidth=0.187] The width, in centimeters, to draw the text at. A
- * negative value mirrors the text for that dimension.
- * @param {number} [options.characterHeight=0.269] The height, in centimeters, to draw the text at.
- * A negative value mirrors the text for that dimension.
  * @param {number} [options.rotation=0] The counter-clockwise rotation to apply to the text (in
  * degrees).
+ * @param {number} [options.scale=0] The scale factor used to size the characters. For example, a
+ * `scale` value of 2.0 doubles the character size while a `scale` of 0.5 makes it half as big.
+ * Scaling is applied after the `characterWidth` and `characterHeight` parameters are applied (if
+ * any). A negative value mirrors the character across both dimensions.
  * @param {number} [options.slant=0] The slant (italic) with which characters are lettered (in
  * degrees). A typical range of values is between -45° and +45°.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
@@ -867,9 +871,12 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
 Plotter.prototype.drawText = function(text, options = {}) {
 
   // Defaults
-  if (!options.charset) options.charset = 0;
-  if (!options.characterWidth) options.characterWidth = .187;
-  if (!options.characterHeight) options.characterHeight = .269;
+  if ( ![0, 34].includes(options.charset) ) options.charset = 0;
+  options.characterWidth = parseFloat(options.characterWidth) || .187;
+  options.characterHeight = parseFloat(options.characterHeight) || .269;
+  options.rotation = parseFloat(options.rotation) || 0;
+  options.scale = parseFloat(options.scale) || 1;
+  options.slant = parseFloat(options.slant) || 0;
 
   // Define the standard character set (CS) and select it (SS)
   this.queue("CS", options.charset);
@@ -879,20 +886,16 @@ Plotter.prototype.drawText = function(text, options = {}) {
   this.queue(
     "SI",
     [
-      this._toHpglDecimal(options.characterWidth),
-      this._toHpglDecimal(options.characterHeight)
+      this._toHpglDecimal(options.characterWidth * options.scale),
+      this._toHpglDecimal(options.characterHeight * options.scale)
     ]
   );
 
   // If a 'rotation' is requested, it must be adjusted for the paper's orientation
-  options.rotation = parseFloat(options.rotation);
-  if ( isNaN(options.rotation) ) { options.rotation = 0; }
   let radRotation = options.rotation * Math.PI / 180;
 
   // If we are in portrait mode, we must flip the text 180°.
-  if (this.orientation !== "landscape") {
-    radRotation += Math.PI
-  }
+  if (this.orientation !== "landscape") radRotation += Math.PI;
 
   this.queue(
     "DI",
@@ -903,9 +906,6 @@ Plotter.prototype.drawText = function(text, options = {}) {
   );
 
   // Assign correct slant
-  options.slant = parseFloat(options.slant);
-  if ( isNaN(options.slant) ) { options.slant = 0; }
-
   let radSlant = options.slant * Math.PI / 180;
   this.queue("SL", this._toHpglDecimal( Math.tan(radSlant) ) );
 
@@ -1250,6 +1250,8 @@ Plotter.prototype.queue = function(
 };
 
 /**
+ * Processes the queue of pending instructions.
+ *
  * The queue is comprised of objects:...
  *
  * @private
