@@ -420,7 +420,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     // Retrieve device model. This must be done before the other instructions because they depend
     // on the characteristics property being set.
-    this.queue("OI", [], (data) => {
+    this.queue("OI", (data) => {
       this.characteristics = Models[data];
       this.characteristics.model = data;
 
@@ -448,13 +448,13 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
       // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
       // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
       // retrieve buffer size.
-      this.queue(String.fromCharCode(27) + ".E", [], () => {}, true);
-      this.queue(String.fromCharCode(27) + ".L", [], (data) => {
+      this.queue(String.fromCharCode(27) + ".E", () => {}, true);
+      this.queue(String.fromCharCode(27) + ".L", (data) => {
         this.characteristics.buffer = data;
       }, true);
 
       // Retrieve device resolution
-      this.queue("OF", [], (data) => {
+      this.queue("OF", (data) => {
         [this.characteristics.resolution.x, this.characteristics.resolution.y] = data.split(",", 2);
 
 
@@ -474,20 +474,20 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
         // same orientation for all paper sizes. It should be noted that, on some devices, this affects
         // orientation (see below).
         if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
-          this.queue("PS", this.characteristics.papers[this.paper].psCode);
+          this.queue("PS" + this.characteristics.papers[this.paper].psCode);
         }
 
         // Check if the user-requested orientation, matches the device's default orientation
         // (landscape).
         if (this.orientation === "landscape") {
 
-          this.queue("RO", 0);    // do not rotate (or rotate back to default)
+          this.queue("RO0");    // do not rotate (or rotate back to default)
 
         } else {
 
           // Check if the device supports rotation (not all do)
           if ( this.characteristics.instructions.includes("RO") ) {
-            this.queue("RO", 90);   // rotate to other orientation
+            this.queue("RO90");   // rotate to other orientation
           } else {
             throw new Error("The device does not support the '" + this.orientation + "' orientation.");
           }
@@ -720,9 +720,9 @@ Plotter.prototype._onError = function(error) {
 };
 
 /**
- * Immediately sends a raw HPGL instruction down the serial port. The validity of the instruction's
- * syntax is not check at all. If you need validation, use the [queue()]{@link Plotter#queue}
- * function.
+ * Immediately sends a single raw HPGL instruction down the serial port. The validity of the
+ * instruction's syntax is not checked at all. If you need validation, use the
+ * [queue()]{@link Plotter#queue} function.
  *
  * Unless you are very familiar with HPGL, this method should not be used directly. Instead, you can
  * use friendlier methods such as: [drawLines()]{@link Plotter#drawLines},
@@ -850,16 +850,14 @@ Plotter.prototype.drawText = function(text, options = {}) {
   options.slant = parseFloat(options.slant) || 0;
 
   // Define the standard character set (CS) and select it (SS)
-  this.queue("CS", options.charset);
+  this.queue("CS" + options.charset);
   this.queue("SS");
 
   // Assign character width and height
   this.queue(
-    "SI",
-    [
-      this._toHpglDecimal(options.characterWidth * options.scale),
-      this._toHpglDecimal(options.characterHeight * options.scale)
-    ]
+    "SI" +
+    this._toHpglDecimal(options.characterWidth * options.scale) + "," +
+    this._toHpglDecimal(options.characterHeight * options.scale)
   );
 
   // If a 'rotation' is requested, it must be adjusted for the paper's orientation
@@ -869,19 +867,17 @@ Plotter.prototype.drawText = function(text, options = {}) {
   if (this.orientation !== "landscape") radRotation += Math.PI;
 
   this.queue(
-    "DI",
-    [
-      this._toHpglDecimal( Math.cos(radRotation) ),
-      this._toHpglDecimal( Math.sin(radRotation) )
-    ]
+    "DI" +
+    this._toHpglDecimal( Math.cos(radRotation) ) + "," +
+    this._toHpglDecimal( Math.sin(radRotation) )
   );
 
   // Assign correct slant
   let radSlant = options.slant * Math.PI / 180;
-  this.queue("SL", this._toHpglDecimal( Math.tan(radSlant) ) );
+  this.queue("SL" + this._toHpglDecimal( Math.tan(radSlant) ) );
 
   // Send label command
-  this.queue("LB", this._toIso646(text, options.charset));
+  this.queue("LB" + this._toIso646(text, options.charset));
 
   return this;
 
@@ -981,7 +977,7 @@ Plotter.prototype._toHpglDecimal = function(value) {
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
-  this.queue("CI", [this._toPlotterUnits(radius), Math.round(angle)]);
+  this.queue("CI" + this._toPlotterUnits(radius) + "," + Math.round(angle));
   return this;
 };
 
@@ -1029,7 +1025,7 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
   if (options.linePattern === 7) {
     this.queue("LT");
   } else {
-    this.queue("LT", options.linePattern);
+    this.queue("LT" + options.linePattern);
   }
 
   // Positions are converted to plotter units and pushed in chunks no larger than the buffer
@@ -1062,7 +1058,7 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
     this.queue("PD");
 
     chunks.forEach((chunk) => {
-      this.queue("PA", chunk.join(","));
+      this.queue("PA" + chunk.join(","));
     });
 
     this.queue("PU");
@@ -1097,7 +1093,7 @@ Plotter.prototype.drawRectangle = function(width, height) {
     this._toPlotterUnits(width),
     this._toPlotterUnits(height)
   );
-  this.queue("ER", [target.x, target.y]);
+  this.queue("ER" + target.x + "," + target.y);
 
   return this;
 
@@ -1113,7 +1109,7 @@ Plotter.prototype.drawRectangle = function(width, height) {
 Plotter.prototype.moveTo = function(x, y) {
 
   let point = this._toAbsoluteHpglCoordinates(this._toPlotterUnits(x), this._toPlotterUnits(y));
-  this.queue("PU", [point.x, point.y]);
+  this.queue("PU" + point.x + "," + point.y);
   return this;
 
 };
@@ -1137,7 +1133,7 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
     velocity = 38.1;
   }
 
-  this.queue("VS", this._toHpglDecimal(velocity));
+  this.queue("VS" + this._toHpglDecimal(velocity));
 
   return this;
 
@@ -1177,39 +1173,58 @@ Plotter.prototype.getPlottableArea = function(metric = true) {
 };
 
 /**
- * Queues an HPGL instruction or an RS-232-C device control command to be sent to the device as soon
- * as possible. If any parameters are present, they are properly appended to the command.
+ */
+Plotter.prototype.getMargins = function(metric = true) {
+
+  let paper = this.characteristics.papers[this.paper];
+  let margins = paper.margins[this.orientation];
+
+  margins.top = this._fromPlotterUnits(margins.top, metric);
+  margins.right = this._fromPlotterUnits(margins.right, metric);
+  margins.bottom = this._fromPlotterUnits(margins.bottom, metric);
+  margins.left = this._fromPlotterUnits(margins.left, metric);
+
+};
+
+/**
+ * Queues a single HPGL instruction, a single RS-232-C device control command or a series of such
+ * instructions concatenated in a string. The instructions will be sent as soon as the device's
+ * buffer can accept them.
  *
  * Unless you are very familiar with HPGL or RS-232-C, you should not use this method directly.
  * Instead, you can use friendlier methods such as: [drawLines()]{@link Plotter#drawLines},
  * [drawText()]{@link Plotter#drawText}, [drawCircle()]{@link Plotter#drawCircle}, etc.
  *
- * @param {string} mnemonic - 2-letter HPGL instruction or 3-byte RS-232-C command.
- * @param {number|string|number[]|string[]} [params=[]] - A string, a number or an or array of
- * string or numbers to use as parameter(s) for the instruction.
+ * @param {string} instruction - Any valid HPGL instruction(s) or RS-232-C command(s).
  * @param {Function} [callback=null] A function to call once the data has been sent to the device
- * (default) or when an answer has been received from the device. If `waitForResponse` is `true`,
- * the callback function will receive a single parameter containing the data received from the
- * device.
+ * (default) or when an answer has been received from the device (when `waitForResponse` is true).
+ * Note that if `waitForResponse` is `true`, the callback function will receive a single parameter
+ * containing the data received from the device. Also note that if the instruction string contains
+ * multiple commands, the callback will be fired after each command.
  * @param {boolean} [waitForResponse=false] Whether to execute the callback function immediately
  * after the data has been sent or only after an answer has been received from the device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.queue = function(
-  mnemonic, params = [], callback = null, waitForResponse = false
-) {
+Plotter.prototype.queue = function(instruction, callback = null, waitForResponse = false) {
 
-  // Make sure the params are wrapped in an array.
-  if (!Array.isArray(params)) params = [params];
+  // Check if we are dealing with a single instruction or multiple instructions concatenated in one
+  // string. To do that, we build a regex that will break the string on semicolons, newlines or CTX
+  // characters (for label). Then we filter out empty elements.
+  let regex = new RegExp("[;\n" + String.fromCharCode(3) + "]");
+  let commands = instruction.split(regex).filter(function(n) { return n.length >= 2; });
 
-  // Add command object to queue.
-  this._queue.push({
-    instruction: mnemonic + params.join(","),
-    callback: callback,
-    waitForResponse: waitForResponse
+  // Add command(s) to queue (tack parameters at the end)
+  commands.forEach((command) => {
+
+    this._queue.push({
+      instruction: command,
+      callback: callback,
+      waitForResponse: waitForResponse
+    });
+
+    console.log("Queue: " + command);
+
   });
-
-  console.log("Queue: " + mnemonic + params.join(","));
 
   // If the queue is not set for execution, set it.
   if (this._queueTimeOutId === 0) {
