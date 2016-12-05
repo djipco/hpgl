@@ -1,11 +1,12 @@
 'use strict';
 
-var util = require('util');
-var EventEmitter = require('events').EventEmitter;
+const EventEmitter = require('events').EventEmitter;
+const fs = require("fs");
+const util = require('util');
 
 module.exports = {};
 
-var orientations = ["portrait", "landscape"];
+const orientations = ["portrait", "landscape"];
 
 /**
  * The `Rectangle` class represents an abstrat rectangle object which posesses a `width`, a `height`
@@ -18,7 +19,7 @@ var orientations = ["portrait", "landscape"];
  * @param width {Number} - Width of the rectangle.
  * @param height {Number} - Height of the rectangle.
  */
-var Rectangle = function (x = 0, y = 0, width = 0, height = 0) {
+let Rectangle = function (x = 0, y = 0, width = 0, height = 0) {
 
   this.x = x;
   this.y = y;
@@ -38,13 +39,9 @@ var Rectangle = function (x = 0, y = 0, width = 0, height = 0) {
  * to see if we can add support for your device. Adding support for a new model simply involves
  * retrieving the information such as the one found in this class for other devices.
  *
- * @todo should this even be exported? allos the user to view the supported modesl ?!
- *
  * @class
  */
-var Models = {
-
-  // The undefined values are expected to be fetched from the device at startup.
+let Models = {
 
   /**
    * Characteristics of the plotter
@@ -82,16 +79,48 @@ var Models = {
 
   /**
    * @type {PlotterCharacteristics}
+   */
+  "GENERIC": {
+    brand: "Unknown",
+    model: "GENERIC",
+    buffer: undefined,
+    papers: {
+      list: ["A", "B", "A4", "A3"],
+      A4: {long: 10870, short: 7600},
+      A3: {long: 15970, short: 10870},
+      A: {long: 10170, short: 7840},
+      B: {long: 16450, short: 10170}
+    },
+    resolution: {
+      x: 40,
+      y: 40
+    },
+    instructions: [
+      "AA", "AP", "AR", "AS", "BF", "BL", "CA", "CI", "CM", "CP", "CS", "CT", "CV", "DC", "DF",
+      "DI", "DL", "DP", "DR", "DS", "DT", "EA", "EP", "ER", "ES", "EW", "FP", "FS", "FT", "GC",
+      "GM", "IM", "IN", "IP", "IV", "IW", "KY", "LB", "LO", "LT", "NR", "OA", "OC", "OD", "OE",
+      "OF", "OG", "OH", "OI", "OK", "OL", "OO", "OP", "OS", "OT", "OW", "PA", "PB", "PD", "PG",
+      "PM", "PR", "PT", "PU", "RA", "RO", "RP", "RR", "SA", "SC", "SI", "SL", "SM", "SP", "SR",
+      "SS", "TL", "UC", "UF", "VS", "WD", "WG", "XT", "YT"
+    ]
+  },
+
+  /**
+   * @type {PlotterCharacteristics}
    * @todo find margin information
    */
   "7470A": {
     brand: "HP",
-    model: undefined,
+    model: "7470A",
     buffer: undefined,
     papers: {
-      list: ["A4", "US"],
+      list: ["A", "A4"],
       A4: {long: 10900, short: 7650},
-      US: {long: 10300, short: 7650}
+      A: {long: 10300, short: 7650} // labeled as "US" on this model
+    },
+    resolution: {
+      x: 40,
+      y: 40
     },
     instructions: [
       "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "IM", "IN", "IP",
@@ -105,7 +134,7 @@ var Models = {
    */
   "7475A": {
     brand: "HP",
-    model: undefined,
+    model: "7475A",
     buffer: undefined,
     papers: {
       list: ["A", "B", "A4", "A3"],
@@ -127,8 +156,8 @@ var Models = {
       A3: {long: 16158, short: 11040, psCode: 0}
     },
     resolution: {
-      x: undefined,
-      y: undefined
+      x: 40,
+      y: 40
     },
     instructions: [
       "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "EA", "ER", "EW",
@@ -145,7 +174,7 @@ var Models = {
    */
   "7550A": {
     brand: "HP",
-    model: undefined,
+    model: "7550A",
     buffer: undefined,
     papers: {
       list: ["A", "B", "A4", "A3"],
@@ -155,8 +184,8 @@ var Models = {
       B: {long: 16450, short: 10170}
     },
     resolution: {
-      x: undefined,
-      y: undefined
+      x: 40,
+      y: 40
     },
     instructions: [
       "AA", "AP", "AR", "AS", "BF", "BL", "CA", "CI", "CM", "CP", "CS", "CT", "CV", "DC", "DF",
@@ -175,8 +204,6 @@ var Models = {
   // "7586B": {}
 
 };
-
-module.exports.Models = Models;
 
 /*
   HPGL Pen Plotters (http://www.winline.com/outdevs.html)
@@ -200,9 +227,7 @@ Cannot use HP-IB plotters such as:
 
 */
 
-
-
-var CharacterSets = {
+let CharacterSets = {
 
   // ISO 646 French (FR1)
   34: {
@@ -245,14 +270,41 @@ var CharacterSets = {
  * (Calcomp, for example).
  *
  * @todo create getter that returns the size of the plottable area
- * @todo the whole processQUeue mechanism needs to be looked at in details
- * @todo use ESC.O to know if device is ready (pinch wheel down,. etc.)
- * @todo create generic model for when the model is not listed
- * @todo verify if we can prepopulate the models fields
+ * @todo use ESC.O or OS to know if device is ready (pinch wheel down, etc.)
  *
  * @class
  */
-var Plotter = function() {
+let Plotter = function() {
+
+  /**
+   * The number of milliseconds to wait while the hardware device completes its initialization
+   * sequence. It is necessary to wait for a certain time after initialization because, otherwise,
+   * following requests for data might see the data truncated.
+   *
+   * @member {Number}
+   * @name Plotter#DEVICE_INIT_DELAY
+   * @constant
+   * @default 150
+   */
+  Object.defineProperty(this, "DEVICE_INIT_DELAY", {
+    enumerable: true,
+    writable: false,
+    value: 150
+  });
+
+  /**
+   * The delay to wait for between calls to process the queue.
+   *
+   * @member {Number}
+   * @name Plotter#QUEUE_DELAY
+   * @constant
+   * @default 100
+   */
+  Object.defineProperty(this, "QUEUE_DELAY", {
+    enumerable: true,
+    writable: false,
+    value: 100
+  });
 
   /**
    * @private
@@ -276,19 +328,13 @@ var Plotter = function() {
    * @private
    * @member {number}
    */
-  this._maxConnectionDelay = 2000;
-
-  /**
-   * @private
-   * @member {number}
-   */
-  this._queueDelay = 100;
-
-  /**
-   * @private
-   * @member {number}
-   */
   this._penThickness = 0.3;
+
+  /**
+   * @private
+   * @member {String}
+   */
+  this._outputFile = undefined;
 
   /**
    * The paper orientation currently selected (portrait or landscape). Paper orientation is assigned
@@ -305,7 +351,7 @@ var Plotter = function() {
    * the connection to the device (with the [connect()]{@link Plotter#connect} function). Currently,
    * it cannot be changed on the fly.
    *
-   * @type {string}
+   * @type {String}
    * @readonly
    */
   this.paper = "A";
@@ -334,6 +380,25 @@ var Plotter = function() {
   });
 
   /**
+   * Indicates whether a successful serial connection has been established or not. This does not
+   * necessarily mean the device is ready to receive commands.
+   *
+   * To know when the device is ready to receive commands, you can check out the `ready` property or
+   * listen to the [ready]{@link Plotter#event:ready} event
+   *
+   * @member {Number} Plotter#connected
+   * @readOnly
+   */
+  Object.defineProperty(this, 'connected', {
+
+    get: () => {
+      return this.transport && (this.transport.isOpen() || this.transport.connectionId >= 0);
+      // return this.transport && this.transport.isOpen();
+    }
+
+  });
+
+  /**
    * @type {PlotterCharacteristics}
    * @readonly
    */
@@ -354,9 +419,9 @@ var Plotter = function() {
   this.transport = undefined;
 
   /**
-   * Indicates whether the device is ready or not. The device is ready only after having been
-   * successfully connected by using the [Plotter.connect()]{@link Plotter#connect} function.
-   * Instructions should not be sent to the device prior to it being ready.
+   * Indicates whether the device is ready to receive commands or not. The device is ready only
+   * after having been successfully connected by using the [Plotter.connect()]{@link Plotter#connect}
+   * function. Instructions should not be sent to the device prior to it being ready.
    *
    * The [Plotter]{@link Plotter} object triggers the [ready]{@link Plotter#event:ready} event when
    * its ready.
@@ -375,6 +440,10 @@ util.inherits(Plotter, EventEmitter);
  * serial modules are supported: [serialport](https://www.npmjs.com/package/serialport) and
  * [browser-serialport](https://www.npmjs.com/package/browser-serialport).
  *
+ * Important: calling `connect()` will terminate any ongoing file capture. If you want to both
+ * plot and save to file at the same time, call `startFileCapture()` only after the plotter is
+ * ready.
+ *
  * @param {Object} transport - A transport object compatible with the
  * [serialport](https://www.npmjs.com/package/serialport) API interface.
  * Typically, it is one of: [serialport](https://www.npmjs.com/package/serialport),
@@ -392,9 +461,6 @@ util.inherits(Plotter, EventEmitter);
  * 0.1mm and 5mm).
  * @param {Function} [callback=null] - A function to trigger when the connect operation has
  * completed. This function will receive an `error` parameter is an error occured.
- *
- * @todo clean up this mess
- *
  */
 Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
@@ -403,6 +469,9 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
   // Try to open transport layer
   this.transport.open((error) => {
 
+    // Terminate any ongoing file capture session
+    this.stopFileCapture();
+
     // If the connection attempt was unsuccessful, we are done!
     if (error) {
       if (callback) { callback.call(this, error); }
@@ -410,151 +479,166 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
       return;
     }
 
+    // Install listeners
     this.transport.on('data', this._onData.bind(this));
     this.transport.on('error', this._onError.bind(this));
 
-    // Reset the device to its 'power on' status (same as DF plus: pen is raised, errors are
-    // cleared, rotation set to 0, scaling points reset). Must be done first and without being
-    // queued.
-    this.send("IN");
+    // Initialize hardware device
+    this._initializeHardwareDevice(options, callback);
 
-    // Retrieve device model. This must be done before the other instructions because they depend
-    // on the characteristics property being set.
-    this.queue("OI", (data) => {
+  });
+
+};
+
+/**
+ * @param [options={}] {Object}
+ * @param [callback=null] {Function}
+ * @private
+ */
+Plotter.prototype._initializeHardwareDevice = function(options = {}, callback = null) {
+
+  // Reset the device to its 'power on' status (same as DF plus: pen is raised, errors are
+  // cleared, rotation set to 0, scaling points reset). Must be done first and without being
+  // queued.
+  this.send("IN");
+
+  // Wait a little for the device reset to complete and then start the initialization sequence
+  setTimeout(() => {
+    this._configurePlottingEnvironment(options, callback);
+  }, this.DEVICE_INIT_DELAY);
+
+
+};
+
+/**
+ * @param [options={}] {Object}
+ * @param [callback=null] {Function}
+ * @private
+ */
+Plotter.prototype._configurePlottingEnvironment = function(options = {}, callback = null) {
+
+  // Retrieve device model. This must be done before the other instructions because they depend
+  // on the characteristics property being set.
+  this.queue("OI", (data) => {
+
+    // Assign model (or GENERIC if model cannot be found)
+    if (Models[data]) {
       this.characteristics = Models[data];
-      this.characteristics.model = data;
+    } else {
+      this.characteristics = Models["GENERIC"];
+    }
+
+    // As soon as we know the model, we can use the 'papers' and 'orientation' properties.
+    if (
+      options.paper &&
+      this.characteristics.papers.list.includes(options.paper.toUpperCase())
+    ) {
+      this.paper = options.paper.toUpperCase();
+    }
+
+    // Save different orientation if specified
+    if (
+      options.orientation &&
+      orientations.includes(options.orientation.toLowerCase())
+    ) {
+      this.orientation = options.orientation.toLowerCase();
+    }
 
 
 
-      // As soon as we know the model, we can use the 'papers' and 'orientation' properties.
-      if (
-        options.paper &&
-        this.characteristics.papers.list.includes(options.paper.toUpperCase())
-      ) {
-        this.paper = options.paper.toUpperCase();
+
+
+
+
+    // The device's default orientation changes according to paper size. For example, on the
+    // HP7475A, paper sizes A (letter) and A4 use a 'landscape' orientation whereas paper sizes B
+    // (tabloid) and A3 use a 'portrait' orientation... So, if we want some sort of standard we must
+    // rotate the orientation to whatever is requested (no matter the paper size). Other devices
+    // (7470A, for example) only have one orientation).
+
+
+
+    // Inform device of the paper size we wish to use. This is not necessary on devices that use the
+    // same orientation for all paper sizes. It should be noted that, on some devices, this affects
+    // orientation (see below).
+    if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
+      this.queue("PS" + this.characteristics.papers[this.paper].psCode);
+    }
+
+    // Check if the user-requested orientation, matches the device's default orientation
+    // (landscape).
+    if (this.orientation === "landscape") {
+
+      this.queue("RO0");    // do not rotate (or rotate back to default)
+
+    } else {
+
+      // Check if the device supports rotation (not all do)
+      if ( this.characteristics.instructions.includes("RO") ) {
+        this.queue("RO90");   // rotate to other orientation
+      } else {
+        throw new Error("The device does not support the '" + this.orientation + "' orientation.");
       }
 
-      // Save different orientation if specified
-      if (
-        options.orientation &&
-        orientations.includes(options.orientation.toLowerCase())
-      ) {
-        this.orientation = options.orientation.toLowerCase();
-      }
+    }
 
+    this.queue("IP");       // reassign P1 and P2
+    this.queue("IW");       // reset plotting window
 
+    // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
+    // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
+    // retrieve buffer size.
+    this.queue(String.fromCharCode(27) + ".E", () => {}, true);
+    this.queue(String.fromCharCode(27) + ".L", (data) => {
+      this.characteristics.buffer = data;
 
-
-      // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
-      // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
-      // retrieve buffer size.
-      this.queue(String.fromCharCode(27) + ".E", () => {}, true);
-      this.queue(String.fromCharCode(27) + ".L", (data) => {
-        this.characteristics.buffer = data;
-      }, true);
-
-      // Retrieve device resolution
-      this.queue("OF", (data) => {
-        [this.characteristics.resolution.x, this.characteristics.resolution.y] = data.split(",", 2);
-
-
-
-
-
-
-        // The device's default orientation changes according to paper size. For example, on the
-        // HP7475A, paper sizes A (letter) and A4 use a 'landscape' orientation whereas paper sizes B
-        // (tabloid) and A3 use a 'portrait' orientation... So, if we want some sort of standard we must
-        // rotate the orientation to whatever is requested (no matter the paper size). Other devices
-        // (7470A, for example) only have one orientation).
-
-
-
-        // Inform device of the paper size we wish to use. This is not necessary on devices that use the
-        // same orientation for all paper sizes. It should be noted that, on some devices, this affects
-        // orientation (see below).
-        if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
-          this.queue("PS" + this.characteristics.papers[this.paper].psCode);
-        }
-
-        // Check if the user-requested orientation, matches the device's default orientation
-        // (landscape).
-        if (this.orientation === "landscape") {
-
-          this.queue("RO0");    // do not rotate (or rotate back to default)
-
-        } else {
-
-          // Check if the device supports rotation (not all do)
-          if ( this.characteristics.instructions.includes("RO") ) {
-            this.queue("RO90");   // rotate to other orientation
-          } else {
-            throw new Error("The device does not support the '" + this.orientation + "' orientation.");
-          }
-
-        }
-
-        this.queue("IP");       // reassign P1 and P2
-        this.queue("IW");       // reset plotting window
-
-      }, true);
-
-
-
+      // We're done!
+      this._onReady(callback);
 
     }, true);
 
 
+  }, true);
 
 
+};
 
+/**
+ * @param [callback=null] {Function}
+ * @private
+ */
+Plotter.prototype._onReady = function(callback = null) {
 
+  this.ready = true;
 
+  if (callback) { callback.call(this); }
 
+  /**
+   * Event emitted when the device is ready.
+   * @event Plotter#ready
+   */
+  this.emit("ready");
 
+};
 
+/**
+ * Immediately abort any ongoing and upcoming plotting instructions.
+ *
+ * @param callback {Function} A function to execute once the abort command has been sent to the
+ * device.
+ * @returns {Plotter}
+ */
+Plotter.prototype.abort = function(callback = null) {
 
+  // Clear any timeout set to trigger the processing of the queue and empty it
+  clearTimeout(this._queueTimeOutId);
+  this._queue = [];
 
+  // Send "Abort" device control instruction
+  // this.send(String.fromCharCode(27) + ".J", callback);
+  this.send(String.fromCharCode(27) + ".K", callback);
 
-    // Wait for buffer size, model and resolution information to be retrieved before triggering
-    // user callback. If it takes too long, report error.
-    // @todo change this so we can input buffer, model and res in the Models class and only
-    let start = Date.now();
-
-    let intervalId = setInterval(() => {
-
-      if (
-        this.characteristics &&
-        this.characteristics.buffer &&
-        this.characteristics.model &&
-        this.characteristics.resolution.x
-      ) {
-
-        clearInterval(intervalId);
-        this.ready = true;
-        if (callback) { callback.call(this); }
-
-        /**
-         * Event emitted when the device is ready.
-         * @event Plotter#ready
-         */
-        this.emit("ready");
-
-      } else if (start + this._maxConnectionDelay < Date.now()) {
-
-        clearInterval(intervalId);
-        if (callback) {
-          callback.call(
-            this,
-            new Error("Could not retrieve mandatory startup information from the device.")
-          );
-        }
-
-      }
-
-    }, 100);
-
-  });
+  return this;
 
 };
 
@@ -574,10 +658,20 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
  */
 Plotter.prototype._toPlotterUnits = function(value, metric = true) {
 
+  let res = 40;
+  if (
+    this.characteristics &&
+    this.characteristics.resolution &&
+    this.characteristics.resolution.x
+    )
+  {
+    res = this.characteristics.resolution.x;
+  }
+
   if (metric) {
-    return Math.round(value * 10 * this.characteristics.resolution.x);
+    return Math.round(value * 10 * res);
   } else {
-    return Math.round(value * 3.937007874015748 * this.characteristics.resolution.x);
+    return Math.round(value * 3.937007874015748 * res);
   }
 
 };
@@ -720,8 +814,8 @@ Plotter.prototype._onError = function(error) {
 };
 
 /**
- * Immediately sends a single raw HPGL instruction down the serial port. The validity of the
- * instruction's syntax is not checked at all. If you need validation, use the
+ * Immediately sends a single raw HPGL or RS-232-C instruction down the serial port. The validity of
+ * the instruction's syntax is not checked at all. If you need validation, use the
  * [queue()]{@link Plotter#queue} function.
  *
  * Unless you are very familiar with HPGL, this method should not be used directly. Instead, you can
@@ -742,9 +836,12 @@ Plotter.prototype._onError = function(error) {
  */
 Plotter.prototype.send = function(instruction, callback = null, waitForResponse = false) {
 
-  // if (!this.ready) {
-  //   throw new Error("The device cannot receive instructions before its `ready` property is `true`");
-  // }
+  // Check if the plotter connected or an output file specified
+  if (!this.connected && !this._outputFile) {
+    throw new Error(
+      "The Plotter must be connected or an output file specified before sending instructions."
+    );
+  }
 
   // Add termination character. A semicolon is used unless we are printing a label (which requires
   // a special termination char: ETX).
@@ -754,37 +851,52 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
     instruction += ";";
   }
 
-  // Check maximum instruction length (we must first check if the buffer size is available because
-  // it will not be for the very first instruction which is "IN".
-  if (
-    this.characteristics &&
-    this.characteristics.buffer &&
-    instruction.length > this.characteristics.buffer
-  ) {
-    throw new RangeError(
-      "The maximum size for a single instruction is " + this.characteristics.buffer +
-      " bytes (characters)."
-    );
+  // All HPGL instructions are appended to the output file (if specified)
+  if (instruction.match(/^[A-Z]{2}/)) {
+    this._appendToOutputFile(instruction);
   }
 
-  // Send the instruction. Wait for printer response if required
-  if (waitForResponse) {
+  // We actually send data to the device only if there is a connection. Otherwise, we assume we are
+  // sending the data to the output file and simply trigger the callback.
+  if (this.connected) {
 
-    console.log("Send and wait " + instruction);
+    // Check maximum instruction length (we must first check if the buffer size is available because
+    // it will not be for the very first instruction which is "IN".
+    if (
+      this.characteristics &&
+      this.characteristics.buffer &&
+      instruction.length > this.characteristics.buffer
+    ) {
+      throw new RangeError(
+        "The maximum size for a single instruction is " + this.characteristics.buffer +
+        " bytes (characters)."
+      );
+    }
 
-    this.once("data", (data) => {
-      console.log("Received: " + data);
-      if (typeof callback === "function") callback(data);
-    });
-    this.transport.write(instruction);
+    // Send the instruction. Wait for printer response if required
+    if (waitForResponse) {
+
+      console.log("Send and wait " + instruction);
+
+      this.once("data", (data) => {
+        console.log("Received: " + data);
+        if (typeof callback === "function") callback(data);
+      });
+      this.transport.write(instruction);
+
+    } else {
+
+      console.log("Send " + instruction);
+
+      this.transport.write(instruction, (results) => {
+        if (typeof callback === "function") callback(results);
+      });
+
+    }
 
   } else {
 
-    console.log("Send " + instruction);
-
-    this.transport.write(instruction, (results) => {
-      if (typeof callback === "function") callback(results);
-    });
+    if (typeof callback === "function") callback();
 
   }
 
@@ -1029,7 +1141,7 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
   }
 
   // Positions are converted to plotter units and pushed in chunks no larger than the buffer
-  for (var i = 0; i < positions.length; i += 2) {
+  for (let i = 0; i < positions.length; i += 2) {
 
     let x = this._toPlotterUnits(positions[i]);
     let y = this._toPlotterUnits(positions[i+1]);
@@ -1140,6 +1252,113 @@ Plotter.prototype.setVelocity = function(velocity = 1.0) {
 };
 
 /**
+ * @param content {String}
+ * @param [newline=true] {Boolean} Whether to add a newline after the content
+ * @private
+ */
+Plotter.prototype._appendToOutputFile = function(content, newline = true) {
+
+  // If no output file has been defined, simply return.
+  if (!this._outputFile) { return; }
+
+  try {
+    fs.appendFileSync(this._outputFile, content + (newline ? "\n" : ""));
+  } catch (e) {
+    throw new Error("Could not append to specified output file.");
+  }
+
+};
+
+/**
+ * Starts appending all HPGL commands to the specified file. Unless a device has been previously
+ * connected, it is necessary to specify the device model, the paper size and orientation.
+ *
+ * @param [path=job.hpgl]
+ * @param [options]
+ * @param [options.model=GENERIC] {String} The device's model.
+ * @param [options.orientation=landscape] {String} The orientation of the paper: *landscape* or
+ * *portrait*.
+ * @param [options.paper=A] {String} - The targeted paper size. Choices are:
+ *   - **A**: ANSI A (8.5"x11", a.k.a "letter")
+ *   - **B**: ANSI B (11"x17", a.k.a "tabloid")
+ *   - **A4**: ISO A4 (210mm × 297mm)
+ *   - **A3**: ISO A3 (297mm × 420mm)
+ */
+Plotter.prototype.startFileCapture = function(path = "job.hpgl", options = {}) {
+
+  console.log("Start file capture");
+
+  this._outputFile = path;
+
+  // Any specified model, paper and orientation parameters are ignored if a connection is already
+  // open.
+  if (!this.connected) {
+
+    // Model
+    if (Models[options.model]) {
+      this.characteristics = Models[options.model];
+    } else {
+      this.characteristics = Models["GENERIC"];
+    }
+
+    // Paper
+    if (
+      options.paper &&
+      this.characteristics.papers.list.includes(options.paper.toUpperCase())
+    ) {
+      this.paper = options.paper.toUpperCase();
+    }
+
+    // Orientation
+    if (
+      options.orientation &&
+      orientations.includes(options.orientation.toLowerCase())
+    ) {
+      this.orientation = options.orientation.toLowerCase();
+    }
+
+  }
+
+  // Always start with initialization
+  this._appendToOutputFile("IN;");
+
+  // Inform device of the paper size we wish to use. This is not necessary on devices that use the
+  // same orientation for all paper sizes. It should be noted that, on some devices, this affects
+  // orientation (see below).
+  if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
+    this._appendToOutputFile("PS" + this.characteristics.papers[this.paper].psCode + ";");
+  }
+
+  // Orientation
+  if (this.orientation === "landscape") {
+
+    this._appendToOutputFile("RO0;");    // do not rotate (or rotate back to default)
+
+  } else {
+
+    // Check if the device supports the rotation (not all do)
+    if ( this.characteristics.instructions.includes("RO") ) {
+      this._appendToOutputFile("RO90;");   // rotate to other orientation
+    } else {
+      throw new Error("The device does not support the '" + this.orientation + "' orientation.");
+    }
+
+  }
+
+  // Reassign P1 and P2 and reset plotting window
+  this._appendToOutputFile("IP;");
+  this._appendToOutputFile("IW;");
+
+};
+
+/**
+ * Stops hpgl commands from being saved to file.
+ */
+Plotter.prototype.stopFileCapture = function() {
+  this._outputFile = undefined;
+};
+
+/**
  * Returns the plottable area for the current paper and orientation.
  *
  * @param {Boolean} [metric=true] Whether to use metric (cm, default) or imperial values (inches).
@@ -1228,7 +1447,7 @@ Plotter.prototype.queue = function(instruction, callback = null, waitForResponse
 
   // If the queue is not set for execution, set it.
   if (this._queueTimeOutId === 0) {
-    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
+    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
   }
 
   return this;
@@ -1252,39 +1471,52 @@ Plotter.prototype._processQueue = function() {
   this._queueTimeOutId = 0;
   if (this._queue.length < 1) { return; }
 
-  // Before sending the command, we send a request to know the available buffer space on the device.
-  this.send(String.fromCharCode(27) + ".B", (data) => {
+  // Are we connected to a device? If not, simply save to file and move along
+  if (!this.connected && this._outputFile) {
 
-    // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
-    // delay processing until later.
-    if (this._queue[0].instruction.length < data) {
+    let command = this._queue.shift();
+    this.send(command.instruction, command.callback, command.waitForResponse);
+    if (this._queue.length > 0) { this._processQueue(); }
 
-      console.log("Enough buffer space: " + data);
+  } else {
 
-      // Send oldest available instruction first (and keep it for later check)
-      var command = this._queue.shift();
-      this.send(command.instruction, command.callback, command.waitForResponse);
+    // Before sending the command, we send a request to know the available buffer space on the device.
+    this.send(String.fromCharCode(27) + ".B", (data) => {
 
-      // If the command must wait for a response, we have to hold the queue until then. Otherwise,
-      // if more commands are in the queue, process them.
-      if (command.waitForResponse) {
-        this.once("data", () => {
-          console.log("data");
-          this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
-        })
-      } else if (this._queue.length > 0) {
-        this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
-        // this._processQueue();
+      // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
+      // delay processing until later.
+      if (this._queue[0].instruction.length < data) {
+
+        console.log("Enough buffer space: " + data);
+
+        // Send oldest available instruction first (and keep it for later check)
+        let command = this._queue.shift();
+        this.send(command.instruction, command.callback, command.waitForResponse);
+
+        // If the command must wait for a response, we have to hold the queue until then. Otherwise,
+        // if more commands are in the queue, process them.
+        if (command.waitForResponse) {
+          this.once("data", () => {
+            console.log("data");
+            this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
+          })
+        } else if (this._queue.length > 0) {
+          this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
+          // this._processQueue();
+        }
+
+      } else {
+
+        console.log("Not enough buffer space (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
+
+        this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
       }
 
-    } else {
+    }, true);
 
-      console.log("Not enough buffer space (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
+  }
 
-      this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this._queueDelay);
-    }
 
-  }, true);
 
 };
 
