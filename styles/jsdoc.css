@@ -309,6 +309,10 @@ footer {
    list-style-type: none
 }
 
+.details .tag-todo ul {
+   list-style-type: inherit
+}
+
 .details pre.prettyprint {
    margin: 0
 }

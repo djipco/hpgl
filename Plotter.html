@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li></ul></li><li><a href="Rectangle.html">Rectangle</a></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7440A">7440A</a></li><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li><li data-type='member'><a href="Models.html#.GENERIC">GENERIC</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#abort">abort</a></li><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#plotFile">plotFile</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li><li data-type='method'><a href="Plotter.html#startCapturingToFile">startCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#stopCapturingToFile">stopCapturingToFile</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:connected">connected</a></li><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <div id="main">
@@ -65,7 +65,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line255">line 255</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line342">line 342</a>
     </li></ul></dd>
     
 
@@ -101,15 +101,17 @@
     <dt class="tag-todo">To Do:</dt>
     <dd class="tag-todo">
         <ul>
-            <li>create getter that returns the size of the plottable area</li>
+            <li>Create a getter that returns the size of the plottable area.</li>
         
-            <li>the whole processQUeue mechanism needs to be looked at in details</li>
+            <li>Use the ESC.O or OS instruction to know if the device is ready (pinch wheel down, etc.).</li>
         
-            <li>use ESC.O to know if device is ready (pinch wheel down,. etc.)</li>
+            <li>Find actual margins where they are missing (7550A, 7470A, GENERIC, etc.).</li>
         
-            <li>create generic model for when the model is not listed</li>
+            <li>Instructions queued with `waitForResponse should timeout if the response does not come`</li>
         
-            <li>verify if we can prepopulate the models fields</li>
+            <li>The queue() function should validate if the instruction(s) is actually valid.</li>
+        
+            <li>Implement penThickness.</li>
         </ul>
     </dd>
     
@@ -121,8 +123,38 @@
 
 <div class="description">
     <p>The <code>Plotter</code> class provides methods to interact with an HPGL-compatible plotter such as those
-made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol
-(Calcomp, for example).</p>
+made by HP. Various other makers also use or support the HPGL protocol (Calcomp, for example).</p>
+<h4>Event Handling</h4><p>This object extends Node's core <a href="https://nodejs.org/api/events.html">EventEmitter</a> object. This
+means you can use methods such as:
+<a href="https://nodejs.org/api/events.html#events_emitter_on_eventname_listener">on()</a>,
+<a href="https://nodejs.org/api/events.html#events_emitter_once_eventname_listener">once()</a>,
+<a href="https://nodejs.org/api/events.html#events_emitter_removelistener_eventname_listener">removeListener()</a>,
+etc.</p>
+<h4>Usage examples</h4><p>Here is how you can use the <code>Plotter</code> object in a Node.js-compatible project:</p>
+<pre class="prettyprint source"><code>const SerialPort = require(&quot;serialport&quot;);
+let transport = new SerialPort(&quot;/dev/tty.usbserial&quot;, { autoOpen: false });
+
+const Plotter = require(&quot;hpgl&quot;).Plotter;
+let plotter = new Plotter();
+
+plotter.connect(transport, {orientation: &quot;portrait&quot;}, function(error) {
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  this
+    .moveTo(1, 1)
+    .drawText(&quot;Hello, World!&quot;)
+    .moveTo(0.5, 0.5)
+    .drawRectangle(4, 3)
+
+});</code></pre><p>If you are using NW.js, you need to change the first three lines of code to this:</p>
+<pre class="prettyprint source"><code>var SerialPort = nw.require(&quot;browser-serialport&quot;).SerialPort;
+var transport = new SerialPort(&quot;/dev/tty.usbserial&quot;, {}, false);
+
+const Plotter = nw.require(&quot;hpgl&quot;).Plotter;</code></pre>
 </div>
 
 
@@ -138,6 +170,17 @@ made by HP starting in the 1980s. Various other makers also use or support the H
 
 
 
+
+<h5>Fires:</h5>
+<ul>
+    <li><a href="Plotter.html#event:connected">Plotter#event:connected</a></li>
+
+    <li><a href="Plotter.html#event:data">Plotter#event:data</a></li>
+
+    <li><a href="Plotter.html#event:error">Plotter#event:error</a></li>
+
+    <li><a href="Plotter.html#event:ready">Plotter#event:ready</a></li>
+</ul>
 
 
 
@@ -178,7 +221,7 @@ made by HP starting in the 1980s. Various other makers also use or support the H
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line340">line 340</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line499">line 499</a>
     </li></ul></dd>
     
 
@@ -236,7 +279,7 @@ made by HP starting in the 1980s. Various other makers also use or support the H
 
         
             
-<h4 class="name" id="orientation"><span class="type-signature">(readonly) </span>orientation<span class="type-signature"> :string</span></h4>
+<h4 class="name" id="connected"><span class="type-signature">(readonly) </span>connected<span class="type-signature"> :Number</span></h4>
 
 
 
@@ -247,7 +290,7 @@ made by HP starting in the 1980s. Various other makers also use or support the H
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line301">line 301</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line465">line 465</a>
     </li></ul></dd>
     
 
@@ -287,9 +330,10 @@ made by HP starting in the 1980s. Various other makers also use or support the H
 
 
 <div class="description">
-    <p>The paper orientation currently selected (portrait or landscape). Paper orientation is assigned
-during the connection to the device (with the <a href="Plotter.html#connect">connect()</a> function).
-Currently, it cannot be changed on the fly.</p>
+    <p>Indicates whether a successful serial connection has been established or not. This does not
+necessarily mean the device is ready to receive commands.</p>
+<p>To know when the device is ready to receive commands, you can check out the <code>ready</code> property or
+listen to the <a href="Plotter.html#event:ready">ready</a> event</p>
 </div>
 
 
@@ -298,7 +342,7 @@ Currently, it cannot be changed on the fly.</p>
     <ul>
         <li>
             
-<span class="param-type">string</span>
+<span class="param-type">Number</span>
 
 
         </li>
@@ -311,7 +355,7 @@ Currently, it cannot be changed on the fly.</p>
 
         
             
-<h4 class="name" id="paper"><span class="type-signature">(readonly) </span>paper<span class="type-signature"> :string</span></h4>
+<h4 class="name" id="orientation"><span class="type-signature">(readonly) </span>orientation<span class="type-signature"> :String</span></h4>
 
 
 
@@ -322,7 +366,7 @@ Currently, it cannot be changed on the fly.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line311">line 311</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line463">line 463</a>
     </li></ul></dd>
     
 
@@ -348,6 +392,91 @@ Currently, it cannot be changed on the fly.</p>
 
     
 
+    
+    <dt class="tag-default">Default Value:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>"landscape"</li>
+        </ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>The paper orientation currently selected (portrait or landscape). Paper orientation is assigned
+during the connection to the device (with the <a href="Plotter.html#connect">connect()</a> function) or
+when saving to file (with the <a href="Plotter.html#startCapturingToFile">connect()</a> function).</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">String</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="paper"><span class="type-signature">(readonly) </span>paper<span class="type-signature"> :String</span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line493">line 493</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-default">Default Value:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>"A"</li>
+        </ul></dd>
     
 
     
@@ -373,7 +502,7 @@ it cannot be changed on the fly.</p>
     <ul>
         <li>
             
-<span class="param-type">string</span>
+<span class="param-type">String</span>
 
 
         </li>
@@ -397,7 +526,7 @@ it cannot be changed on the fly.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line313">line 313</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line432">line 432</a>
     </li></ul></dd>
     
 
@@ -472,7 +601,7 @@ Specifying an invalid value will set the thickness to the default value of 0.3.<
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line367">line 367</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line524">line 524</a>
     </li></ul></dd>
     
 
@@ -512,9 +641,9 @@ Specifying an invalid value will set the thickness to the default value of 0.3.<
 
 
 <div class="description">
-    <p>Indicates whether the device is ready or not. The device is ready only after having been
-successfully connected by using the <a href="Plotter.html#connect">Plotter.connect()</a> function.
-Instructions should not be sent to the device prior to it being ready.</p>
+    <p>Indicates whether the device is ready to receive commands or not. The device is ready only
+after having been successfully connected by using the <a href="Plotter.html#connect">Plotter.connect()</a>
+function. Instructions should not be sent to the device prior to it being ready.</p>
 <p>The <a href="Plotter.html">Plotter</a> object triggers the <a href="Plotter.html#event:ready">ready</a> event when
 its ready.</p>
 </div>
@@ -549,7 +678,7 @@ its ready.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line354">line 354</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line511">line 511</a>
     </li></ul></dd>
     
 
@@ -581,13 +710,6 @@ its ready.</p>
 
     
 
-    
-    <dt class="tag-todo">To Do:</dt>
-    <dd class="tag-todo">
-        <ul>
-            <li>Must test with serialport and virtual-serialport</li>
-        </ul>
-    </dd>
     
 </dl>
 
@@ -631,7 +753,7 @@ of: <a href="https://www.npmjs.com/package/serialport">serialport</a>,
 
     
 
-    <h4 class="name" id="connect"><span class="type-signature"></span>connect<span class="signature">(transport, options<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="abort"><span class="type-signature"></span>abort<span class="signature">(callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
 
     
 
@@ -643,7 +765,7 @@ of: <a href="https://www.npmjs.com/package/serialport">serialport</a>,
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line399">line 399</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line740">line 740</a>
     </li></ul></dd>
     
 
@@ -676,12 +798,169 @@ of: <a href="https://www.npmjs.com/package/serialport">serialport</a>,
     
 
     
-    <dt class="tag-todo">To Do:</dt>
-    <dd class="tag-todo">
-        <ul>
-            <li>clean up this mess</li>
-        </ul>
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Immediately abort any ongoing and upcoming plotting instructions.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>A function to execute once the abort command has been sent to the
+device.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Plotter.html">Plotter</a></span>
+
+
     </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="connect"><span class="type-signature"></span>connect<span class="signature">(transport, options<span class="signature-attributes">opt</span>, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line559">line 559</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
     
 </dl>
 
@@ -693,6 +972,9 @@ of: <a href="https://www.npmjs.com/package/serialport">serialport</a>,
     <p>Opens a serial connection to the device using the specified serial transport layer. The following
 serial modules are supported: <a href="https://www.npmjs.com/package/serialport">serialport</a> and
 <a href="https://www.npmjs.com/package/browser-serialport">browser-serialport</a>.</p>
+<p>Important: calling <code>connect()</code> will terminate any ongoing file capture. If you want to both
+plot and save to file at the same time, call
+<a href="Plotter.html#startCapturingToFile">startCapturingToFile()</a> only after the plotter is ready.</p>
 </div>
 
 
@@ -1020,6 +1302,28 @@ completed. This function will receive an <code>error</code> parameter is an erro
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Returns the <code>Plotter</code> object to allow method chaining.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Plotter.html">Plotter</a></span>
+
+
+    </dd>
+</dl>
+
+    
 
 
         
@@ -1039,7 +1343,7 @@ completed. This function will receive an <code>error</code> parameter is an erro
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line609">line 609</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line859">line 859</a>
     </li></ul></dd>
     
 
@@ -1174,7 +1478,7 @@ occurs, this function will receive an error object as its parameter.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line979">line 979</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1243">line 1243</a>
     </li></ul></dd>
     
 
@@ -1390,7 +1694,7 @@ circle will be. Negative values make the circle start at 180° instead of 0°.</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line991">line 991</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1255">line 1255</a>
     </li></ul></dd>
     
 
@@ -1568,7 +1872,7 @@ circle will be. Negative values make the circle start at 180° instead of 0°.</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1012">line 1012</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1276">line 1276</a>
     </li></ul></dd>
     
 
@@ -1862,7 +2166,7 @@ at line extremities only. Values <code>1</code> to <code>6</code> prints various
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1084">line 1084</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1348">line 1348</a>
     </li></ul></dd>
     
 
@@ -2069,7 +2373,7 @@ When drawing is done, the pen is returned to the starting point.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line842">line 842</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1106">line 1106</a>
     </li></ul></dd>
     
 
@@ -2584,7 +2888,7 @@ degrees). A typical range of values is between -45° and +45°.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1177">line 1177</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1569">line 1569</a>
     </li></ul></dd>
     
 
@@ -2652,7 +2956,7 @@ degrees). A typical range of values is between -45° and +45°.</p></td>
 
     
 
-    <h4 class="name" id="getPlottableArea"><span class="type-signature"></span>getPlottableArea<span class="signature">(metric<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Rectangle.html">Rectangle</a>}</span></h4>
+    <h4 class="name" id="getPlottableArea"><span class="type-signature"></span>getPlottableArea<span class="signature">(metric<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="global.html#Rectangle">Rectangle</a>}</span></h4>
 
     
 
@@ -2664,7 +2968,7 @@ degrees). A typical range of values is between -45° and +45°.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1149">line 1149</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1541">line 1541</a>
     </li></ul></dd>
     
 
@@ -2814,7 +3118,7 @@ and the position (x, y) of the plottable area.</p>
     </dt>
     <dd>
         
-<span class="param-type"><a href="Rectangle.html">Rectangle</a></span>
+<span class="param-type"><a href="global.html#Rectangle">Rectangle</a></span>
 
 
     </dd>
@@ -2840,7 +3144,7 @@ and the position (x, y) of the plottable area.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1109">line 1109</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1373">line 1373</a>
     </li></ul></dd>
     
 
@@ -3006,6 +3310,199 @@ and the position (x, y) of the plottable area.</p>
 
     
 
+    <h4 class="name" id="plotFile"><span class="type-signature"></span>plotFile<span class="signature">(file, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line781">line 781</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Loads an hpgl file and sends all instructions found inside it to the plotter. The pen thickness,
+paper size and orientation defined in the file have precedence over the same properties defined
+during connection (with <a href="Plotter.html#connect">connect()</a>).</p>
+<p>This function must be called after the device is ready:</p>
+<pre class="prettyprint source"><code>plotter
+  .on(&quot;ready&quot;, function() {
+
+    if (err) {
+      console.log(&quot;An error occured!&quot;);
+      return;
+    }
+
+    this.plotFile(&quot;test.hpgl&quot;);
+
+  })
+  .connect(transport);</code></pre>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>file</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>The path to the file that will be sent to the plotter.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>A function to execute when all the instructions have been sent to
+the plotter's buffer. Depending on the size of the file and of the device's buffer, this may take
+a while.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
     <h4 class="name" id="queue"><span class="type-signature"></span>queue<span class="signature">(instruction, callback<span class="signature-attributes">opt</span>, waitForResponse<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
 
     
@@ -3018,7 +3515,7 @@ and the position (x, y) of the plottable area.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1208">line 1208</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1600">line 1600</a>
     </li></ul></dd>
     
 
@@ -3277,7 +3774,7 @@ after the data has been sent or only after an answer has been received from the 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line743">line 743</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line989">line 989</a>
     </li></ul></dd>
     
 
@@ -3317,8 +3814,8 @@ after the data has been sent or only after an answer has been received from the 
 
 
 <div class="description">
-    <p>Immediately sends a single raw HPGL instruction down the serial port. The validity of the
-instruction's syntax is not checked at all. If you need validation, use the
+    <p>Immediately sends a single raw HPGL or RS-232-C instruction down the serial port. The validity of
+the instruction's syntax is not checked at all. If you need validation, use the
 <a href="Plotter.html#queue">queue()</a> function.</p>
 <p>Unless you are very familiar with HPGL, this method should not be used directly. Instead, you can
 use friendlier methods such as: <a href="Plotter.html#drawLines">drawLines()</a>,
@@ -3537,7 +4034,7 @@ after the data has been sent or only after an answer has been received from the 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1128">line 1128</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1392">line 1392</a>
     </li></ul></dd>
     
 
@@ -3700,12 +4197,587 @@ velocity.</p>
 
 
         
+            
+
+    
+
+    <h4 class="name" id="startCapturingToFile"><span class="type-signature"></span>startCapturingToFile<span class="signature">(path<span class="signature-attributes">opt</span>, options<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1461">line 1461</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Starts appending all sent HPGL commands to the specified file. Unless a device has been
+previously connected, it is necessary to specify the device model, the paper size and the
+orientation in the options object.</p>
+<p>If you want to both plot and save at the same time, you must wait for the device to be ready
+before calling this function:</p>
+<pre class="prettyprint source"><code>plotter
+  .on(&quot;ready&quot;, function() {
+
+    if (err) {
+      console.log(&quot;An error occured!&quot;);
+      return;
+    }
+
+    this.startCapturingToFile(&quot;test.hpgl&quot;);
+
+  })
+  .connect(transport);</code></pre>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>path</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>"job.hpgl"</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>The path of the file to append to.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Options affecting how the commands are captured to file.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>model</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>"GENERIC"</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>The target device's model.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>orientation</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>"landscape"</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>The orientation of the paper: <em>landscape</em> or
+<em>portrait</em>.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>paper</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>"A"</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>The targeted paper size. Choices vary depending on the
+device. Typical choices are:</p>
+<ul>
+<li><strong>A</strong>: ANSI A (8.5&quot;x11&quot;, a.k.a &quot;letter&quot;)</li>
+<li><strong>B</strong>: ANSI B (11&quot;x17&quot;, a.k.a &quot;tabloid&quot;)</li>
+<li><strong>A4</strong>: ISO A4 (210mm × 297mm)</li>
+<li><strong>A3</strong>: ISO A3 (297mm × 420mm)</li>
+</ul></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Returns the <code>Plotter</code> object to allow method chaining.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Plotter.html">Plotter</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="stopCapturingToFile"><span class="type-signature"></span>stopCapturingToFile<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1530">line 1530</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Stops hpgl commands from being saved to file.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Returns the <code>Plotter</code> object to allow method chaining.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Plotter.html">Plotter</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
     
 
     
 
     
         <h3 class="subsection-title">Events</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id="event:connected">connected</h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line576">line 576</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Event emitted when a serial connection has been successfully established. This does not mean
+the device is ready to receive plotting instructions. For that, you should instead use the
+<a href="Plotter.html#event:ready">ready</a> event</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         
             
@@ -3724,7 +4796,7 @@ velocity.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line686">line 686</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line933">line 933</a>
     </li></ul></dd>
     
 
@@ -3857,7 +4929,7 @@ velocity.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line711">line 711</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line957">line 957</a>
     </li></ul></dd>
     
 
@@ -3991,7 +5063,7 @@ information about the error.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line537">line 537</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line725">line 725</a>
     </li></ul></dd>
     
 
@@ -4031,7 +5103,7 @@ information about the error.</p>
 
 
 <div class="description">
-    <p>Event emitted when the device is ready.</p>
+    <p>Event emitted when the device is ready to receive plotting instructions.</p>
 </div>
 
 
@@ -4074,7 +5146,7 @@ information about the error.</p>
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.6.1-alpha.1</b> /
+  <b>hpgl v0.8.0-alpha.1</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
