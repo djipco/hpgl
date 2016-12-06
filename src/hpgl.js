@@ -285,6 +285,7 @@ let Plotter = function() {
    * @name Plotter#DEVICE_INIT_DELAY
    * @constant
    * @default 150
+   * @private
    */
   Object.defineProperty(this, "DEVICE_INIT_DELAY", {
     enumerable: true,
@@ -299,11 +300,27 @@ let Plotter = function() {
    * @name Plotter#QUEUE_DELAY
    * @constant
    * @default 100
+   * @private
    */
   Object.defineProperty(this, "QUEUE_DELAY", {
     enumerable: true,
     writable: false,
     value: 100
+  });
+
+  /**
+   * Prefix for tthe RS-232 instructions. It is typically made up of the `escape` character followed
+   * by a period.
+   *
+   * @member {String}
+   * @name Plotter#RS232_PREFIX
+   * @constant
+   * @private
+   */
+  Object.defineProperty(this, "RS232_PREFIX", {
+    enumerable: true,
+    writable: false,
+    value: String.fromCharCode(27) + "."
   });
 
   /**
@@ -588,8 +605,8 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
     // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
     // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
     // retrieve buffer size.
-    this.queue(String.fromCharCode(27) + ".E", () => {}, true);
-    this.queue(String.fromCharCode(27) + ".L", (data) => {
+    this.queue(this.RS232_PREFIX + "E", () => {}, true);
+    this.queue(this.RS232_PREFIX + "L", (data) => {
       this.characteristics.buffer = data;
 
       // We're done!
@@ -634,11 +651,25 @@ Plotter.prototype.abort = function(callback = null) {
   clearTimeout(this._queueTimeOutId);
   this._queue = [];
 
-  // Send "Abort" device control instruction
-  // this.send(String.fromCharCode(27) + ".J", callback);
-  this.send(String.fromCharCode(27) + ".K", callback);
+  // Send "Abort Graphic" instruction
+  this.send(this.RS232_PREFIX + "K", callback);
 
   return this;
+
+};
+
+
+Plotter.prototype.plotFile = function(file, callback = null) {
+
+  fs.readFile(file, 'utf8', (err, data) => {
+
+    if (err)  {
+      throw new Error("Could not load requested file: " + file);
+    } else {
+      this.queue(data, callback);
+    }
+
+  });
 
 };
 
@@ -706,10 +737,7 @@ Plotter.prototype.disconnect = function(callback = null) {
     callback();
   }
 
-  console.log(this.transport);
-
-  // Abort graphic instruction
-  this.send(String.fromCharCode(27) + ".K");
+  this.abort();
 
   this.send("IN", () => {
     this.transport.close((error) => {
@@ -1432,18 +1460,22 @@ Plotter.prototype.queue = function(instruction, callback = null, waitForResponse
   let regex = new RegExp("[;\n" + String.fromCharCode(3) + "]");
   let commands = instruction.split(regex).filter(function(n) { return n.length >= 2; });
 
-  // Add command(s) to queue (tack parameters at the end)
-  commands.forEach((command) => {
 
-    this._queue.push({
-      instruction: command,
-      callback: callback,
-      waitForResponse: waitForResponse
-    });
+  // The callback is only added to the last element (if many instructions are concatenated together
+  for (let i = 0; i < commands.length; i++) {
 
-    console.log("Queue: " + command);
+    console.log("Add to _queue: " + commands[i]);
 
-  });
+    let command = { instruction: commands[i] };
+
+    if (i === commands.length - 1) {
+      command.callback = callback;
+      command.waitForResponse = waitForResponse;
+    }
+
+    this._queue.push(command);
+
+  }
 
   // If the queue is not set for execution, set it.
   if (this._queueTimeOutId === 0) {
@@ -1481,7 +1513,7 @@ Plotter.prototype._processQueue = function() {
   } else {
 
     // Before sending the command, we send a request to know the available buffer space on the device.
-    this.send(String.fromCharCode(27) + ".B", (data) => {
+    this.send(this.RS232_PREFIX + "B", (data) => {
 
       // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
       // delay processing until later.
