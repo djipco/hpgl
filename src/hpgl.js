@@ -6,228 +6,17 @@ const util = require('util');
 
 module.exports = {};
 
-const orientations = ["portrait", "landscape"];
+/**
+ * Array of valid paper orientations.
+ * @private
+ */
+const ORIENTATIONS = ["portrait", "landscape"];
 
 /**
- * The `Rectangle` class represents an abstrat rectangle object which posesses a `width`, a `height`
- * and a position (`x`, `y`).
- *
- * @class
- *
- * @param x {Number} - Position of the rectangle's top-left corner along the **x** axis.
- * @param y {Number} - Position of the rectangle's topl-left corner along the **y** axis.
- * @param width {Number} - Width of the rectangle.
- * @param height {Number} - Height of the rectangle.
+ * Supported character sets definitions. Currently, only French (FR1) is supported.
+ * @private
  */
-let Rectangle = function (x = 0, y = 0, width = 0, height = 0) {
-
-  this.x = x;
-  this.y = y;
-  this.width = width;
-  this.height = height;
-
-};
-
-/**
- * The `Models` class is basically an enumeration class that provides information about all the
- * devices (only a few plotters for now) that are supported by the library.
- *
- * >Note: the only plotter that was tested so far is the **HP 7475A**. We are assuming the others
- * >are going to work based on the documentation we found for them.
- *
- * If you have a plotter that is not listed here, [contact the author](https://twitter.com/jpcote)
- * to see if we can add support for your device. Adding support for a new model simply involves
- * retrieving the information such as the one found in this class for other devices.
- *
- * @class
- */
-let Models = {
-
-  /**
-   * Characteristics of the plotter
-   *
-   * @todo how can i move this inside the Models documentation without screwing up everything?
-   *
-   * @typedef {object} PlotterCharacteristics
-   * @property {string} brand - Name of the manufacturer of the device.
-   * @property {number} buffer - Size of the device's buffer in bytes (characters).
-   * @property {string[]} instructions - An array of all the 2-letter HPGL instruction codes
-   * supported by the device.
-   * @property {string} model - Model of the device. The library attempts to retrieve that
-   * information from the device itself.
-   * @property {Object} papers - Supported paper formats
-   * @property {string[]} papers.list - Array of all paper formats supported by the device.
-   * @property {number} papers.~format~ - Information about a specific paper format. Substitute
-   * `~format~` with the actual format from the `papers.list` array: **A3**, **A4**, **A**, **B**,
-   * **C**, etc.
-   * @property {number} papers.~format~.long - The length of the long side of the plottable are.
-   * @property {number} papers.~format~.short - The length of the short side of the plottable are.
-   * @property {number} papers.~format~.psCode - The paper size (**PS**) code for that paper (not
-   * @property {number} papers.~format~.margins - The margins for that paper.
-   * @property {number} papers.~format~.margins.landscape - Margins in **landscape** orientation.
-   * @property {number} papers.~format~.margins.landscape.top - Top margin.
-   * @property {number} papers.~format~.margins.landscape.right - Right margin.
-   * @property {number} papers.~format~.margins.landscape.bottom - Bottom margin.
-   * @property {number} papers.~format~.margins.landscape.left - Left margin.
-   * @property {number} papers.~format~.margins.portrait - Margins in **portrait** orientation.
-   * @property {number} papers.~format~.margins.portrait.top - Top margin.
-   * @property {number} papers.~format~.margins.portrait.right - Right margin.
-   * @property {number} papers.~format~.margins.portrait.bottom - Bottom margin.
-   * @property {number} papers.~format~.margins.portrait.left - Left margin.
-   * necessary on most devices).
-   */
-
-  /**
-   * @type {PlotterCharacteristics}
-   */
-  "GENERIC": {
-    brand: "Unknown",
-    model: "GENERIC",
-    buffer: undefined,
-    papers: {
-      list: ["A", "B", "A4", "A3"],
-      A4: {long: 10870, short: 7600},
-      A3: {long: 15970, short: 10870},
-      A: {long: 10170, short: 7840},
-      B: {long: 16450, short: 10170}
-    },
-    resolution: {
-      x: 40,
-      y: 40
-    },
-    instructions: [
-      "AA", "AP", "AR", "AS", "BF", "BL", "CA", "CI", "CM", "CP", "CS", "CT", "CV", "DC", "DF",
-      "DI", "DL", "DP", "DR", "DS", "DT", "EA", "EP", "ER", "ES", "EW", "FP", "FS", "FT", "GC",
-      "GM", "IM", "IN", "IP", "IV", "IW", "KY", "LB", "LO", "LT", "NR", "OA", "OC", "OD", "OE",
-      "OF", "OG", "OH", "OI", "OK", "OL", "OO", "OP", "OS", "OT", "OW", "PA", "PB", "PD", "PG",
-      "PM", "PR", "PT", "PU", "RA", "RO", "RP", "RR", "SA", "SC", "SI", "SL", "SM", "SP", "SR",
-      "SS", "TL", "UC", "UF", "VS", "WD", "WG", "XT", "YT"
-    ]
-  },
-
-  /**
-   * @type {PlotterCharacteristics}
-   * @todo find margin information
-   */
-  "7470A": {
-    brand: "HP",
-    model: "7470A",
-    buffer: undefined,
-    papers: {
-      list: ["A", "A4"],
-      A4: {long: 10900, short: 7650},
-      A: {long: 10300, short: 7650} // labeled as "US" on this model
-    },
-    resolution: {
-      x: 40,
-      y: 40
-    },
-    instructions: [
-      "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "IM", "IN", "IP",
-      "IW", "LB", "LT", "OA", "OC", "OD", "OE", "OF", "OI", "OO", "OP", "OS", "OW", "PA", "PD",
-      "PR", "PU", "SA", "SC", "SI", "SL", "SM", "SP", "SR", "SS", "TL", "UC", "VS", "XT", "YT"
-    ]
-  },
-
-  /**
-   * @type {PlotterCharacteristics}
-   */
-  "7475A": {
-    brand: "HP",
-    model: "7475A",
-    buffer: undefined,
-    papers: {
-      list: ["A", "B", "A4", "A3"],
-      A: {
-        long: 10365, short: 7962, psCode: 4,
-        margins: {
-          landscape: {top: 562, right: 463, bottom: 112, left: 348},
-          portrait: {top: 348, right: 562, bottom: 463, left: 112}
-        }
-      },
-      B: {
-        long: 16640, short: 10365, psCode: 0,
-        margins: {
-          landscape: {top: 463, right: 112, bottom: 348, left: 562},
-          portrait: {top: 112, right: 348, bottom: 562, left: 463}
-        },
-      },
-      A4: {long: 11040, short: 7721, psCode: 4},
-      A3: {long: 16158, short: 11040, psCode: 0}
-    },
-    resolution: {
-      x: 40,
-      y: 40
-    },
-    instructions: [
-      "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "EA", "ER", "EW",
-      "FT", "IM", "IN", "IP", "IW", "LB", "LT", "OA", "OC", "OD", "OE", "OF", "OH", "OI", "OO",
-      "OP", "OS", "OW", "PA", "PD", "PR", "PS", "PT", "PU", "RA", "RO", "RR", "SA", "SC", "SI",
-      "SL", "SM", "SP", "SR", "SS", "TL", "UC", "VS", "WG", "XT", "YT"
-    ]
-  },
-
-  // 12800 bytes memory
-  /**
-   * @type {PlotterCharacteristics}
-   * @todo find margin information
-   */
-  "7550A": {
-    brand: "HP",
-    model: "7550A",
-    buffer: undefined,
-    papers: {
-      list: ["A", "B", "A4", "A3"],
-      A4: {long: 10870, short: 7600},
-      A3: {long: 15970, short: 10870},
-      A: {long: 10170, short: 7840},
-      B: {long: 16450, short: 10170}
-    },
-    resolution: {
-      x: 40,
-      y: 40
-    },
-    instructions: [
-      "AA", "AP", "AR", "AS", "BF", "BL", "CA", "CI", "CM", "CP", "CS", "CT", "CV", "DC", "DF",
-      "DI", "DL", "DP", "DR", "DS", "DT", "EA", "EP", "ER", "ES", "EW", "FP", "FS", "FT", "GC",
-      "GM", "IM", "IN", "IP", "IV", "IW", "KY", "LB", "LO", "LT", "NR", "OA", "OC", "OD", "OE",
-      "OF", "OG", "OH", "OI", "OK", "OL", "OO", "OP", "OS", "OT", "OW", "PA", "PB", "PD", "PG",
-      "PM", "PR", "PT", "PU", "RA", "RO", "RP", "RR", "SA", "SC", "SI", "SL", "SM", "SP", "SR",
-      "SS", "TL", "UC", "UF", "VS", "WD", "WG", "XT", "YT"
-    ]
-  }
-
-  // "7440A": {}, res: 40,40 // buffer: 60 ou 1024
-  // "7580A": {},
-  // "7585A": {},
-  // "7585B": {},
-  // "7586B": {}
-
-};
-
-/*
-  HPGL Pen Plotters (http://www.winline.com/outdevs.html)
-
- HP 7220C
- HP ColorPro, HP 7470, HP 7475A, HP 7550A
- HP DraftPro (7570A), HP DraftPro DXL (7575A), HP DraftPro EXL (7576A)
- HP 7580A, HP 7580B, HP 7585A, HP 7585B, HP 7586B
- HP DraftMaster I (7595A), HP DraftMaster II (7596A)
- IOLINE LP 3700, IOLINE LP 4000
- Generic HPGL plotter driver supports Hewlett Packard, Océ, Calcomp, Mutoh, Graphtec, Summagraphics, IOLINE, ENCAD, Benson, Schlumberger, Aristo, Zünd and most other HPGL devices.
- */
-
-/*
-
-Cannot use HP-IB plotters such as:
-
-  - 7225B
-  - 9872A
-  -
-
-*/
-
-let CharacterSets = {
+const CHARACTER_SETS = {
 
   // ISO 646 French (FR1)
   34: {
@@ -265,14 +54,290 @@ let CharacterSets = {
 };
 
 /**
- * The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those
- * made by HP starting in the 1980s. Various other makers also use or support the HPGL protocol
- * (Calcomp, for example).
+ * A rectangle object with position (x, y) and dimensions (width, height).
  *
- * @todo create getter that returns the size of the plottable area
- * @todo use ESC.O or OS to know if device is ready (pinch wheel down, etc.)
+ * @typedef {object} Rectangle
+ * @property x {Number} - Position of the rectangle's top-left corner along the **x** axis.
+ * @property y {Number} - Position of the rectangle's topl-left corner along the **y** axis.
+ * @property width {Number} - Width of the rectangle.
+ * @property height {Number} - Height of the rectangle.
+ */
+let Rectangle = function (x = 0, y = 0, width = 0, height = 0) {
+  this.x = x;
+  this.y = y;
+  this.width = width;
+  this.height = height;
+};
+
+/**
+ * The `Models` class is basically an enumeration class that provides information about all the
+ * devices (only a few plotters for now) that are supported by the library.
+ *
+ * >Note: the only plotter that was tested so far is the **HP 7475A**. We are assuming the others
+ * >are going to work based on the documentation we found for them.
+ *
+ * If you have a plotter that is not listed here, [contact the author](https://twitter.com/jpcote)
+ * to see if we can add support for your device. Adding support for a new model simply involves
+ * retrieving the information such as the one found in this class for other devices.
  *
  * @class
+ */
+let Models = {
+
+  /**
+   * Characteristics of the plotter
+   *
+   * @typedef {object} PlotterCharacteristics
+   * @property {string} brand - Name of the manufacturer of the device.
+   * @property {number} buffer - Size of the device's buffer in bytes (characters).
+   * @property {string[]} instructions - An array of all the 2-letter HPGL instruction codes
+   * supported by the device.
+   * @property {string} model - Model of the device. The library attempts to retrieve that
+   * information from the device itself.
+   * @property {Object} papers - Supported paper formats
+   * @property {string[]} papers.list - Array of all paper formats supported by the device.
+   * @property {number} papers.~format~ - Information about a specific paper format. Substitute
+   * `~format~` with the actual format from the `papers.list` array: **A3**, **A4**, **A**, **B**,
+   * **C**, etc.
+   * @property {number} papers.~format~.long - The length of the long side of the plottable are.
+   * @property {number} papers.~format~.short - The length of the short side of the plottable are.
+   * @property {number} papers.~format~.psCode - The paper size (**PS**) code for that paper (not
+   * @property {number} papers.~format~.margins - The margins for that paper.
+   * @property {number} papers.~format~.margins.landscape - Margins in **landscape** orientation.
+   * @property {number} papers.~format~.margins.landscape.top - Top margin.
+   * @property {number} papers.~format~.margins.landscape.right - Right margin.
+   * @property {number} papers.~format~.margins.landscape.bottom - Bottom margin.
+   * @property {number} papers.~format~.margins.landscape.left - Left margin.
+   * @property {number} papers.~format~.margins.portrait - Margins in **portrait** orientation.
+   * @property {number} papers.~format~.margins.portrait.top - Top margin.
+   * @property {number} papers.~format~.margins.portrait.right - Right margin.
+   * @property {number} papers.~format~.margins.portrait.bottom - Bottom margin.
+   * @property {number} papers.~format~.margins.portrait.left - Left margin.
+   * necessary on most devices).
+   */
+
+  /** @type {PlotterCharacteristics} */
+  "GENERIC": {
+    brand: "Unknown",
+    model: "GENERIC",
+    buffer: undefined,
+    papers: {
+      list: ["A", "B", "A4", "A3"],
+      A4: {long: 10870, short: 7600},
+      A3: {long: 15970, short: 10870},
+      A: {long: 10170, short: 7840},
+      B: {long: 16450, short: 10170}
+    },
+    resolution: {
+      x: 40,
+      y: 40
+    },
+    instructions: [
+      "AA", "AP", "AR", "AS", "BF", "BL", "CA", "CI", "CM", "CP", "CS", "CT", "CV", "DC", "DF",
+      "DI", "DL", "DP", "DR", "DS", "DT", "EA", "EP", "ER", "ES", "EW", "FP", "FS", "FT", "GC",
+      "GM", "IM", "IN", "IP", "IV", "IW", "KY", "LB", "LO", "LT", "NR", "OA", "OC", "OD", "OE",
+      "OF", "OG", "OH", "OI", "OK", "OL", "OO", "OP", "OS", "OT", "OW", "PA", "PB", "PD", "PG",
+      "PM", "PR", "PT", "PU", "RA", "RO", "RP", "RR", "SA", "SC", "SI", "SL", "SM", "SP", "SR",
+      "SS", "TL", "UC", "UF", "VS", "WD", "WG", "XT", "YT"
+    ]
+  },
+
+  /** @type {PlotterCharacteristics} */
+  "7440A": {
+    brand: "HP",
+    model: "7440A",
+    buffer: undefined,
+    papers: {
+      list: ["A", "A4"],
+      A4: {long: 10870, short: 7600},
+      A: {long: 10170, short: 7840},
+    },
+    resolution: {
+      x: 40,
+      y: 40
+    },
+    instructions: [
+      "CA", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "IM", "IN", "IP", "IW", "LB", "LT", "OA",
+      "OC", "OD", "OE", "OF", "OH", "OI", "OO", "OP", "OS", "OW", "PA", "PD", "PR", "PU", "RO",
+      "SA", "SC", "SI", "SL", "SM", "SP", "SR", "SS", "TL", "UC", "VS", "XT", "YT"
+    ]
+  },
+
+  /** @type {PlotterCharacteristics} */
+  "7470A": {
+    brand: "HP",
+    model: "7470A",
+    buffer: undefined,
+    papers: {
+      list: ["A", "A4"],
+      A4: {long: 10900, short: 7650},
+      A: {long: 10300, short: 7650} // labeled as "US" on this model
+    },
+    resolution: {
+      x: 40,
+      y: 40
+    },
+    instructions: [
+      "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "IM", "IN", "IP",
+      "IW", "LB", "LT", "OA", "OC", "OD", "OE", "OF", "OI", "OO", "OP", "OS", "OW", "PA", "PD",
+      "PR", "PU", "SA", "SC", "SI", "SL", "SM", "SP", "SR", "SS", "TL", "UC", "VS", "XT", "YT"
+    ]
+  },
+
+  /** @type {PlotterCharacteristics} */
+  "7475A": {
+    brand: "HP",
+    model: "7475A",
+    buffer: undefined,
+    papers: {
+      list: ["A", "B", "A4", "A3"],
+      A: {
+        long: 10365, short: 7962, psCode: 4,
+        margins: {
+          landscape: {top: 562, right: 463, bottom: 112, left: 348},
+          portrait: {top: 348, right: 562, bottom: 463, left: 112}
+        }
+      },
+      B: {
+        long: 16640, short: 10365, psCode: 0,
+        margins: {
+          landscape: {top: 463, right: 112, bottom: 348, left: 562},
+          portrait: {top: 112, right: 348, bottom: 562, left: 463}
+        },
+      },
+      A4: {long: 11040, short: 7721, psCode: 4},
+      A3: {long: 16158, short: 11040, psCode: 0}
+    },
+    resolution: {
+      x: 40,
+      y: 40
+    },
+    instructions: [
+      "AA", "AR", "CA", "CI", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "DT", "EA", "ER", "EW",
+      "FT", "IM", "IN", "IP", "IW", "LB", "LT", "OA", "OC", "OD", "OE", "OF", "OH", "OI", "OO",
+      "OP", "OS", "OW", "PA", "PD", "PR", "PS", "PT", "PU", "RA", "RO", "RR", "SA", "SC", "SI",
+      "SL", "SM", "SP", "SR", "SS", "TL", "UC", "VS", "WG", "XT", "YT"
+    ]
+  },
+
+  /**
+   * @type {PlotterCharacteristics}
+   */
+  "7550A": {
+    brand: "HP",
+    model: "7550A",
+    buffer: undefined,  // 12800 bytes memory
+    papers: {
+      list: ["A", "B", "A4", "A3"],
+      A4: {long: 10870, short: 7600},
+      A3: {long: 15970, short: 10870},
+      A: {long: 10170, short: 7840},
+      B: {long: 16450, short: 10170}
+    },
+    resolution: {
+      x: 40,
+      y: 40
+    },
+    instructions: [
+      "AA", "AP", "AR", "AS", "BF", "BL", "CA", "CI", "CM", "CP", "CS", "CT", "CV", "DC", "DF",
+      "DI", "DL", "DP", "DR", "DS", "DT", "EA", "EP", "ER", "ES", "EW", "FP", "FS", "FT", "GC",
+      "GM", "IM", "IN", "IP", "IV", "IW", "KY", "LB", "LO", "LT", "NR", "OA", "OC", "OD", "OE",
+      "OF", "OG", "OH", "OI", "OK", "OL", "OO", "OP", "OS", "OT", "OW", "PA", "PB", "PD", "PG",
+      "PM", "PR", "PT", "PU", "RA", "RO", "RP", "RR", "SA", "SC", "SI", "SL", "SM", "SP", "SR",
+      "SS", "TL", "UC", "UF", "VS", "WD", "WG", "XT", "YT"
+    ]
+  }
+
+  // "7580A": {},
+  // "7585A": {},
+  // "7585B": {},
+  // "7586B": {}
+
+};
+
+/*
+  HPGL Pen Plotters (http://www.winline.com/outdevs.html)
+
+ HP 7220C
+ HP ColorPro, HP 7470, HP 7475A, HP 7550A
+ HP DraftPro (7570A), HP DraftPro DXL (7575A), HP DraftPro EXL (7576A)
+ HP 7580A, HP 7580B, HP 7585A, HP 7585B, HP 7586B
+ HP DraftMaster I (7595A), HP DraftMaster II (7596A)
+ IOLINE LP 3700, IOLINE LP 4000
+ Generic HPGL plotter driver supports Hewlett Packard, Océ, Calcomp, Mutoh, Graphtec, Summagraphics, IOLINE, ENCAD, Benson, Schlumberger, Aristo, Zünd and most other HPGL devices.
+ */
+
+/*
+
+Cannot use HP-IB plotters such as:
+
+  - 7225B
+  - 9872A
+  -
+
+*/
+
+/**
+ * The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those
+ * made by HP. Various other makers also use or support the HPGL protocol (Calcomp, for example).
+ *
+ * #### Event Handling
+ *
+ * This object extends Node's core [EventEmitter](https://nodejs.org/api/events.html) object. This
+ * means you can use methods such as:
+ * [on()](https://nodejs.org/api/events.html#events_emitter_on_eventname_listener),
+ * [once()](https://nodejs.org/api/events.html#events_emitter_once_eventname_listener),
+ * [removeListener()](https://nodejs.org/api/events.html#events_emitter_removelistener_eventname_listener),
+ * etc.
+ *
+ * #### Usage examples
+ *
+ * Here is how you can use the `Plotter` object in a Node.js-compatible project:
+ *
+ * ```
+ * const SerialPort = require("serialport");
+ * let transport = new SerialPort("/dev/tty.usbserial", { autoOpen: false });
+ *
+ * const Plotter = require("hpgl").Plotter;
+ * let plotter = new Plotter();
+ *
+ * plotter.connect(transport, {orientation: "portrait"}, function(error) {
+ *
+ *   if (error) {
+ *     console.log(error);
+ *     return;
+ *   }
+ *
+ *   this
+ *     .moveTo(1, 1)
+ *     .drawText("Hello, World!")
+ *     .moveTo(0.5, 0.5)
+ *     .drawRectangle(4, 3)
+ *
+ * });
+ * ```
+ *
+ * If you are using NW.js, you need to change the first three lines of code to this:
+ *
+ * ```
+ * var SerialPort = nw.require("browser-serialport").SerialPort;
+ * var transport = new SerialPort("/dev/tty.usbserial", {}, false);
+ *
+ * const Plotter = nw.require("hpgl").Plotter;
+ * ```
+ *
+ * @todo Create a getter that returns the size of the plottable area.
+ * @todo Use the ESC.O or OS instruction to know if the device is ready (pinch wheel down, etc.).
+ * @todo Find actual margins where they are missing (7550A, 7470A, GENERIC, etc.).
+ * @todo Instructions queued with `waitForResponse should timeout if the response does not come`
+ * @todo The queue() function should validate if the instruction(s) is actually valid.
+ * @todo Implement penThickness.
+ *
+ * @class
+ * @fires Plotter#event:connected
+ * @fires Plotter#event:data
+ * @fires Plotter#event:error
+ * @fires Plotter#event:ready
  */
 let Plotter = function() {
 
@@ -309,7 +374,7 @@ let Plotter = function() {
   });
 
   /**
-   * Prefix for tthe RS-232 instructions. It is typically made up of the `escape` character followed
+   * Prefix for the RS-232 instructions. It is typically made up of the `escape` character followed
    * by a period.
    *
    * @member {String}
@@ -324,54 +389,45 @@ let Plotter = function() {
   });
 
   /**
+   * Queue of command objects that will be sent (one by one) to the plotter when the device's buffer
+   * has enough space.
+   *
    * @private
    * @member {Array}
    */
   this._queue = [];
 
   /**
+   * ID of the timeout used to periodically process the queue.
+   *
    * @private
-   * @member {number}
+   * @member {Number}
    */
   this._queueTimeOutId = 0;
 
   /**
+   * Serial input buffer
+   *
    * @private
-   * @member {string}
+   * @member {String}
    */
   this._buffer  = "";
 
   /**
-   * @private
-   * @member {number}
-   */
-  this._penThickness = 0.3;
-
-  /**
+   * Path to a file were hpgl commands should be savec.
+   *
    * @private
    * @member {String}
    */
   this._outputFile = undefined;
 
   /**
-   * The paper orientation currently selected (portrait or landscape). Paper orientation is assigned
-   * during the connection to the device (with the [connect()]{@link Plotter#connect} function).
-   * Currently, it cannot be changed on the fly.
+   * Plotter pen's nib size
    *
-   * @type {string}
-   * @readonly
+   * @private
+   * @member {Number}
    */
-  this.orientation = "landscape";
-
-  /**
-   * The format of paper currently selected (A4, letter, B, etc.). Paper format is assigned during
-   * the connection to the device (with the [connect()]{@link Plotter#connect} function). Currently,
-   * it cannot be changed on the fly.
-   *
-   * @type {String}
-   * @readonly
-   */
-  this.paper = "A";
+  this._penThickness = 0.3;
 
   /**
    * The thickness of the drawing pen's nib in millimiters. The value must be between 0.1 and 5.
@@ -386,7 +442,6 @@ let Plotter = function() {
     get: () => { return this._penThickness; },
 
     set: (value) => {
-
       if (value >= 0.1 && value <= 5) {
         this._penThickness = value;
       } else {
@@ -395,6 +450,17 @@ let Plotter = function() {
     }
 
   });
+
+  /**
+   * The paper orientation currently selected (portrait or landscape). Paper orientation is assigned
+   * during the connection to the device (with the [connect()]{@link Plotter#connect} function) or
+   * when saving to file (with the [connect()]{@link Plotter#startCapturingToFile} function).
+   *
+   * @type {String}
+   * @default "landscape"
+   * @readonly
+   */
+  this.orientation = "landscape";
 
   /**
    * Indicates whether a successful serial connection has been established or not. This does not
@@ -416,6 +482,17 @@ let Plotter = function() {
   });
 
   /**
+   * The format of paper currently selected (A4, letter, B, etc.). Paper format is assigned during
+   * the connection to the device (with the [connect()]{@link Plotter#connect} function). Currently,
+   * it cannot be changed on the fly.
+   *
+   * @type {String}
+   * @default "A"
+   * @readonly
+   */
+  this.paper = "A";
+
+  /**
    * @type {PlotterCharacteristics}
    * @readonly
    */
@@ -427,8 +504,6 @@ let Plotter = function() {
    * of: [serialport](https://www.npmjs.com/package/serialport),
    * [browser-serialport](https://www.npmjs.com/package/browser-serialport) or
    * [virtual-serialport](https://www.npmjs.com/package/virtual-serialport)
-   *
-   * @todo Must test with serialport and virtual-serialport
    *
    * @member {Object}
    * @readOnly
@@ -458,8 +533,8 @@ util.inherits(Plotter, EventEmitter);
  * [browser-serialport](https://www.npmjs.com/package/browser-serialport).
  *
  * Important: calling `connect()` will terminate any ongoing file capture. If you want to both
- * plot and save to file at the same time, call `startFileCapture()` only after the plotter is
- * ready.
+ * plot and save to file at the same time, call
+ * [startCapturingToFile()]{@link Plotter#startCapturingToFile} only after the plotter is ready.
  *
  * @param {Object} transport - A transport object compatible with the
  * [serialport](https://www.npmjs.com/package/serialport) API interface.
@@ -478,6 +553,8 @@ util.inherits(Plotter, EventEmitter);
  * 0.1mm and 5mm).
  * @param {Function} [callback=null] - A function to trigger when the connect operation has
  * completed. This function will receive an `error` parameter is an error occured.
+ *
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
@@ -487,47 +564,72 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
   this.transport.open((error) => {
 
     // Terminate any ongoing file capture session
-    this.stopFileCapture();
+    this.stopCapturingToFile();
 
     // If the connection attempt was unsuccessful, we are done!
     if (error) {
-      if (callback) { callback.call(this, error); }
+      if (typeof callback === "function") { callback.call(this, error); }
       this._onError(error);
       return;
     }
+
+    /**
+     * Event emitted when a serial connection has been successfully established. This does not mean
+     * the device is ready to receive plotting instructions. For that, you should instead use the
+     * [ready]{@link Plotter#event:ready} event
+     *
+     * @event Plotter#connected
+     */
+    this.emit("connected");
 
     // Install listeners
     this.transport.on('data', this._onData.bind(this));
     this.transport.on('error', this._onError.bind(this));
 
-    // Initialize hardware device
-    this._initializeHardwareDevice(options, callback);
+    // Initialize hardware device and, when done, configure plotting environment
+    this._initializeDevice(() => {
+      this._configurePlottingEnvironment(options, callback);
+    });
 
   });
 
+  return this;
+
 };
 
 /**
- * @param [options={}] {Object}
+ * Reset the device to its 'power on' status using the `IN` instruction (same as `DF` plus: pen is
+ * raised, errors are cleared, rotation set to 0, scaling points reset). This operation is
+ * asynchronous. It generally takes a little while for the device to be fully reset.
+ *
  * @param [callback=null] {Function}
  * @private
  */
-Plotter.prototype._initializeHardwareDevice = function(options = {}, callback = null) {
+Plotter.prototype._initializeDevice = function(callback = null) {
 
-  // Reset the device to its 'power on' status (same as DF plus: pen is raised, errors are
-  // cleared, rotation set to 0, scaling points reset). Must be done first and without being
-  // queued.
+  // Cannot be queued (because that would trigger a buffer size verification)
   this.send("IN");
 
-  // Wait a little for the device reset to complete and then start the initialization sequence
+  // Wait a little for the device reset to fully complete
   setTimeout(() => {
-    this._configurePlottingEnvironment(options, callback);
+    if (typeof callback === "function") callback();
   }, this.DEVICE_INIT_DELAY);
-
 
 };
 
 /**
+ * This does:
+ *
+ *  1- Fetch the model from the device so we can assign the characteristics
+ *
+ *  2- Assign requested paper and orientation which may trigger the queuing of PS and RO
+ *     instructions depending on model.
+ *
+ *  3- Reassign P1 and P2 and reset window to match the new setup.
+ *
+ *  4- Retrieve the device's actual buffer size. On some devices, optional modules can be added to
+ *     increase buffer and add additional functionalities (such as extra instructions).
+ *
  * @param [options={}] {Object}
  * @param [callback=null] {Function}
  * @private
@@ -556,28 +658,20 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
     // Save different orientation if specified
     if (
       options.orientation &&
-      orientations.includes(options.orientation.toLowerCase())
+      ORIENTATIONS.includes(options.orientation.toLowerCase())
     ) {
       this.orientation = options.orientation.toLowerCase();
     }
 
-
-
-
-
-
-
     // The device's default orientation changes according to paper size. For example, on the
-    // HP7475A, paper sizes A (letter) and A4 use a 'landscape' orientation whereas paper sizes B
-    // (tabloid) and A3 use a 'portrait' orientation... So, if we want some sort of standard we must
-    // rotate the orientation to whatever is requested (no matter the paper size). Other devices
-    // (7470A, for example) only have one orientation).
-
-
-
+    // HP7475A, paper sizes A (letter) and A4 use a 'landscape' orientation by default whereas paper
+    // sizes B (tabloid) and A3 use a 'portrait' orientation by default...
+    //
+    // So, if we want some sort of standard we must rotate the orientation to whatever is requested
+    // (no matter the paper size). Other devices (7470A, for example) only have one orientation.
+    //
     // Inform device of the paper size we wish to use. This is not necessary on devices that use the
-    // same orientation for all paper sizes. It should be noted that, on some devices, this affects
-    // orientation (see below).
+    // same orientation for all paper sizes.
     if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
       this.queue("PS" + this.characteristics.papers[this.paper].psCode);
     }
@@ -614,9 +708,7 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
 
     }, true);
 
-
   }, true);
-
 
 };
 
@@ -628,10 +720,10 @@ Plotter.prototype._onReady = function(callback = null) {
 
   this.ready = true;
 
-  if (callback) { callback.call(this); }
+  if (typeof callback === "function") { callback.call(this); }
 
   /**
-   * Event emitted when the device is ready.
+   * Event emitted when the device is ready to receive plotting instructions.
    * @event Plotter#ready
    */
   this.emit("ready");
@@ -641,7 +733,7 @@ Plotter.prototype._onReady = function(callback = null) {
 /**
  * Immediately abort any ongoing and upcoming plotting instructions.
  *
- * @param callback {Function} A function to execute once the abort command has been sent to the
+ * @param [callback] {Function} - A function to execute once the abort command has been sent to the
  * device.
  * @returns {Plotter}
  */
@@ -658,15 +750,48 @@ Plotter.prototype.abort = function(callback = null) {
 
 };
 
-
+/**
+ * Loads an hpgl file and sends all instructions found inside it to the plotter. The pen thickness,
+ * paper size and orientation defined in the file have precedence over the same properties defined
+ * during connection (with [connect()]{@link Plotter#connect}).
+ *
+ * This function must be called after the device is ready:
+ *
+ * ```
+ * plotter
+ *   .on("ready", function() {
+ *
+ *     if (err) {
+ *       console.log("An error occured!");
+ *       return;
+ *     }
+ *
+ *     this.plotFile("test.hpgl");
+ *
+ *   })
+ *   .connect(transport);
+ *
+ * ```
+ *
+ * @param file {String} - The path to the file that will be sent to the plotter.
+ * @param [callback] {Function} - A function to execute when all the instructions have been sent to
+ * the plotter's buffer. Depending on the size of the file and of the device's buffer, this may take
+ * a while.
+ */
 Plotter.prototype.plotFile = function(file, callback = null) {
 
   fs.readFile(file, 'utf8', (err, data) => {
 
     if (err)  {
-      throw new Error("Could not load requested file: " + file);
+      throw new Error("Could not read requested file: " + file);
     } else {
+
+      if (!this.ready) {
+        throw new Error("The plotFile() function can only be called after the device is ready.");
+      }
+
       this.queue(data, callback);
+
     }
 
   });
@@ -734,14 +859,14 @@ Plotter.prototype._fromPlotterUnits = function(value, metric = true) {
 Plotter.prototype.disconnect = function(callback = null) {
 
   if ( !this.transport || this.transport.connectionId === -1 ) {
-    callback();
+    if (typeof callback === "function") callback();
   }
 
   this.abort();
 
   this.send("IN", () => {
     this.transport.close((error) => {
-      if (callback) { callback(error); }
+      if (typeof callback === "function") { callback(error); }
     });
   });
 
@@ -1038,7 +1163,7 @@ Plotter.prototype._toIso646 = function(text, charset = 0) {
 
   let converted = text.split("").map((char) => {
 
-    let found = CharacterSets[charset][char];
+    let found = CHARACTER_SETS[charset][char];
 
     if (found) {
 
@@ -1298,21 +1423,43 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
 };
 
 /**
- * Starts appending all HPGL commands to the specified file. Unless a device has been previously
- * connected, it is necessary to specify the device model, the paper size and orientation.
+ * Starts appending all sent HPGL commands to the specified file. Unless a device has been
+ * previously connected, it is necessary to specify the device model, the paper size and the
+ * orientation in the options object.
  *
- * @param [path=job.hpgl]
- * @param [options]
- * @param [options.model=GENERIC] {String} The device's model.
- * @param [options.orientation=landscape] {String} The orientation of the paper: *landscape* or
+ * If you want to both plot and save at the same time, you must wait for the device to be ready
+ * before calling this function:
+ *
+ * ```
+ * plotter
+ *   .on("ready", function() {
+ *
+ *     if (err) {
+ *       console.log("An error occured!");
+ *       return;
+ *     }
+ *
+ *     this.startCapturingToFile("test.hpgl");
+ *
+ *   })
+ *   .connect(transport);
+ *
+ * ```
+ *
+ * @param [path="job.hpgl"] {String} - The path of the file to append to.
+ * @param [options] {Object} - Options affecting how the commands are captured to file.
+ * @param [options.model="GENERIC"] {String} - The target device's model.
+ * @param [options.orientation="landscape"] {String} The orientation of the paper: *landscape* or
  * *portrait*.
- * @param [options.paper=A] {String} - The targeted paper size. Choices are:
+ * @param [options.paper="A"] {String} - The targeted paper size. Choices vary depending on the
+ * device. Typical choices are:
  *   - **A**: ANSI A (8.5"x11", a.k.a "letter")
  *   - **B**: ANSI B (11"x17", a.k.a "tabloid")
  *   - **A4**: ISO A4 (210mm × 297mm)
  *   - **A3**: ISO A3 (297mm × 420mm)
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.startFileCapture = function(path = "job.hpgl", options = {}) {
+Plotter.prototype.startCapturingToFile = function(path = "job.hpgl", options = {}) {
 
   console.log("Start file capture");
 
@@ -1340,15 +1487,12 @@ Plotter.prototype.startFileCapture = function(path = "job.hpgl", options = {}) {
     // Orientation
     if (
       options.orientation &&
-      orientations.includes(options.orientation.toLowerCase())
+      ORIENTATIONS.includes(options.orientation.toLowerCase())
     ) {
       this.orientation = options.orientation.toLowerCase();
     }
 
   }
-
-  // Always start with initialization
-  this._appendToOutputFile("IN;");
 
   // Inform device of the paper size we wish to use. This is not necessary on devices that use the
   // same orientation for all paper sizes. It should be noted that, on some devices, this affects
@@ -1381,8 +1525,10 @@ Plotter.prototype.startFileCapture = function(path = "job.hpgl", options = {}) {
 
 /**
  * Stops hpgl commands from being saved to file.
+ *
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.stopFileCapture = function() {
+Plotter.prototype.stopCapturingToFile = function() {
   this._outputFile = undefined;
 };
 
