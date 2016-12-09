@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7440A">7440A</a></li><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li><li data-type='member'><a href="Models.html#.GENERIC">GENERIC</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#abort">abort</a></li><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#plotFile">plotFile</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li><li data-type='method'><a href="Plotter.html#startCapturingToFile">startCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#stopCapturingToFile">stopCapturingToFile</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:connected">connected</a></li><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7440A">7440A</a></li><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li><li data-type='member'><a href="Models.html#.GENERIC">GENERIC</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#abort">abort</a></li><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#plotFile">plotFile</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li><li data-type='method'><a href="Plotter.html#startCapturingToFile">startCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#stopCapturingToFile">stopCapturingToFile</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:connected">connected</a></li><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:fileplotted">fileplotted</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <div id="main">
@@ -64,11 +64,11 @@ applications, you will need the
 <p><em>Note: it is possible to use <code>node-serialport</code> within NW.js and Electron projects but it needs to 
 be specifically recompiled for those environment.</em></p>
 </blockquote>
-<p>So far, the library has only beed tested with an 
-<a href="http://hpmuseum.net/display_item.php?hw=74">HP 7475a plotter</a>. If you have success with other makes
-or models, <a href="https://twitter.com/jpcote">let me know</a>. Beware that some HP plotters are only equipped 
-with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a <strong>serial</strong>
-interface (RS-232-C).</p>
+<p>So far, the library has only beed tested with <a href="http://hpmuseum.net/display_item.php?hw=74">HP 7475A</a>
+and <a href="http://hpmuseum.net/display_item.php?hw=80">HP 7440A</a> plotters. If you have success with other 
+makes or models, <a href="https://twitter.com/jpcote">let me know</a>. Beware that some HP plotters are only 
+equipped with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a 
+<strong>serial</strong> interface (RS-232-C).</p>
 <h3>Coordinate Sytem</h3><p>The plotting coordinate system is anchored in the top-left corner, just like a computer screen. 
 This means positive <code>x</code> goes right and positive <code>y</code> goes down. By default, plotters usually work 
 differently, but I find it easier to stick with the computer screen standard.</p>
@@ -139,7 +139,7 @@ are!</p>
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.0-alpha.2</b> /
+  <b>hpgl v0.8.1-alpha.1</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
