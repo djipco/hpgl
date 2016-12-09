@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.1-alpha.2
+hpgl v0.8.1-alpha.3
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -884,8 +884,8 @@ Plotter.prototype.plotFile = function(file, callback = null) {
        * Event emitted when a file has been completely drawn by the device.
        * @event Plotter#fileplotted
        * @param status {Object} - Additional information
-       * @param status.x {Object} - The ending `x` position of the pen.
-       * @param status.y {Object} - The ending `y` position of the pen.
+       * @param status.x {Object} - The ending `x` position of the pen (in cm).
+       * @param status.y {Object} - The ending `y` position of the pen (in cm).
        * @param status.penDown {Boolean} - Whether the pen is down or not.
        */
       this.emit("fileplotted", status);
