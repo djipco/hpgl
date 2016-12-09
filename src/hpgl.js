@@ -352,6 +352,7 @@ Cannot use HP-IB plotters such as:
  * const Plotter = nw.require("hpgl").Plotter;
  * ```
  *
+ * @todo Use OO to identify plotters with potential extended capabilities (such as 7440A)
  * @todo Create a getter that returns the size of the plottable area.
  * @todo Use the ESC.O or OS instruction to know if the device is ready (pinch wheel down, etc.).
  * @todo Instructions queued with waitForResponse should timeout if the response does not come`
@@ -838,15 +839,27 @@ Plotter.prototype.plotFile = function(file, callback = null) {
     this.queue(data, null, {ignoreOutputInstructions: true});
 
     // We send a bogus output-type instruction so we can know when the plotter is done drawing.
-    this.queue("OA", () => {
+    this.queue("OA", (data) => {
 
-      if (typeof callback === "function") callback();
+      let [x, y, penDown] = data.split(",");
+
+      let status = {
+        x: this._fromPlotterUnits(x),
+        y: this._fromPlotterUnits(y),
+        penDown: penDown === "1"
+      };
+
+      if (typeof callback === "function") callback(status);
 
       /**
        * Event emitted when a file has been completely drawn by the device.
        * @event Plotter#fileplotted
+       * @param status {Object} - Additional information
+       * @param status.x {Object} - The ending `x` position of the pen (in cm).
+       * @param status.y {Object} - The ending `y` position of the pen (in cm).
+       * @param status.penDown {Boolean} - Whether the pen is down or not.
        */
-      this.emit("fileplotted");
+      this.emit("fileplotted", status);
 
     }, {waitForResponse: true});
 
