@@ -354,16 +354,17 @@ Cannot use HP-IB plotters such as:
  *
  * @todo Create a getter that returns the size of the plottable area.
  * @todo Use the ESC.O or OS instruction to know if the device is ready (pinch wheel down, etc.).
- * @todo Find actual margins where they are missing (7550A, 7470A, GENERIC, etc.).
- * @todo Instructions queued with `waitForResponse should timeout if the response does not come`
+ * @todo Instructions queued with waitForResponse should timeout if the response does not come`
  * @todo The queue() function should validate if the instruction(s) is actually valid.
  * @todo Implement penThickness.
+ * @todo ?? The buffer must be flushed during connect because some devices (7440A) will keep commands in the buffer
  *
  * @class
- * @fires Plotter#event:connected
- * @fires Plotter#event:data
- * @fires Plotter#event:error
- * @fires Plotter#event:ready
+ * @fires Plotter#connected
+ * @fires Plotter#data
+ * @fires Plotter#error
+ * @fires Plotter#ready
+ * @fires Plotter#fileplotted
  */
 let Plotter = function() {
 
@@ -580,6 +581,9 @@ util.inherits(Plotter, EventEmitter);
  * @param {Function} [callback=null] - A function to trigger when the connect operation has
  * completed. This function will receive an `error` parameter is an error occured.
  *
+ * @fires Plotter#connected
+ * @fires Plotter#ready
+ *
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.connect = function(transport, options = {}, callback = null) {
@@ -725,16 +729,16 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
     // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
     // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
     // retrieve buffer size.
-    this.queue(this.RS232_PREFIX + "E", () => {}, true);
+    this.queue(this.RS232_PREFIX + "E", () => {}, {waitForResponse: true});
     this.queue(this.RS232_PREFIX + "L", (data) => {
       this.characteristics.buffer = data;
 
       // We're done!
       this._onReady(callback);
 
-    }, true);
+    }, {waitForResponse: true});
 
-  }, true);
+  }, {waitForResponse: true});
 
 };
 
@@ -777,23 +781,31 @@ Plotter.prototype.abort = function(callback = null) {
 };
 
 /**
- * Loads an hpgl file and sends all instructions found inside it to the plotter. The pen thickness,
+ * Loads an HPGL file and sends all instructions found inside it to the plotter. The pen thickness,
  * paper size and orientation defined in the file have precedence over the same properties defined
- * during connection (with [connect()]{@link Plotter#connect}).
+ * during connection with the [connect()]{@link Plotter#connect} function (if any).
  *
- * This function must be called after the device is ready:
+ * The format for the instructions must be the HP-recommended syntax. That is:
+ *
+ *  * Two-letter uppercase mnemonic
+ *  * Optionnally followed by comma-separated parameters
+ *  * Followed by a semicolon (or the `CTX` character, in the case of the `LB` instruction)
+ *
+ * Newline (`\n`) characters may be used after the semicolons for readability. No other format is
+ * supported. Also note that all HPGL **output** instructions (those starting with "O") will be
+ * discarded. The file **cannot* include RS-232-C escape sequences.
+ *
+ * #### Example
+ *
+ * Note that the `plotFile()` function must be called after the device is ready:
  *
  * ```
  * plotter
  *   .on("ready", function() {
- *
- *     if (err) {
- *       console.log("An error occured!");
- *       return;
- *     }
- *
  *     this.plotFile("test.hpgl");
- *
+ *   })
+ *   .on("fileplotted", function() {
+ *     console.log("Done plotting!");
  *   })
  *   .connect(transport);
  *
@@ -803,6 +815,8 @@ Plotter.prototype.abort = function(callback = null) {
  * @param [callback] {Function} - A function to execute when all the instructions have been sent to
  * the plotter's buffer. Depending on the size of the file and of the device's buffer, this may take
  * a while.
+ *
+ * @fires Plotter#fileplotted
  */
 Plotter.prototype.plotFile = function(file, callback = null) {
 
@@ -810,15 +824,31 @@ Plotter.prototype.plotFile = function(file, callback = null) {
 
     if (err)  {
       throw new Error("Could not read requested file: " + file);
-    } else {
-
-      if (!this.ready) {
-        throw new Error("The plotFile() function can only be called after the device is ready.");
-      }
-
-      this.queue(data, callback);
-
     }
+
+    if ( data.match(new RegExp(this.RS232_PREFIX)) ) {
+      throw new Error("The file to plot cannot contain RS-232-C escape sequences.")
+    }
+
+    if (!this.ready) {
+      throw new Error("The plotFile() function can only be called after the device is ready.");
+    }
+
+    // Queue the whole file
+    this.queue(data, null, {ignoreOutputInstructions: true});
+
+    // We send a bogus output-type instruction so we can know when the plotter is done drawing.
+    this.queue("OA", () => {
+
+      if (typeof callback === "function") callback();
+
+      /**
+       * Event emitted when a file has been completely drawn by the device.
+       * @event Plotter#fileplotted
+       */
+      this.emit("fileplotted");
+
+    }, {waitForResponse: true});
 
   });
 
@@ -1014,7 +1044,7 @@ Plotter.prototype._onError = function(error) {
  */
 Plotter.prototype.send = function(instruction, callback = null, waitForResponse = false) {
 
-  // Check if the plotter connected or an output file specified
+  // Check if the plotter is connected or an output file has been specified
   if (!this.connected && !this._outputFile) {
     throw new Error(
       "The Plotter must be connected or an output file specified before sending instructions."
@@ -1605,25 +1635,29 @@ Plotter.prototype.getMargins = function(metric = true) {
 };
 
 /**
- * Queues a single HPGL instruction, a single RS-232-C device control command or a series of such
- * instructions concatenated in a string. The instructions will be sent as soon as the device's
+ * Queues a single HPGL instruction, a series of HPGL instructions concatenated in a string or a
+ * single RS-232-C device control command. The instructions will be sent as soon as the device's
  * buffer can accept them.
  *
  * Unless you are very familiar with HPGL or RS-232-C, you should not use this method directly.
  * Instead, you can use friendlier methods such as: [drawLines()]{@link Plotter#drawLines},
  * [drawText()]{@link Plotter#drawText}, [drawCircle()]{@link Plotter#drawCircle}, etc.
  *
- * @param {string} instruction - Any valid HPGL instruction(s) or RS-232-C command(s).
+ * @param {string} instruction - Any valid HPGL instruction(s) or RS-232-C command.
  * @param {Function} [callback=null] A function to call once the data has been sent to the device
  * (default) or when an answer has been received from the device (when `waitForResponse` is true).
  * Note that if `waitForResponse` is `true`, the callback function will receive a single parameter
  * containing the data received from the device. Also note that if the instruction string contains
  * multiple commands, the callback will be fired after each command.
- * @param {boolean} [waitForResponse=false] Whether to execute the callback function immediately
- * after the data has been sent or only after an answer has been received from the device.
+ * @param {Object} [options=Object] Additional options
+ * @param {Boolean} [options.waitForResponse=false] Whether to execute the callback function
+ * immediately after the data has been sent or only after an answer has been received from the
+ * device.
+ * @param {Boolean} [options.ignoreOutputInstructions=false] Whether to ignore HPGL output
+ * instructions (instructions starting with "O"). This is useful when plotting a whole file.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.queue = function(instruction, callback = null, waitForResponse = false) {
+Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
 
   // Check if we are dealing with a single instruction or multiple instructions concatenated in one
   // string. To do that, we build a regex that will break the string on semicolons, newlines or CTX
@@ -1631,9 +1665,13 @@ Plotter.prototype.queue = function(instruction, callback = null, waitForResponse
   let regex = new RegExp("[;\n" + String.fromCharCode(3) + "]");
   let commands = instruction.split(regex).filter(function(n) { return n.length >= 2; });
 
-
-  // The callback is only added to the last element (if many instructions are concatenated together
+  // The callback is only added to the last element (if many instructions are concatenated together)
   for (let i = 0; i < commands.length; i++) {
+
+    if (commands[i].startsWith("O") && options.ignoreOutputInstructions) {
+      console.log("Ignore: " + commands[i]);
+      continue;
+    }
 
     console.log("Add to _queue: " + commands[i]);
 
@@ -1641,7 +1679,7 @@ Plotter.prototype.queue = function(instruction, callback = null, waitForResponse
 
     if (i === commands.length - 1) {
       command.callback = callback;
-      command.waitForResponse = waitForResponse;
+      command.waitForResponse = options.waitForResponse;
     }
 
     this._queue.push(command);
@@ -1683,7 +1721,8 @@ Plotter.prototype._processQueue = function() {
 
   } else {
 
-    // Before sending the command, we send a request to know the available buffer space on the device.
+    // Before sending the command, we send a request to know the available buffer space on the
+    // device.
     this.send(this.RS232_PREFIX + "B", (data) => {
 
       // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
