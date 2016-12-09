@@ -142,15 +142,36 @@ let Models = {
     ]
   },
 
-  /** @type {PlotterCharacteristics} */
+  /**
+   * Characteristics for the **HP 7440A** plotter. This model is also know as the *Color Pro
+   * Graphics* Plotter. It is an A/A4 size plotter with an 8-pen carousel.
+   *
+   * **Important**: this model can be fitted with an optional *Graphics Enhancement Cartridge* which
+   * bumps its buffer memory to 1024 (instead of 60) bytes. The cartridge also adds support for
+   * various plotting instructions which are not supported by default. For example, without the
+   * cartridge, this model cannot draw rectangles, circles or arcs, it cannot set the pen thickness,
+   * etc.
+   *
+   * @type {PlotterCharacteristics}
+   */
   "7440A": {
     brand: "HP",
     model: "7440A",
     buffer: undefined,
     papers: {
       list: ["A", "A4"],
-      A4: {long: 10870, short: 7600},
-      A: {long: 10170, short: 7840},
+      A4: {
+        long: 10880,
+        short: 7640
+      },
+      A: {
+        long: 10280,
+        short: 7640,
+        margins: {
+          portrait: {top: 240, right: 360, bottom: 640, left: 640},
+          landscape: {top: 640, right: 240, bottom: 360, left: 640}
+        }
+      },
     },
     resolution: {
       x: 40,
@@ -184,7 +205,12 @@ let Models = {
     ]
   },
 
-  /** @type {PlotterCharacteristics} */
+  /**
+   * Characteristics for the **HP 7475A** plotter. It is a A/A4 and B/A3 size plotter with a 6-pen
+   * carousel.
+   *
+   * @type {PlotterCharacteristics}
+   */
   "7475A": {
     brand: "HP",
     model: "7475A",
@@ -952,7 +978,6 @@ Plotter.prototype._onData = function(data) {
  */
 Plotter.prototype._onError = function(error) {
 
-  console.log("ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
   console.log(error);
 
   /**
