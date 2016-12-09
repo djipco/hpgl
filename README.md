@@ -25,11 +25,11 @@ applications, you will need the
 > *Note: it is possible to use `node-serialport` within NW.js and Electron projects but it needs to 
 > be specifically recompiled for those environment.*
 
-So far, the library has only beed tested with an 
-[HP 7475a plotter](http://hpmuseum.net/display_item.php?hw=74). If you have success with other makes
-or models, [let me know](https://twitter.com/jpcote). Beware that some HP plotters are only equipped 
-with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a **serial**
-interface (RS-232-C).
+So far, the library has only beed tested with [HP 7475A](http://hpmuseum.net/display_item.php?hw=74)
+and [HP 7440A](http://hpmuseum.net/display_item.php?hw=80) plotters. If you have success with other 
+makes or models, [let me know](https://twitter.com/jpcote). Beware that some HP plotters are only 
+equipped with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a 
+**serial** interface (RS-232-C).
 
 ### Coordinate Sytem
 
