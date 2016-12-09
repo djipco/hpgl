@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.0-alpha.1
+hpgl v0.8.0-alpha.2
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -171,15 +171,36 @@ let Models = {
     ]
   },
 
-  /** @type {PlotterCharacteristics} */
+  /**
+   * Characteristics for the **HP 7440A** plotter. This model is also know as the *Color Pro
+   * Graphics* Plotter. It is an A/A4 size plotter with an 8-pen carousel.
+   *
+   * **Important**: this model can be fitted with an optional *Graphics Enhancement Cartridge* which
+   * bumps its buffer memory to 1024 (instead of 60) bytes. The cartridge also adds support for
+   * various plotting instructions which are not supported by default. For example, without the
+   * cartridge, this model cannot draw rectangles, circles or arcs, it cannot set the pen thickness,
+   * etc.
+   *
+   * @type {PlotterCharacteristics}
+   */
   "7440A": {
     brand: "HP",
     model: "7440A",
     buffer: undefined,
     papers: {
       list: ["A", "A4"],
-      A4: {long: 10870, short: 7600},
-      A: {long: 10170, short: 7840},
+      A4: {
+        long: 10880,
+        short: 7640
+      },
+      A: {
+        long: 10280,
+        short: 7640,
+        margins: {
+          portrait: {top: 240, right: 360, bottom: 640, left: 640},
+          landscape: {top: 640, right: 240, bottom: 360, left: 640}
+        }
+      },
     },
     resolution: {
       x: 40,
@@ -213,7 +234,12 @@ let Models = {
     ]
   },
 
-  /** @type {PlotterCharacteristics} */
+  /**
+   * Characteristics for the **HP 7475A** plotter. It is a A/A4 and B/A3 size plotter with a 6-pen
+   * carousel.
+   *
+   * @type {PlotterCharacteristics}
+   */
   "7475A": {
     brand: "HP",
     model: "7475A",
@@ -955,7 +981,7 @@ Plotter.prototype._toRelativeHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
-  // console.log("_onData: " + data);
+  console.log("_onData: " + data);
 
   if (data.toString() === "\r") {
 
@@ -981,7 +1007,7 @@ Plotter.prototype._onData = function(data) {
  */
 Plotter.prototype._onError = function(error) {
 
-  // console.log(error);
+  console.log(error);
 
   /**
    * Event emitted when an error occurs. The specified function will receive an object with
@@ -1057,17 +1083,17 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
     // Send the instruction. Wait for printer response if required
     if (waitForResponse) {
 
-      // console.log("Send and wait " + instruction);
+      console.log("Send and wait " + instruction);
 
       this.once("data", (data) => {
-        // console.log("Received: " + data);
+        console.log("Received: " + data);
         if (typeof callback === "function") callback(data);
       });
       this.transport.write(instruction);
 
     } else {
 
-      // console.log("Send " + instruction);
+      console.log("Send " + instruction);
 
       this.transport.write(instruction, (results) => {
         if (typeof callback === "function") callback(results);
@@ -1489,7 +1515,7 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
  */
 Plotter.prototype.startCapturingToFile = function(path = "job.hpgl", options = {}) {
 
-  // console.log("Start file capture");
+  console.log("Start file capture");
 
   this._outputFile = path;
 
@@ -1638,7 +1664,7 @@ Plotter.prototype.queue = function(instruction, callback = null, waitForResponse
   // The callback is only added to the last element (if many instructions are concatenated together
   for (let i = 0; i < commands.length; i++) {
 
-    // console.log("Add to _queue: " + commands[i]);
+    console.log("Add to _queue: " + commands[i]);
 
     let command = { instruction: commands[i] };
 
@@ -1669,7 +1695,7 @@ Plotter.prototype.queue = function(instruction, callback = null, waitForResponse
  */
 Plotter.prototype._processQueue = function() {
 
-  // console.log("Process queue");
+  console.log("Process queue");
 
   // Make sure any pending timeout is cancelled. We will add a new one if necessary. Exit if no
   // commands are pending.
@@ -1693,7 +1719,7 @@ Plotter.prototype._processQueue = function() {
       // delay processing until later.
       if (this._queue[0].instruction.length < data) {
 
-        // console.log("Enough buffer space: " + data);
+        console.log("Enough buffer space: " + data);
 
         // Send oldest available instruction first (and keep it for later check)
         let command = this._queue.shift();
@@ -1703,7 +1729,7 @@ Plotter.prototype._processQueue = function() {
         // if more commands are in the queue, process them.
         if (command.waitForResponse) {
           this.once("data", () => {
-            // console.log("data");
+            console.log("data");
             this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
           })
         } else if (this._queue.length > 0) {
@@ -1713,7 +1739,7 @@ Plotter.prototype._processQueue = function() {
 
       } else {
 
-        // console.log("Not enough buffer space (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
+        console.log("Not enough buffer space (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
 
         this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
       }
