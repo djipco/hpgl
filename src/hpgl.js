@@ -822,9 +822,9 @@ Plotter.prototype.abort = function(callback = null) {
  * ```
  *
  * @param file {String} - The path to the file that will be sent to the plotter.
- * @param [callback] {Function} - A function to execute when all the instructions have been sent to
- * the plotter's buffer. Depending on the size of the file and of the device's buffer, this may take
- * a while.
+ * @param [callback] {Plotter~statusCallback} - A function to execute when all the instructions have
+ * been sent to the plotter's buffer. Depending on the size of the file and of the device's buffer,
+ * this may take a while.
  *
  * @fires Plotter#fileplotted
  */
@@ -847,16 +847,8 @@ Plotter.prototype.plotFile = function(file, callback = null) {
     // Queue the whole file
     this.queue(data, null, {ignoreOutputInstructions: true});
 
-    // We send a bogus output-type instruction so we can know when the plotter is done drawing.
-    this.queue("OA", (data) => {
-
-      let [x, y, penDown] = data.split(",");
-
-      let status = {
-        x: this._fromPlotterUnits(x),
-        y: this._fromPlotterUnits(y),
-        penDown: penDown === "1"
-      };
+    // Wait for the whole file to have been plotted
+    this.wait(status => {
 
       if (typeof callback === "function") callback(status);
 
@@ -870,11 +862,48 @@ Plotter.prototype.plotFile = function(file, callback = null) {
        */
       this.emit("fileplotted", status);
 
-    }, {waitForResponse: true});
+    });
 
   });
 
 };
+
+/**
+ * Waits for the device to finish processing and/or drawing all previously queued instructions and
+ * then executes the specified callback function.
+ *
+ * @param callback {Plotter~statusCallback} - The function to execute.
+ */
+Plotter.prototype.wait = function(callback) {
+
+  // Send a request for actual pen position and status. This means the device will have to finish
+  // all queued instructions before being able to reply.
+  this.queue("OA", (data) => {
+
+    let [x, y, penDown] = data.split(",");
+
+    let status = {
+      x: this._fromPlotterUnits(x),
+      y: this._fromPlotterUnits(y),
+      penDown: penDown === "1"
+    };
+
+    if (typeof callback === "function") { callback(status); }
+
+  }, {waitForResponse: true});
+
+};
+
+/**
+ * Defines the expected signature of functions used in a `statusCallback` context. Such functions
+ * basically receive a `status` object detailing the current status of the hardware device.
+ *
+ * @callback Plotter~statusCallback
+ * @param status {Object} Hardware status information
+ * @param status.x {Number} Position of the pen of the `x` axis (in plotter units)
+ * @param status.y {Number} Position of the pen of the `y` axis (in plotter units)
+ * @param status.penDown {Boolean} Whether the pen is down or not
+ */
 
 /**
  * Converts a centimeter or inches value to its plotter units equivalent.
