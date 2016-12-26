@@ -1515,7 +1515,7 @@ Plotter.prototype.moveTo = function(x, y) {
  */
 Plotter.prototype.setVelocity = function(velocity = 1.0) {
 
-  velocity = parseFloat(velocity);
+  velocity = parseFloat(velocity) * 38.1;
 
   if (isNaN(velocity) || velocity <= 0 || velocity > 38.1) {
     velocity = 38.1;
