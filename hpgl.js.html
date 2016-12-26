@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7440A">7440A</a></li><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li><li data-type='member'><a href="Models.html#.GENERIC">GENERIC</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#abort">abort</a></li><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#plotFile">plotFile</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li><li data-type='method'><a href="Plotter.html#startCapturingToFile">startCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#stopCapturingToFile">stopCapturingToFile</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:connected">connected</a></li><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:fileplotted">fileplotted</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7440A">7440A</a></li><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li><li data-type='member'><a href="Models.html#.GENERIC">GENERIC</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#abort">abort</a></li><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#plotFile">plotFile</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li><li data-type='method'><a href="Plotter.html#startCapturingToFile">startCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#stopCapturingToFile">stopCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#wait">wait</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:connected">connected</a></li><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:fileplotted">fileplotted</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <div id="main">
@@ -861,9 +861,9 @@ Plotter.prototype.abort = function(callback = null) {
  * ```
  *
  * @param file {String} - The path to the file that will be sent to the plotter.
- * @param [callback] {Function} - A function to execute when all the instructions have been sent to
- * the plotter's buffer. Depending on the size of the file and of the device's buffer, this may take
- * a while.
+ * @param [callback] {Plotter~statusCallback} - A function to execute when all the instructions have
+ * been sent to the plotter's buffer. Depending on the size of the file and of the device's buffer,
+ * this may take a while.
  *
  * @fires Plotter#fileplotted
  */
@@ -886,16 +886,8 @@ Plotter.prototype.plotFile = function(file, callback = null) {
     // Queue the whole file
     this.queue(data, null, {ignoreOutputInstructions: true});
 
-    // We send a bogus output-type instruction so we can know when the plotter is done drawing.
-    this.queue("OA", (data) => {
-
-      let [x, y, penDown] = data.split(",");
-
-      let status = {
-        x: this._fromPlotterUnits(x),
-        y: this._fromPlotterUnits(y),
-        penDown: penDown === "1"
-      };
+    // Wait for the whole file to have been plotted
+    this.wait(status => {
 
       if (typeof callback === "function") callback(status);
 
@@ -909,11 +901,48 @@ Plotter.prototype.plotFile = function(file, callback = null) {
        */
       this.emit("fileplotted", status);
 
-    }, {waitForResponse: true});
+    });
 
   });
 
 };
+
+/**
+ * Waits for the device to finish processing and/or drawing all previously queued instructions and
+ * then executes the specified callback function.
+ *
+ * @param callback {Plotter~statusCallback} - The function to execute.
+ */
+Plotter.prototype.wait = function(callback) {
+
+  // Send a request for actual pen position and status. This means the device will have to finish
+  // all queued instructions before being able to reply.
+  this.queue("OA", (data) => {
+
+    let [x, y, penDown] = data.split(",");
+
+    let status = {
+      x: this._fromPlotterUnits(x),
+      y: this._fromPlotterUnits(y),
+      penDown: penDown === "1"
+    };
+
+    if (typeof callback === "function") { callback(status); }
+
+  }, {waitForResponse: true});
+
+};
+
+/**
+ * Defines the expected signature of functions used in a `statusCallback` context. Such functions
+ * basically receive a `status` object detailing the current status of the hardware device.
+ *
+ * @callback Plotter~statusCallback
+ * @param status {Object} Hardware status information
+ * @param status.x {Number} Position of the pen of the `x` axis (in plotter units)
+ * @param status.y {Number} Position of the pen of the `y` axis (in plotter units)
+ * @param status.penDown {Boolean} Whether the pen is down or not
+ */
 
 /**
  * Converts a centimeter or inches value to its plotter units equivalent.
@@ -1218,9 +1247,11 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  * any). A negative value mirrors the character across both dimensions.
  * @param {number} [options.slant=0] The slant (italic) with which characters are lettered (in
  * degrees). A typical range of values is between -45° and +45°.
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawText = function(text, options = {}) {
+Plotter.prototype.drawText = function(text, options = {}, callback) {
 
   // Defaults
   if ( ![0, 34].includes(options.charset) ) options.charset = 0;
@@ -1258,7 +1289,7 @@ Plotter.prototype.drawText = function(text, options = {}) {
   this.queue("SL" + this._toHpglDecimal( Math.tan(radSlant) ) );
 
   // Send label command
-  this.queue("LB" + this._toIso646(text, options.charset));
+  this.queue("LB" + this._toIso646(text, options.charset), callback);
 
   return this;
 
@@ -1355,10 +1386,13 @@ Plotter.prototype._toHpglDecimal = function(value) {
  * @param {number} [angle=5]  An integer between -180° and 180° representing the chord angle. The
  * most commonly used values are 0-180. In this case, the smaller the angle is, the smoother the
  * circle will be. Negative values make the circle start at 180° instead of 0°.
+ * @param {Object} [options={}] Additional options (none for now)
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
-  this.queue("CI" + this._toPlotterUnits(radius) + "," + Math.round(angle));
+Plotter.prototype.drawCircle = function(radius = 1, angle = 5, options = {}, callback) {
+  this.queue("CI" + this._toPlotterUnits(radius) + "," + Math.round(angle), callback);
   return this;
 };
 
@@ -1367,11 +1401,17 @@ Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
  *
  * @param {number} x The `x` coordinate of the point where the the line should end (in cm).
  * @param {number} y The `y` coordinate of the point where the the line should end (in cm).
+ * @param {Object} [options={}] Additional options
+ * @param {number} [options.linePattern=7] Integer between `0` and `7`. Value `0` prints dots at
+ * line extremities only. Values `1` to `6` prints various types of dotted lines. Value `7`
+ * (default) is a solid line.
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawLine = function(x, y) {
+Plotter.prototype.drawLine = function(x, y, options = {}, callback) {
 
-  this.drawLines([x, y]);
+  this.drawLines([x, y], options, callback);
   return this;
 
 };
@@ -1382,15 +1422,17 @@ Plotter.prototype.drawLine = function(x, y) {
  *
  * @param {number[]} [positions=[]] An array of line-end positions in the form
  * `[x1, y1, x2, y2, ...]`.
- * @param {Object} [options={}]
+ * @param {Object} [options={}] Additional options
  * @param {number} [options.linePattern=7] Integer between `0` and `7`. Value `0` only prints dots
  * at line extremities only. Values `1` to `6` prints various types of dotted lines. Value `7`
  * (default) is a solid line.
+ * @param {Function} [callback] A function to execute when all the instruction(s) have been sent to
+ * the device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  *
  * @todo add linePatternLength option
  */
-Plotter.prototype.drawLines = function(positions = [], options = {}) {
+Plotter.prototype.drawLines = function(positions = [], options = {}, callback) {
 
   // Since this command can be very long, we break it into chunks no larger than the buffer size
   let chunks = [[]], current = 0;
@@ -1442,7 +1484,8 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
       this.queue("PA" + chunk.join(","));
     });
 
-    this.queue("PU");
+    // We attach the callback to the very last instruction
+    this.queue("PU", callback);
 
   }
 
@@ -1460,9 +1503,12 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
  *
  * @param {number} width The width of the rectangle (in cm).
  * @param {number} [height] The height of the rectangle (in cm).
+ * @param {Object} [options={}] Additional options (none for now)
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawRectangle = function(width, height) {
+Plotter.prototype.drawRectangle = function(width, height, options = {}, callback) {
 
   if ( parseFloat(width) ) {
     if ( !parseFloat(height) ) { height = width; }
@@ -1474,7 +1520,7 @@ Plotter.prototype.drawRectangle = function(width, height) {
     this._toPlotterUnits(width),
     this._toPlotterUnits(height)
   );
-  this.queue("ER" + target.x + "," + target.y);
+  this.queue("ER" + target.x + "," + target.y, callback);
 
   return this;
 
@@ -1837,7 +1883,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.1-alpha.5</b> /
+  <b>hpgl v0.8.3-0</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
