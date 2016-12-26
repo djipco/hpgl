@@ -1179,9 +1179,11 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  * any). A negative value mirrors the character across both dimensions.
  * @param {number} [options.slant=0] The slant (italic) with which characters are lettered (in
  * degrees). A typical range of values is between -45° and +45°.
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawText = function(text, options = {}) {
+Plotter.prototype.drawText = function(text, options = {}, callback) {
 
   // Defaults
   if ( ![0, 34].includes(options.charset) ) options.charset = 0;
@@ -1219,7 +1221,7 @@ Plotter.prototype.drawText = function(text, options = {}) {
   this.queue("SL" + this._toHpglDecimal( Math.tan(radSlant) ) );
 
   // Send label command
-  this.queue("LB" + this._toIso646(text, options.charset));
+  this.queue("LB" + this._toIso646(text, options.charset), callback);
 
   return this;
 
@@ -1316,10 +1318,13 @@ Plotter.prototype._toHpglDecimal = function(value) {
  * @param {number} [angle=5]  An integer between -180° and 180° representing the chord angle. The
  * most commonly used values are 0-180. In this case, the smaller the angle is, the smoother the
  * circle will be. Negative values make the circle start at 180° instead of 0°.
+ * @param {Object} [options={}] Additional options (none for now)
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
-  this.queue("CI" + this._toPlotterUnits(radius) + "," + Math.round(angle));
+Plotter.prototype.drawCircle = function(radius = 1, angle = 5, options = {}, callback) {
+  this.queue("CI" + this._toPlotterUnits(radius) + "," + Math.round(angle), callback);
   return this;
 };
 
@@ -1328,11 +1333,17 @@ Plotter.prototype.drawCircle = function(radius = 1, angle = 5) {
  *
  * @param {number} x The `x` coordinate of the point where the the line should end (in cm).
  * @param {number} y The `y` coordinate of the point where the the line should end (in cm).
+ * @param {Object} [options={}] Additional options
+ * @param {number} [options.linePattern=7] Integer between `0` and `7`. Value `0` prints dots at
+ * line extremities only. Values `1` to `6` prints various types of dotted lines. Value `7`
+ * (default) is a solid line.
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawLine = function(x, y) {
+Plotter.prototype.drawLine = function(x, y, options = {}, callback) {
 
-  this.drawLines([x, y]);
+  this.drawLines([x, y], options, callback);
   return this;
 
 };
@@ -1343,15 +1354,17 @@ Plotter.prototype.drawLine = function(x, y) {
  *
  * @param {number[]} [positions=[]] An array of line-end positions in the form
  * `[x1, y1, x2, y2, ...]`.
- * @param {Object} [options={}]
+ * @param {Object} [options={}] Additional options
  * @param {number} [options.linePattern=7] Integer between `0` and `7`. Value `0` only prints dots
  * at line extremities only. Values `1` to `6` prints various types of dotted lines. Value `7`
  * (default) is a solid line.
+ * @param {Function} [callback] A function to execute when all the instruction(s) have been sent to
+ * the device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  *
  * @todo add linePatternLength option
  */
-Plotter.prototype.drawLines = function(positions = [], options = {}) {
+Plotter.prototype.drawLines = function(positions = [], options = {}, callback) {
 
   // Since this command can be very long, we break it into chunks no larger than the buffer size
   let chunks = [[]], current = 0;
@@ -1403,7 +1416,8 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
       this.queue("PA" + chunk.join(","));
     });
 
-    this.queue("PU");
+    // We attach the callback to the very last instruction
+    this.queue("PU", callback);
 
   }
 
@@ -1421,9 +1435,12 @@ Plotter.prototype.drawLines = function(positions = [], options = {}) {
  *
  * @param {number} width The width of the rectangle (in cm).
  * @param {number} [height] The height of the rectangle (in cm).
+ * @param {Object} [options={}] Additional options (none for now)
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.drawRectangle = function(width, height) {
+Plotter.prototype.drawRectangle = function(width, height, options = {}, callback) {
 
   if ( parseFloat(width) ) {
     if ( !parseFloat(height) ) { height = width; }
@@ -1435,7 +1452,7 @@ Plotter.prototype.drawRectangle = function(width, height) {
     this._toPlotterUnits(width),
     this._toPlotterUnits(height)
   );
-  this.queue("ER" + target.x + "," + target.y);
+  this.queue("ER" + target.x + "," + target.y, callback);
 
   return this;
 
