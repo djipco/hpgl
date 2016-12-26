@@ -1,7 +1,7 @@
 'use strict';
 
 const EventEmitter = require('events').EventEmitter;
-const fs = require("fs");
+const fs = require("fs-extra");
 const util = require('util');
 
 module.exports = {};
@@ -184,7 +184,11 @@ let Models = {
     ]
   },
 
-  /** @type {PlotterCharacteristics} */
+  /**
+   * Characteristics for the **HP 7470A** plotter.
+   *
+   * @type {PlotterCharacteristics}
+   */
   "7470A": {
     brand: "HP",
     model: "7470A",
@@ -247,6 +251,8 @@ let Models = {
   },
 
   /**
+   * Characteristics for the **HP 7550A** plotter.
+   *
    * @type {PlotterCharacteristics}
    */
   "7550A": {
@@ -274,6 +280,10 @@ let Models = {
     ]
   }
 
+  // "7550B": {},
+  // "7550Plus": {},
+
+  // LARGE:
   // "7580A": {},
   // "7585A": {},
   // "7585B": {},
@@ -503,8 +513,7 @@ let Plotter = function() {
   Object.defineProperty(this, 'connected', {
 
     get: () => {
-      return this.transport && (this.transport.isOpen() || this.transport.connectionId >= 0);
-      // return this.transport && this.transport.isOpen();
+      return this.transport && this.transport.isOpen();
     }
 
   });
@@ -995,7 +1004,7 @@ Plotter.prototype._toRelativeHpglCoordinates = function(x, y) {
  */
 Plotter.prototype._onData = function(data) {
 
-  console.log("_onData: " + data);
+  // console.log("_onData: " + data);
 
   if (data.toString() === "\r") {
 
@@ -1021,7 +1030,7 @@ Plotter.prototype._onData = function(data) {
  */
 Plotter.prototype._onError = function(error) {
 
-  console.log(error);
+  // console.log(error);
 
   /**
    * Event emitted when an error occurs. The specified function will receive an object with
@@ -1097,17 +1106,17 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
     // Send the instruction. Wait for printer response if required
     if (waitForResponse) {
 
-      console.log("Send and wait " + instruction);
+      // console.log("Send and wait " + instruction);
 
       this.once("data", (data) => {
-        console.log("Received: " + data);
+        // console.log("Received: " + data);
         if (typeof callback === "function") callback(data);
       });
       this.transport.write(instruction);
 
     } else {
 
-      console.log("Send " + instruction);
+      // console.log("Send " + instruction);
 
       this.transport.write(instruction, (results) => {
         if (typeof callback === "function") callback(results);
@@ -1483,6 +1492,7 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
   if (!this._outputFile) { return; }
 
   try {
+    fs.ensureFileSync(this._outputFile);
     fs.appendFileSync(this._outputFile, content + (newline ? "\n" : ""));
   } catch (e) {
     throw new Error("Could not append to specified output file.");
@@ -1496,7 +1506,7 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
  * orientation in the options object.
  *
  * If you want to both plot and save at the same time, you must wait for the device to be ready
- * before calling this function:
+ * before calling the `startCapturingToFile()` function:
  *
  * ```
  * plotter
@@ -1528,8 +1538,6 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.startCapturingToFile = function(path = "job.hpgl", options = {}) {
-
-  console.log("Start file capture");
 
   this._outputFile = path;
 
@@ -1682,11 +1690,11 @@ Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
   for (let i = 0; i < commands.length; i++) {
 
     if (commands[i].startsWith("O") && options.ignoreOutputInstructions) {
-      console.log("Ignore: " + commands[i]);
+      // console.log("Ignore: " + commands[i]);
       continue;
     }
 
-    console.log("Add to _queue: " + commands[i]);
+    // console.log("Add to _queue: " + commands[i]);
 
     let command = { instruction: commands[i] };
 
@@ -1717,7 +1725,7 @@ Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
  */
 Plotter.prototype._processQueue = function() {
 
-  console.log("Process queue");
+  // console.log("Process queue");
 
   // Make sure any pending timeout is cancelled. We will add a new one if necessary. Exit if no
   // commands are pending.
@@ -1742,7 +1750,7 @@ Plotter.prototype._processQueue = function() {
       // delay processing until later.
       if (this._queue[0].instruction.length < data) {
 
-        console.log("Enough buffer space: " + data);
+        // console.log("Enough buffer space: " + data);
 
         // Send oldest available instruction first (and keep it for later check)
         let command = this._queue.shift();
@@ -1752,7 +1760,7 @@ Plotter.prototype._processQueue = function() {
         // if more commands are in the queue, process them.
         if (command.waitForResponse) {
           this.once("data", () => {
-            console.log("data");
+            // console.log("data");
             this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
           })
         } else if (this._queue.length > 0) {
@@ -1762,7 +1770,7 @@ Plotter.prototype._processQueue = function() {
 
       } else {
 
-        console.log("Not enough buffer space (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
+        // console.log("Not enough buffer space (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
 
         this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
       }
