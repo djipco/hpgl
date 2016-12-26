@@ -58,8 +58,8 @@ production.</strong></p>
 environment, you will need to install and use the 
 <a href="https://www.npmjs.com/package/serialport">serialport</a> module. If you want to use this library 
 inside <a href="https://developer.chrome.com/apps/about_apps">Chrome Apps</a> or <a href="http://nwjs.io/">NW.js</a>
-applications, you will need the 
-<a href="https://www.npmjs.com/package/browser-serialport">browser-serialport</a> module instead. </p>
+applications, you will need to install the <a href="https://www.npmjs.com/package/browser-serialport">browser-serialport</a> 
+module instead (<strong>version 2.1.0 or greater</strong>). </p>
 <blockquote>
 <p><em>Note: it is possible to use <code>node-serialport</code> within NW.js and Electron projects but it needs to 
 be specifically recompiled for those environment.</em></p>
@@ -69,7 +69,7 @@ and <a href="http://hpmuseum.net/display_item.php?hw=80">HP 7440A</a> plotters. 
 makes or models, <a href="https://twitter.com/jpcote">let me know</a>. Beware that some HP plotters are only 
 equipped with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a 
 <strong>serial</strong> interface (RS-232-C).</p>
-<h3>Coordinate Sytem</h3><p>The plotting coordinate system is anchored in the top-left corner, just like a computer screen. 
+<h3>Coordinate System</h3><p>The plotting coordinate system is anchored in the top-left corner, just like a computer screen. 
 This means positive <code>x</code> goes right and positive <code>y</code> goes down. By default, plotters usually work 
 differently, but I find it easier to stick with the computer screen standard.</p>
 <h3>Getting Started</h3><p>To get started, you will need a few pieces of hardware:</p>
@@ -139,7 +139,7 @@ are!</p>
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.1-alpha.4</b> /
+  <b>hpgl v0.8.1-alpha.5</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
