@@ -1554,7 +1554,7 @@ Plotter.prototype.moveTo = function(x, y) {
  */
 Plotter.prototype.setVelocity = function(velocity = 1.0) {
 
-  velocity = parseFloat(velocity);
+  velocity = parseFloat(velocity) * 38.1;
 
   if (isNaN(velocity) || velocity &lt;= 0 || velocity > 38.1) {
     velocity = 38.1;
@@ -1883,7 +1883,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.3-0</b> /
+  <b>hpgl v0.8.3-1</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>

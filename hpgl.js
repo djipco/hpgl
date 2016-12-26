@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.3-0
+hpgl v0.8.3-1
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -1544,7 +1544,7 @@ Plotter.prototype.moveTo = function(x, y) {
  */
 Plotter.prototype.setVelocity = function(velocity = 1.0) {
 
-  velocity = parseFloat(velocity);
+  velocity = parseFloat(velocity) * 38.1;
 
   if (isNaN(velocity) || velocity <= 0 || velocity > 38.1) {
     velocity = 38.1;
