@@ -19,8 +19,8 @@ This library relies on external modules for serial communication. To use it in a
 environment, you will need to install and use the 
 [serialport](https://www.npmjs.com/package/serialport) module. If you want to use this library 
 inside [Chrome Apps](https://developer.chrome.com/apps/about_apps) or [NW.js](http://nwjs.io/)
-applications, you will need to install v2.1.0+ of the  
-[browser-serialport](https://www.npmjs.com/package/browser-serialport) module instead. 
+applications, you will need to install the [browser-serialport](https://www.npmjs.com/package/browser-serialport) 
+module instead (**version 2.1.0 or greater**). 
 
 > *Note: it is possible to use `node-serialport` within NW.js and Electron projects but it needs to 
 > be specifically recompiled for those environment.*
