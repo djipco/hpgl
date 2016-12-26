@@ -31,7 +31,7 @@ makes or models, [let me know](https://twitter.com/jpcote). Beware that some HP 
 equipped with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a 
 **serial** interface (RS-232-C).
 
-### Coordinate Sytem
+### Coordinate System
 
 The plotting coordinate system is anchored in the top-left corner, just like a computer screen. 
 This means positive `x` goes right and positive `y` goes down. By default, plotters usually work 
