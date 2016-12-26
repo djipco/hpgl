@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.1-alpha.4
+hpgl v0.8.1-alpha.5
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -30,7 +30,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 'use strict';
 
 const EventEmitter = require('events').EventEmitter;
-const fs = require("fs");
+const fs = require("fs-extra");
 const util = require('util');
 
 module.exports = {};
@@ -213,7 +213,11 @@ let Models = {
     ]
   },
 
-  /** @type {PlotterCharacteristics} */
+  /**
+   * Characteristics for the **HP 7470A** plotter.
+   *
+   * @type {PlotterCharacteristics}
+   */
   "7470A": {
     brand: "HP",
     model: "7470A",
@@ -276,6 +280,8 @@ let Models = {
   },
 
   /**
+   * Characteristics for the **HP 7550A** plotter.
+   *
    * @type {PlotterCharacteristics}
    */
   "7550A": {
@@ -303,6 +309,10 @@ let Models = {
     ]
   }
 
+  // "7550B": {},
+  // "7550Plus": {},
+
+  // LARGE:
   // "7580A": {},
   // "7585A": {},
   // "7585B": {},
@@ -532,8 +542,7 @@ let Plotter = function() {
   Object.defineProperty(this, 'connected', {
 
     get: () => {
-      return this.transport && (this.transport.isOpen() || this.transport.connectionId >= 0);
-      // return this.transport && this.transport.isOpen();
+      return this.transport && this.transport.isOpen();
     }
 
   });
@@ -1512,6 +1521,7 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
   if (!this._outputFile) { return; }
 
   try {
+    fs.ensureFileSync(this._outputFile);
     fs.appendFileSync(this._outputFile, content + (newline ? "\n" : ""));
   } catch (e) {
     throw new Error("Could not append to specified output file.");
@@ -1525,7 +1535,7 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
  * orientation in the options object.
  *
  * If you want to both plot and save at the same time, you must wait for the device to be ready
- * before calling this function:
+ * before calling the `startCapturingToFile()` function:
  *
  * ```
  * plotter
@@ -1557,8 +1567,6 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.startCapturingToFile = function(path = "job.hpgl", options = {}) {
-
-  // console.log("Start file capture");
 
   this._outputFile = path;
 
