@@ -1,6 +1,6 @@
 {
   "name": "hpgl",
-  "version": "0.8.3-1",
+  "version": "0.8.4-1",
   "description": "A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.",
   "author": "Jean-Philippe Côté",
   "main": "hpgl.js",
