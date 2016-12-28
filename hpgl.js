@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.3-1
+hpgl v0.8.4-1
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -1717,16 +1717,31 @@ Plotter.prototype.getPlottableArea = function(metric = true) {
 };
 
 /**
+ * Returns an object with `top`, `right`, `bottom` and `left` properties each containing the size of
+ * the corresponding margin. The device model, the paper size and the paper orientation must have
+ * been defined before calling this function, otherwise the function will return `undefined`.
+ *
+ * @param metric {Boolean} Whether the margin values should be returned in cm (default) or decimal
+ * inches.
+ * @returns {Object} An object with `top`, `right`, `bottom` and `left` properties.
  */
 Plotter.prototype.getMargins = function(metric = true) {
 
-  let paper = this.characteristics.papers[this.paper];
-  let margins = paper.margins[this.orientation];
+  let paper, margins;
+
+  try {
+    paper = this.characteristics.papers[this.paper];
+    margins = paper.margins[this.orientation];
+  } catch (e) {
+    return undefined;
+  }
 
   margins.top = this._fromPlotterUnits(margins.top, metric);
   margins.right = this._fromPlotterUnits(margins.right, metric);
   margins.bottom = this._fromPlotterUnits(margins.bottom, metric);
   margins.left = this._fromPlotterUnits(margins.left, metric);
+
+  return margins;
 
 };
 
