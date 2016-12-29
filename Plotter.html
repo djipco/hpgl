@@ -147,9 +147,9 @@ plotter.connect(transport, {orientation: &quot;portrait&quot;}, function(error) 
   }
 
   this
-    .moveTo(1, 1)
+    .moveTo(2, 2)
     .drawText(&quot;Hello, World!&quot;)
-    .moveTo(0.5, 0.5)
+    .moveTo(5, 5)
     .drawRectangle(4, 3)
 
 });</code></pre><p>If you are using NW.js, you need to change the first three lines of code to this:</p>
@@ -1354,7 +1354,7 @@ completed. This function will receive an <code>error</code> parameter is an erro
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line966">line 966</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line967">line 967</a>
     </li></ul></dd>
     
 
@@ -1489,7 +1489,7 @@ occurs, this function will receive an error object as its parameter.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1355">line 1355</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1366">line 1366</a>
     </li></ul></dd>
     
 
@@ -1782,7 +1782,7 @@ device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1373">line 1373</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1384">line 1384</a>
     </li></ul></dd>
     
 
@@ -2136,7 +2136,7 @@ device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1396">line 1396</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1407">line 1407</a>
     </li></ul></dd>
     
 
@@ -2468,7 +2468,7 @@ the device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1472">line 1472</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1483">line 1483</a>
     </li></ul></dd>
     
 
@@ -2762,7 +2762,7 @@ device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1215">line 1215</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1226">line 1226</a>
     </li></ul></dd>
     
 
@@ -3315,7 +3315,7 @@ device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1699">line 1699</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1714">line 1714</a>
     </li></ul></dd>
     
 
@@ -3473,7 +3473,7 @@ inches.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1664">line 1664</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1679">line 1679</a>
     </li></ul></dd>
     
 
@@ -3637,7 +3637,7 @@ and the position (x, y) of the plottable area.</p>
 
     
 
-    <h4 class="name" id="moveTo"><span class="type-signature"></span>moveTo<span class="signature">(x, y)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
+    <h4 class="name" id="moveTo"><span class="type-signature"></span>moveTo<span class="signature">(x, y, metric)</span><span class="type-signature"> &rarr; {<a href="Plotter.html">Plotter</a>}</span></h4>
 
     
 
@@ -3649,7 +3649,7 @@ and the position (x, y) of the plottable area.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1497">line 1497</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1509">line 1509</a>
     </li></ul></dd>
     
 
@@ -3743,7 +3743,7 @@ and the position (x, y) of the plottable area.</p>
 
             
 
-            <td class="description last"><p>Position along the <code>x</code> axis (in centimeters)</p></td>
+            <td class="description last"><p>Position along the <code>x</code> axis</p></td>
         </tr>
 
     
@@ -3766,7 +3766,30 @@ and the position (x, y) of the plottable area.</p>
 
             
 
-            <td class="description last"><p>Position along the <code>y</code> axis (in centimeters)</p></td>
+            <td class="description last"><p>Position along the <code>y</code> axis</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>metric</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Whether the coordinates are in centimeters (default) or decimal inches.</p></td>
         </tr>
 
     
@@ -4030,7 +4053,7 @@ this may take a while.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1740">line 1740</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1755">line 1755</a>
     </li></ul></dd>
     
 
@@ -4399,7 +4422,7 @@ instructions (instructions starting with &quot;O&quot;). This is useful when plo
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1096">line 1096</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1107">line 1107</a>
     </li></ul></dd>
     
 
@@ -4659,7 +4682,7 @@ after the data has been sent or only after an answer has been received from the 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1516">line 1516</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1531">line 1531</a>
     </li></ul></dd>
     
 
@@ -4838,7 +4861,7 @@ velocity.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1586">line 1586</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1601">line 1601</a>
     </li></ul></dd>
     
 
@@ -5221,7 +5244,7 @@ device. Typical choices are:</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1653">line 1653</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1668">line 1668</a>
     </li></ul></dd>
     
 
@@ -5788,7 +5811,7 @@ the device is ready to receive plotting instructions. For that, you should inste
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1040">line 1040</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1051">line 1051</a>
     </li></ul></dd>
     
 
@@ -5921,7 +5944,7 @@ the device is ready to receive plotting instructions. For that, you should inste
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1064">line 1064</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1075">line 1075</a>
     </li></ul></dd>
     
 
@@ -6366,7 +6389,7 @@ information about the error.</p>
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.4-2</b> /
+  <b>hpgl v0.8.4-3</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
