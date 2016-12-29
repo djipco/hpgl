@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.4-2
+hpgl v0.8.4-3
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -374,9 +374,9 @@ Cannot use HP-IB plotters such as:
  *   }
  *
  *   this
- *     .moveTo(1, 1)
+ *     .moveTo(2, 2)
  *     .drawText("Hello, World!")
- *     .moveTo(0.5, 0.5)
+ *     .moveTo(5, 5)
  *     .drawRectangle(4, 3)
  *
  * });
@@ -951,6 +951,7 @@ Plotter.prototype.wait = function(callback) {
 Plotter.prototype._toPlotterUnits = function(value, metric = true) {
 
   let res = 40;
+
   if (
     this.characteristics &&
     this.characteristics.resolution &&
@@ -963,7 +964,7 @@ Plotter.prototype._toPlotterUnits = function(value, metric = true) {
   if (metric) {
     return Math.round(value * 10 * res);
   } else {
-    return Math.round(value * 3.937007874015748 * res);
+    return Math.round(value * 25.4 * res);
   }
 
 };
@@ -1009,24 +1010,34 @@ Plotter.prototype.disconnect = function(callback = null) {
 };
 
 /**
- * Converts a point in 2D space (x, y) whose origin is in the top-left corner (+x going right, +y
- * going down) to the HPGL coordinates system which has its origin in the bottom-left corner (+x
- * going right, + y going up).
+ * Converts a position whose reference origin is in the top-left corner of the paper sheet (+x going
+ * right, +y going down) to the HPGL coordinates system which has its origin in the bottom-left
+ * corner (+x going right, + y going up).
+ *
+ * Beware that the resulting position might be outside the plottable area.
  *
  * @todo Add the option to use the native HPGL coordinates system (bypass this)
  *
  * @private
- * @param {number} x The `x` coordinate of the point.
- * @param {number} y The `y` coordinate of the point.
+ * @param {number} x The `x` coordinate of the point in plotter units.
+ * @param {number} y The `y` coordinate of the point in plotter units.
  * @return {Object} An object whose **x** and **y** properties have been transformed.
  */
 Plotter.prototype._toAbsoluteHpglCoordinates = function(x, y) {
+
+  let p = this.characteristics.papers[this.paper];
+
+  // Compensate for margins
+  x -= p.margins[this.orientation].left;
+  y -= p.margins[this.orientation].top;
 
   if (this.orientation === "landscape") {
     y = this.characteristics.papers[this.paper].short - y;
   } else {
     x = this.characteristics.papers[this.paper].short - x;
   }
+
+
 
   return {x: x, y: y};
 
@@ -1519,13 +1530,17 @@ Plotter.prototype.drawRectangle = function(width, height, options = {}, callback
 /**
  * Lifts the pen and moves it to the specified `x` and `y` coordinates.
  *
- * @param {number} x Position along the `x` axis (in centimeters)
- * @param {number} y Position along the `y` axis (in centimeters)
+ * @param x {number} - Position along the `x` axis
+ * @param y {number} - Position along the `y` axis
+ * @param metric {Boolean} - Whether the coordinates are in centimeters (default) or decimal inches.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.moveTo = function(x, y) {
+Plotter.prototype.moveTo = function(x, y, metric = true) {
 
-  let point = this._toAbsoluteHpglCoordinates(this._toPlotterUnits(x), this._toPlotterUnits(y));
+  let point = this._toAbsoluteHpglCoordinates(
+    this._toPlotterUnits(x, metric),
+    this._toPlotterUnits(y, metric)
+  );
   this.queue("PU" + point.x + "," + point.y);
   return this;
 
