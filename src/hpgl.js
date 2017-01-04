@@ -690,6 +690,7 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
     // As soon as we know the model, we can use the 'papers' and 'orientation' properties.
     if (
       options.paper &&
+      options.paper.toUpperCase &&
       this.characteristics.papers.list.includes(options.paper.toUpperCase())
     ) {
       this.paper = options.paper.toUpperCase();
@@ -698,6 +699,7 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
     // Save different orientation if specified
     if (
       options.orientation &&
+      options.orientation.toLowerCase &&
       ORIENTATIONS.includes(options.orientation.toLowerCase())
     ) {
       this.orientation = options.orientation.toLowerCase();
