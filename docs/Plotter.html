@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7440A">7440A</a></li><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li><li data-type='member'><a href="Models.html#.GENERIC">GENERIC</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#abort">abort</a></li><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#plotFile">plotFile</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li><li data-type='method'><a href="Plotter.html#startCapturingToFile">startCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#stopCapturingToFile">stopCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#wait">wait</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:connected">connected</a></li><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:fileplotted">fileplotted</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7440A">7440A</a></li><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li><li data-type='member'><a href="Models.html#.GENERIC">GENERIC</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#abort">abort</a></li><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#destroy">destroy</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#plotFile">plotFile</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li><li data-type='method'><a href="Plotter.html#startCapturingToFile">startCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#stopCapturingToFile">stopCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#wait">wait</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:connected">connected</a></li><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:fileplotted">fileplotted</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <div id="main">
@@ -769,7 +769,7 @@ of: <a href="https://www.npmjs.com/package/serialport">serialport</a>,
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line780">line 780</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line782">line 782</a>
     </li></ul></dd>
     
 
@@ -1342,6 +1342,141 @@ completed. This function will receive an <code>error</code> parameter is an erro
 
     
 
+    <h4 class="name" id="destroy"><span class="type-signature"></span>destroy<span class="signature">(callback)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1029">line 1029</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Disconnects from the hardware device. This will cancel ongoing and upcoming plotting instructions
+and close the serial connection. The device will be returned to its default state.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A function to execute once the disconnection is complete. If an error
+occurs, this function will receive an error object as its parameter.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
     <h4 class="name" id="disconnect"><span class="type-signature"></span>disconnect<span class="signature">(callback)</span><span class="type-signature"></span></h4>
 
     
@@ -1354,7 +1489,7 @@ completed. This function will receive an <code>error</code> parameter is an erro
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line967">line 967</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line989">line 989</a>
     </li></ul></dd>
     
 
@@ -1489,7 +1624,7 @@ occurs, this function will receive an error object as its parameter.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1366">line 1366</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1427">line 1427</a>
     </li></ul></dd>
     
 
@@ -1782,7 +1917,7 @@ device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1384">line 1384</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1445">line 1445</a>
     </li></ul></dd>
     
 
@@ -2136,7 +2271,7 @@ device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1407">line 1407</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1468">line 1468</a>
     </li></ul></dd>
     
 
@@ -2468,7 +2603,7 @@ the device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1483">line 1483</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1544">line 1544</a>
     </li></ul></dd>
     
 
@@ -2762,7 +2897,7 @@ device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1226">line 1226</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1287">line 1287</a>
     </li></ul></dd>
     
 
@@ -3315,7 +3450,7 @@ device.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1714">line 1714</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1783">line 1783</a>
     </li></ul></dd>
     
 
@@ -3473,7 +3608,7 @@ inches.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1679">line 1679</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1748">line 1748</a>
     </li></ul></dd>
     
 
@@ -3649,7 +3784,7 @@ and the position (x, y) of the plottable area.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1509">line 1509</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1570">line 1570</a>
     </li></ul></dd>
     
 
@@ -3850,7 +3985,7 @@ and the position (x, y) of the plottable area.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line831">line 831</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line837">line 837</a>
     </li></ul></dd>
     
 
@@ -4053,7 +4188,7 @@ this may take a while.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1755">line 1755</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1824">line 1824</a>
     </li></ul></dd>
     
 
@@ -4422,7 +4557,7 @@ instructions (instructions starting with &quot;O&quot;). This is useful when plo
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1107">line 1107</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1168">line 1168</a>
     </li></ul></dd>
     
 
@@ -4682,7 +4817,7 @@ after the data has been sent or only after an answer has been received from the 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1531">line 1531</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1592">line 1592</a>
     </li></ul></dd>
     
 
@@ -4861,7 +4996,7 @@ velocity.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1601">line 1601</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1662">line 1662</a>
     </li></ul></dd>
     
 
@@ -5244,7 +5379,7 @@ device. Typical choices are:</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1668">line 1668</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1729">line 1729</a>
     </li></ul></dd>
     
 
@@ -5350,7 +5485,7 @@ device. Typical choices are:</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line877">line 877</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line883">line 883</a>
     </li></ul></dd>
     
 
@@ -5490,7 +5625,7 @@ then executes the specified callback function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line897">line 897</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line919">line 919</a>
     </li></ul></dd>
     
 
@@ -5799,6 +5934,90 @@ the device is ready to receive plotting instructions. For that, you should inste
 
     
 
+    <h4 class="name" id="event:connected">connected</h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1013">line 1013</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Event emitted when the serial connection has been successfully closed.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
     <h4 class="name" id="event:data">data</h4>
 
     
@@ -5811,7 +6030,7 @@ the device is ready to receive plotting instructions. For that, you should inste
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1051">line 1051</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1112">line 1112</a>
     </li></ul></dd>
     
 
@@ -5944,7 +6163,7 @@ the device is ready to receive plotting instructions. For that, you should inste
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1075">line 1075</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line1136">line 1136</a>
     </li></ul></dd>
     
 
@@ -6078,7 +6297,7 @@ information about the error.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line855">line 855</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line861">line 861</a>
     </li></ul></dd>
     
 
@@ -6306,7 +6525,7 @@ information about the error.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line765">line 765</a>
+        <a href="hpgl.js.html">hpgl.js</a>, <a href="hpgl.js.html#line767">line 767</a>
     </li></ul></dd>
     
 
@@ -6389,7 +6608,7 @@ information about the error.</p>
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.4-3</b> /
+  <b>hpgl v0.8.4-4</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
