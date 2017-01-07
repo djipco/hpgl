@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7440A">7440A</a></li><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li><li data-type='member'><a href="Models.html#.GENERIC">GENERIC</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#abort">abort</a></li><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#plotFile">plotFile</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li><li data-type='method'><a href="Plotter.html#startCapturingToFile">startCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#stopCapturingToFile">stopCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#wait">wait</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:connected">connected</a></li><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:fileplotted">fileplotted</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Models.html">Models</a><ul class='members'><li data-type='member'><a href="Models.html#.7440A">7440A</a></li><li data-type='member'><a href="Models.html#.7470A">7470A</a></li><li data-type='member'><a href="Models.html#.7475A">7475A</a></li><li data-type='member'><a href="Models.html#.7550A">7550A</a></li><li data-type='member'><a href="Models.html#.GENERIC">GENERIC</a></li></ul></li><li><a href="Plotter.html">Plotter</a><ul class='methods'><li data-type='method'><a href="Plotter.html#abort">abort</a></li><li data-type='method'><a href="Plotter.html#connect">connect</a></li><li data-type='method'><a href="Plotter.html#destroy">destroy</a></li><li data-type='method'><a href="Plotter.html#disconnect">disconnect</a></li><li data-type='method'><a href="Plotter.html#drawCircle">drawCircle</a></li><li data-type='method'><a href="Plotter.html#drawLine">drawLine</a></li><li data-type='method'><a href="Plotter.html#drawLines">drawLines</a></li><li data-type='method'><a href="Plotter.html#drawRectangle">drawRectangle</a></li><li data-type='method'><a href="Plotter.html#drawText">drawText</a></li><li data-type='method'><a href="Plotter.html#getMargins">getMargins</a></li><li data-type='method'><a href="Plotter.html#getPlottableArea">getPlottableArea</a></li><li data-type='method'><a href="Plotter.html#moveTo">moveTo</a></li><li data-type='method'><a href="Plotter.html#plotFile">plotFile</a></li><li data-type='method'><a href="Plotter.html#queue">queue</a></li><li data-type='method'><a href="Plotter.html#send">send</a></li><li data-type='method'><a href="Plotter.html#setVelocity">setVelocity</a></li><li data-type='method'><a href="Plotter.html#startCapturingToFile">startCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#stopCapturingToFile">stopCapturingToFile</a></li><li data-type='method'><a href="Plotter.html#wait">wait</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Plotter.html#event:connected">connected</a></li><li><a href="Plotter.html#event:data">data</a></li><li><a href="Plotter.html#event:error">error</a></li><li><a href="Plotter.html#event:fileplotted">fileplotted</a></li><li><a href="Plotter.html#event:ready">ready</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <div id="main">
@@ -552,7 +552,7 @@ let Plotter = function() {
   Object.defineProperty(this, 'connected', {
 
     get: () => {
-      return this.transport &amp;&amp; this.transport.isOpen();
+      return (this.transport &amp;&amp; this.transport.isOpen()) === true;
     }
 
   });
@@ -729,6 +729,7 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
     // As soon as we know the model, we can use the 'papers' and 'orientation' properties.
     if (
       options.paper &amp;&amp;
+      options.paper.toUpperCase &amp;&amp;
       this.characteristics.papers.list.includes(options.paper.toUpperCase())
     ) {
       this.paper = options.paper.toUpperCase();
@@ -737,6 +738,7 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
     // Save different orientation if specified
     if (
       options.orientation &amp;&amp;
+      options.orientation.toLowerCase &amp;&amp;
       ORIENTATIONS.includes(options.orientation.toLowerCase())
     ) {
       this.orientation = options.orientation.toLowerCase();
@@ -819,14 +821,18 @@ Plotter.prototype._onReady = function(callback = null) {
 Plotter.prototype.abort = function(callback = null) {
 
   // Clear any timeout set to trigger the processing of the queue and empty it
-  clearTimeout(this._queueTimeOutId);
-  this._queue = [];
+  this._stopAndEmptyQueue();
 
   // Send "Abort Graphic" instruction
   this.send(this.RS232_PREFIX + "K", callback);
 
   return this;
 
+};
+
+Plotter.prototype._stopAndEmptyQueue = function() {
+  clearTimeout(this._queueTimeOutId);
+  this._queue = [];
 };
 
 /**
@@ -914,6 +920,22 @@ Plotter.prototype.plotFile = function(file, callback = null) {
  * @param callback {Plotter~statusCallback} - The function to execute.
  */
 Plotter.prototype.wait = function(callback) {
+
+
+  // If the plotter is not connected we simply wait for the queue to be empty
+  if (!this.connected) {
+
+    if (this._queue.length &lt; 1) {
+      callback();
+    } else {
+      setTimeout(this.wait.bind(this, callback), 0)
+    }
+
+    return;
+
+  }
+
+
 
   // Send a request for actual pen position and status. This means the device will have to finish
   // all queued instructions before being able to reply.
@@ -1005,16 +1027,55 @@ Plotter.prototype._fromPlotterUnits = function(value, metric = true) {
  */
 Plotter.prototype.disconnect = function(callback = null) {
 
+  if (!this._outputFile) {
+    this.characteristics = undefined;
+    this.orientation = "landscape";
+    this.paper = "A";
+  }
+
   if ( !this.transport || this.transport.connectionId === -1 ) {
     if (typeof callback === "function") callback();
+    return;
   }
+
+  this.ready = false;
 
   this.abort();
 
   this.send("IN", () => {
     this.transport.close((error) => {
+      this.transport = undefined;
       if (typeof callback === "function") { callback(error); }
     });
+  });
+
+  /**
+   * Event emitted when the serial connection has been successfully closed.
+   *
+   * @event Plotter#connected
+   */
+  this.emit("disconnected");
+
+};
+
+/**
+ * Disconnects from the hardware device. This will cancel ongoing and upcoming plotting instructions
+ * and close the serial connection. The device will be returned to its default state.
+ *
+ * @param {Function} callback A function to execute once the disconnection is complete. If an error
+ * occurs, this function will receive an error object as its parameter.
+ */
+Plotter.prototype.destroy = function(callback = null) {
+
+  // Terminate any ongoing file capture session
+  this.stopCapturingToFile();
+
+  // Stop and empty queue
+  this._stopAndEmptyQueue();
+
+  this.disconnect(() => {
+    // Plotter = null;
+    if (typeof callback === "function") callback();
   });
 
 };
@@ -1705,7 +1766,15 @@ Plotter.prototype.startCapturingToFile = function(path = "job.hpgl", options = {
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.stopCapturingToFile = function() {
+
+  if (!this.connected) {
+    this.characteristics = undefined;
+    this.orientation = "landscape";
+    this.paper = "A";
+  }
+
   this._outputFile = undefined;
+
 };
 
 /**
@@ -1911,7 +1980,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.4-3</b> /
+  <b>hpgl v0.8.4-4</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
