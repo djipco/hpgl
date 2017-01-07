@@ -513,7 +513,7 @@ let Plotter = function() {
   Object.defineProperty(this, 'connected', {
 
     get: () => {
-      return this.transport && this.transport.isOpen();
+      return (this.transport && this.transport.isOpen()) === true;
     }
 
   });
@@ -782,14 +782,18 @@ Plotter.prototype._onReady = function(callback = null) {
 Plotter.prototype.abort = function(callback = null) {
 
   // Clear any timeout set to trigger the processing of the queue and empty it
-  clearTimeout(this._queueTimeOutId);
-  this._queue = [];
+  this._stopAndEmptyQueue();
 
   // Send "Abort Graphic" instruction
   this.send(this.RS232_PREFIX + "K", callback);
 
   return this;
 
+};
+
+Plotter.prototype._stopAndEmptyQueue = function() {
+  clearTimeout(this._queueTimeOutId);
+  this._queue = [];
 };
 
 /**
@@ -877,6 +881,22 @@ Plotter.prototype.plotFile = function(file, callback = null) {
  * @param callback {Plotter~statusCallback} - The function to execute.
  */
 Plotter.prototype.wait = function(callback) {
+
+
+  // If the plotter is not connected we simply wait for the queue to be empty
+  if (!this.connected) {
+
+    if (this._queue.length < 1) {
+      callback();
+    } else {
+      setTimeout(this.wait.bind(this, callback), 0)
+    }
+
+    return;
+
+  }
+
+
 
   // Send a request for actual pen position and status. This means the device will have to finish
   // all queued instructions before being able to reply.
@@ -968,16 +988,55 @@ Plotter.prototype._fromPlotterUnits = function(value, metric = true) {
  */
 Plotter.prototype.disconnect = function(callback = null) {
 
+  if (!this._outputFile) {
+    this.characteristics = undefined;
+    this.orientation = "landscape";
+    this.paper = "A";
+  }
+
   if ( !this.transport || this.transport.connectionId === -1 ) {
     if (typeof callback === "function") callback();
+    return;
   }
+
+  this.ready = false;
 
   this.abort();
 
   this.send("IN", () => {
     this.transport.close((error) => {
+      this.transport = undefined;
       if (typeof callback === "function") { callback(error); }
     });
+  });
+
+  /**
+   * Event emitted when the serial connection has been successfully closed.
+   *
+   * @event Plotter#connected
+   */
+  this.emit("disconnected");
+
+};
+
+/**
+ * Disconnects from the hardware device. This will cancel ongoing and upcoming plotting instructions
+ * and close the serial connection. The device will be returned to its default state.
+ *
+ * @param {Function} callback A function to execute once the disconnection is complete. If an error
+ * occurs, this function will receive an error object as its parameter.
+ */
+Plotter.prototype.destroy = function(callback = null) {
+
+  // Terminate any ongoing file capture session
+  this.stopCapturingToFile();
+
+  // Stop and empty queue
+  this._stopAndEmptyQueue();
+
+  this.disconnect(() => {
+    // Plotter = null;
+    if (typeof callback === "function") callback();
   });
 
 };
@@ -1668,7 +1727,15 @@ Plotter.prototype.startCapturingToFile = function(path = "job.hpgl", options = {
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
 Plotter.prototype.stopCapturingToFile = function() {
+
+  if (!this.connected) {
+    this.characteristics = undefined;
+    this.orientation = "landscape";
+    this.paper = "A";
+  }
+
   this._outputFile = undefined;
+
 };
 
 /**
