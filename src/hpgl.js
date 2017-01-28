@@ -990,25 +990,53 @@ Plotter.prototype.plotFile = function(file, callback = null) {
       throw new Error("The plotFile() function can only be called after the device is ready.");
     }
 
-    // Queue the whole file
-    this.queue(data, null, {ignoreOutputInstructions: true});
 
-    // Wait for the whole file to have been plotted
-    this.wait(status => {
+    this.getStatus((status) => {
 
-      if (typeof callback === "function") callback(status);
+      if (!status.ready) {
 
-      /**
-       * Event emitted when a file has been completely drawn by the device.
-       * @event Plotter#fileplotted
-       * @param status {Object} - Additional information
-       * @param status.x {Object} - The ending `x` position of the pen (in cm).
-       * @param status.y {Object} - The ending `y` position of the pen (in cm).
-       * @param status.penDown {Boolean} - Whether the pen is down or not.
-       */
-      this.emit("fileplotted", status);
+        if (typeof callback === "function") {
+
+          let err = new Error("Device not ready!");
+          callback(err);
+
+          /**
+           * Event emitted when the attempt to plot a file failed.
+           * @event Plotter#fileaborted
+           * @param err {Error} - The error that occured
+           */
+          this.emit("fileaborted", err);
+
+        }
+
+      } else {
+
+        // Queue the whole file
+        this.queue(data, null, {ignoreOutputInstructions: true});
+
+        // Wait for the whole file to have been plotted
+        this.wait(status => {
+
+          if (typeof callback === "function") callback(undefined, status);
+
+          /**
+           * Event emitted when a file has been completely drawn by the device.
+           * @event Plotter#fileplotted
+           * @param status {Object} - Additional information
+           * @param status.x {Object} - The ending `x` position of the pen (in cm).
+           * @param status.y {Object} - The ending `y` position of the pen (in cm).
+           * @param status.penDown {Boolean} - Whether the pen is down or not.
+           */
+          this.emit("fileplotted", status);
+
+        });
+
+      }
 
     });
+
+
+
 
   });
 
