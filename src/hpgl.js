@@ -278,18 +278,143 @@ let Models = {
       "PM", "PR", "PT", "PU", "RA", "RO", "RP", "RR", "SA", "SC", "SI", "SL", "SM", "SP", "SR",
       "SS", "TL", "UC", "UF", "VS", "WD", "WG", "XT", "YT"
     ]
-  }
+  },
 
   // "7550B": {},
   // "7550Plus": {},
 
   // LARGE:
-  // "7580A": {},
-  // "7585A": {},
+
+
+  /**
+   * Characteristics for the **HP 7580A** plotter.
+   *
+   * @type {PlotterCharacteristics}
+   *
+   * A and A4 sizes are loaded with the longer axis horizontal.
+   * All other sizes have long axis vertical.
+   * LES MARGES SONT À LA PAGE 43 DU MANUEL. ÇA PERMETTRA DE CALCULER LES GROSSEURS
+   * LA PAGE 53 DIT COMMENT CHARGER LE PAPIER (DANS QUEL SENS)
+   */
+  "7580A": {
+    brand: "HP",
+    model: "7580A",
+    buffer: undefined,  // ??? bytes memory
+    // papers: {
+    //   list: ["A", "B", "C", "D", "A4", "A3", "A2", "A1"],
+    //   A: {long: 10170, short: 7840},
+    //   B: {long: 16450, short: 10170},
+    //   C: {long: ?, short: ?},
+    //   D: {long: ?, short: ?},
+    //   A4: {long: 10870, short: 7600},
+    //   A3: {long: 15970, short: 10870},
+    //   A2: {long: ?, short: ?},
+    //   A1: {long: ?, short: ?}
+    // },
+    resolution: {
+      x: 40,
+      y: 40
+    },
+    instructions: [
+      "AA", "AP", "AR", "AS", "BL", "CA", "CC", "CI", "CM", "CP", "CS", "CT", "DC", "DF", "DI",
+      "DL", "DP", "DR", "DS", "DT", "EA", "EP", "ER", "ES", "EW", "FP", "FS", "FT", "GP", "IM",
+      "IN", "IP", "IV", "IW", "LB", "LO", "LT", "NR", "OA", "OC", "OD", "OE", "OF", "OH", "OI",
+      "OL", "OO", "OP", "OS", "OT", "OW", "PA", "PB", "PD", "PM", "PR", "PT", "PU", "RA", "RO",
+      "RR", "SA", "SC", "SG", "SI", "SL", "SM", "SP", "SR", "SS", "TL", "UC", "UF", "VS", "WG",
+      "XT", "YT"
+    ]
+  },
+
+  /**
+   * Characteristics for the **HP 7585A** plotter.
+   *
+   * @type {PlotterCharacteristics}
+   *
+   * A, C, A4, and A2 sizes are loaded with the longer axis horizontal.
+   * All other sizes have long axis vertical.
+   */
+  "7585A": {
+    brand: "HP",
+    model: "7585A",
+    buffer: undefined,  // ??? bytes memory
+    // papers: {
+    //   list: ["A", "B", "C", "D", "E", "A4", "A3", "A2", "A1", "A0"],
+    //   A: {long: 10170, short: 7840},
+    //   B: {long: 16450, short: 10170},
+    //   C: {long: ?, short: ?},
+    //   D: {long: ?, short: ?},
+    //   E: {long: ?, short: ?},
+    //   A4: {long: 10870, short: 7600},
+    //   A3: {long: 15970, short: 10870},
+    //   A2: {long: ?, short: ?},
+    //   A1: {long: ?, short: ?}
+    //   A0: {long: ?, short: ?}
+    // },
+    resolution: {
+      x: 40,
+      y: 40
+    },
+    instructions: [
+      "AA", "AP", "AR", "AS", "BL", "CA", "CC", "CI", "CM", "CP", "CS", "CT", "DC", "DF", "DI",
+      "DL", "DP", "DR", "DS", "DT", "EA", "EP", "ER", "ES", "EW", "FP", "FS", "FT", "GP", "IM",
+      "IN", "IP", "IV", "IW", "LB", "LO", "LT", "NR", "OA", "OC", "OD", "OE", "OF", "OH", "OI",
+      "OL", "OO", "OP", "OS", "OT", "OW", "PA", "PB", "PD", "PM", "PR", "PT", "PU", "RA", "RO",
+      "RR", "SA", "SC", "SG", "SI", "SL", "SM", "SP", "SR", "SS", "TL", "UC", "UF", "VS", "WG",
+      "XT", "YT"
+    ]
+  },
+
   // "7585B": {},
-  // "7586B": {}
+
+  /**
+   * Characteristics for the **HP 7586B** plotter.
+   *
+   * @type {PlotterCharacteristics}
+   */
+  "7586B": {
+    brand: "HP",
+    model: "7586B",
+    buffer: undefined,  // ??? bytes memory
+    // papers: {
+    //   list: ["A", "B", "C", "D", "E", "A4", "A3", "A2", "A1", "A0"],
+    //   A: {long: 10170, short: 7840},
+    //   B: {long: 16450, short: 10170},
+    //   C: {long: ?, short: ?},
+    //   D: {long: ?, short: ?},
+    //   E: {long: ?, short: ?},
+    //   A4: {long: 10870, short: 7600},
+    //   A3: {long: 15970, short: 10870},
+    //   A2: {long: ?, short: ?},
+    //   A1: {long: ?, short: ?}
+    //   A0: {long: ?, short: ?}
+    // },
+    resolution: {
+      x: 40,
+      y: 40
+    },
+    instructions: [
+      "AA", "AF", "AH", "AP", "AR", "AS", "BL", "CA", "CC", "CI", "CM", "CP", "CS", "CT", "DC",
+      "DF", "DI", "DL", "DP", "DR", "DS", "DT", "EA", "EC", "EP", "ER", "ES", "EW", "FP", "FR",
+      "FS", "FT", "GP", "IM", "IN", "IP", "IV", "IW", "LB", "LO", "LT", "NR", "OA", "OC", "OD",
+      "OE", "OF", "OH", "OI", "OL", "OO", "OP", "OS", "OT", "OW", "PA", "PB", "PD", "PG", "PM",
+      "PR", "PT", "PU", "RA", "RO", "RR", "SA", "SC", "SG", "SI", "SL", "SM", "SP", "SR", "SS",
+      "TL", "UC", "UF", "VS", "WG", "XT", "YT"
+    ]
+  }
+
+
+
 
 };
+
+/*
+
+ b. "Automatic" is available only for the following models, and
+ allows continuous plotting on rollfeed or automatically-fed media:
+
+ 7550, 7586B, DraftMasterII (7596A)
+
+*/
 
 /*
   HPGL Pen Plotters (http://www.winline.com/outdevs.html)
@@ -785,12 +910,27 @@ Plotter.prototype.abort = function(callback = null) {
   this._stopAndEmptyQueue();
 
   // Send "Abort Graphic" instruction
-  this.send(this.RS232_PREFIX + "K", callback);
+  this.send(this.RS232_PREFIX + "K", () => {
+
+    /**
+     * Event emitted when a plotting job is aborted.
+     *
+     * @event Plotter#aborted
+     */
+    this.emit("aborted");
+
+    if (typeof callback === "function") callback();
+
+  });
 
   return this;
 
 };
 
+/**
+ * Stops the queue and empties it.
+ * @private
+ */
 Plotter.prototype._stopAndEmptyQueue = function() {
   clearTimeout(this._queueTimeOutId);
   this._queue = [];
@@ -1795,6 +1935,59 @@ Plotter.prototype.getMargins = function(metric = true) {
   }
 
   return margins;
+
+};
+
+/**
+ * Fetches status information about the device. Once retrieved, the status information is packaged
+ * in an object that is passed to the specified callback.
+ *
+ * The status request is not queued. It is being answered by the device in an immediate fashion. It
+ * still takes a little while but does not wait for previous drawing instructions to complete. It
+ * does not affect drawing in any way.
+ *
+ * @param {Function} callback A function to call once the status data has been obtained from the
+ * device. This function receives an object with various properties which are detailed below.
+ * @param {Boolean} callback.rollPaper Whether roll paper or sheet paper is being used.
+ * @param {Boolean} callback.cleanPaper Whether the paper is "clean" (set after being sensed). The
+ * paper is considered to not be clean if:
+ *  * No paper is loaded or advanced
+ *  * The pen has touched the paper
+ *  * No paper was sensed before or after paper advance (end of roll)
+ * @param {Boolean} callback.paperAdvance Whether a paper advance instruction has been received
+ * since the last time the status was retrieved.
+ * @param {Boolean} callback.bufferEmpty Whether the buffer is currently empty or not.
+ * @param {Boolean} callback.ready Whether the device is ready to receive instructions or not.
+ * @param {Boolean} callback.viewEngaged Whether "view" mode is currently engaged.
+ * @param {Boolean} callback.coverOpen Whether the cover is currently open.
+ * @param {Boolean} callback.emulateMode Whether the device is in emulate or normal mode.
+ * @param {Boolean} callback.expandMode Whether expand mode is activated or not.
+ *
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
+ */
+Plotter.prototype.getStatus = function(callback) {
+
+  this.send(this.RS232_PREFIX + "O", (data) => {
+
+    let n = parseInt(data);
+
+    let status = {
+      rollPaper:    (n & 0b000000001) === 1,
+      cleanPaper:   (n & 0b000000010) !== 2,
+      paperAdvance: (n & 0b000000100) === 4,
+      bufferEmpty:  (n & 0b000001000) === 8,
+      ready:        (n & 0b000110000) === 0,
+      viewEngaged:  (n & 0b000110000) === 16,
+      coverOpen:    (n & 0b001000000) === 64,
+      emulateMode:  (n & 0b010000000) === 128,
+      expandMode:   (n & 0b100000000) === 256
+    };
+
+    if (typeof callback === "function") callback(status);
+
+  }, true);
+
+  return this;
 
 };
 
