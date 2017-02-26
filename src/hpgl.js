@@ -489,7 +489,6 @@ Cannot use HP-IB plotters such as:
  *
  * @todo Use OO to identify plotters with potential extended capabilities (such as 7440A)
  * @todo Create a getter that returns the size of the plottable area.
- * @todo Use the ESC.O or OS instruction to know if the device is ready (pinch wheel down, etc.).
  * @todo Instructions queued with waitForResponse should timeout if the response does not come`
  * @todo The queue() function should validate if the instruction(s) is actually valid.
  * @todo Implement penThickness.
@@ -1578,6 +1577,42 @@ Plotter.prototype._toHpglDecimal = function(value) {
 
   return value.toFixed(4);
 
+};
+
+/**
+ * Selects the requested pen from the carousel or stall. If no pen is specified, selects the pen at
+ * position 1. If the pen designated for selection is not in its stall, the plotter will attempt to
+ * select a pen beginning in stall 1 and moving up until a pen is found.
+ *
+ * Specifying a pen number of 0, stores the current pen (the equivalent of calling `storePen()`).
+ *
+ * If the plotter does not have a carousel/stall or the specified pen number is out of range, this
+ * instruction is ignored.
+ *
+ * @param {Number} [penNumber=1] The number of the pen to select.
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
+ */
+Plotter.prototype.selectPen = function(penNumber = 1, callback) {
+  this.queue("SP" + parseInt(penNumber), callback);
+  return this;
+};
+
+/**
+ * Stores the pen back in the carousel or stall. If the pen carousel is full, the plotter will try
+ * to put the pen away in the appropriate stall. If the stall is occupied, the plotter will attempt
+ * to store the pen in pen stall 1, then 2, etc. If all the stalls are full, the pen holder will
+ * return to its previous location.
+ *
+ * If the plotter does not support pen storage, this instruction is ignored.
+ *
+ * @param {Function} [callback] A function to execute when the instruction has been sent to the
+ * device.
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
+ */
+Plotter.prototype.storePen = function(callback) {
+  return this.selectPen(0, callback);
 };
 
 /**
