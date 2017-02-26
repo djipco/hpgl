@@ -414,10 +414,10 @@ let Models = {
 
  7550, 7586B, DraftMasterII (7596A)
 
-*/
+ */
 
 /*
-  HPGL Pen Plotters (http://www.winline.com/outdevs.html)
+ HPGL Pen Plotters (http://www.winline.com/outdevs.html)
 
  HP 7220C
  HP ColorPro, HP 7470, HP 7475A, HP 7550A
@@ -430,13 +430,13 @@ let Models = {
 
 /*
 
-Cannot use HP-IB plotters such as:
+ Cannot use HP-IB plotters such as:
 
-  - 7225B
-  - 9872A
-  -
+ - 7225B
+ - 9872A
+ -
 
-*/
+ */
 
 /**
  * The `Plotter` class provides methods to interact with an HPGL-compatible plotter such as those
@@ -713,7 +713,7 @@ util.inherits(Plotter, EventEmitter);
  * @param {number} [options.penThickness=0.3] - The drawing pen's thickness in millimiters (between
  * 0.1mm and 5mm).
  * @param {Function} [callback=null] - A function to trigger when the connect operation has
- * completed. This function will receive an `error` parameter is an error occured.
+ * completed. This function will receive an `error` parameter if an error occured.
  *
  * @fires Plotter#connected
  * @fires Plotter#ready
@@ -751,8 +751,14 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
     this.transport.on('error', this._onError.bind(this));
 
     // Initialize hardware device and, when done, configure plotting environment
-    this._initializeDevice(() => {
-      this._configurePlottingEnvironment(options, callback);
+    this._initializeDevice((err) => {
+
+      if (err) {
+        callback(err);
+      } else {
+        this._configurePlottingEnvironment(options, callback);
+      }
+
     });
 
   });
@@ -776,8 +782,37 @@ Plotter.prototype._initializeDevice = function(callback = null) {
 
   // Wait a little for the device reset to fully complete
   setTimeout(() => {
-    if (typeof callback === "function") callback();
+
+    // Make sure we hear back within a maximum timeframe. Otherwise, we throw an error.
+    let timeout = setTimeout(() => {
+      callback(new Error("Device initialization timed out."));
+    }, this.DEVICE_INIT_DELAY);
+
+    // We use the extended error instruction to check if we can actually talk to the device. This is
+    // to prevent a dead end in case the port is connected to a valid serial port which happens to
+    // not be a plotter.
+    this.send(this.RS232_PREFIX + "E", (data) => {
+
+      clearTimeout(timeout);
+
+      if (typeof callback === "function") {
+
+        if (parseInt(data) === 0) {
+          callback();
+        } else {
+          callback(new Error("Could not initialize device."));
+        }
+
+      }
+
+    }, true);
+
   }, this.DEVICE_INIT_DELAY);
+
+
+
+
+
 
 };
 
@@ -1116,7 +1151,7 @@ Plotter.prototype._toPlotterUnits = function(value, metric = true) {
     this.characteristics &&
     this.characteristics.resolution &&
     this.characteristics.resolution.x
-    )
+  )
   {
     res = this.characteristics.resolution.x;
   }
@@ -1280,7 +1315,7 @@ Plotter.prototype._onData = function(data) {
      * Event emitted when data is received from the device.
      * @event Plotter#data
      * @param {string} data The data received.
-    */
+     */
     this.emit("data", this._buffer);
     this._buffer = "";
 
@@ -1582,9 +1617,10 @@ Plotter.prototype._toHpglDecimal = function(value) {
 /**
  * Selects the requested pen from the carousel or stall. If no pen is specified, selects the pen at
  * position 1. If the pen designated for selection is not in its stall, the plotter will attempt to
- * select a pen beginning in stall 1 and moving up until a pen is found.
+ * select a pen beginning in stall 1 and move up until a pen is found.
  *
- * Specifying a pen number of 0, stores the current pen (the equivalent of calling `storePen()`).
+ * Specifying a pen number of 0, stores the current pen. This is the equivalent of calling
+ * [`storePen()`]{@link Plotter#storePen}.
  *
  * If the plotter does not have a carousel/stall or the specified pen number is out of range, this
  * instruction is ignored.
@@ -1600,10 +1636,10 @@ Plotter.prototype.selectPen = function(penNumber = 1, callback) {
 };
 
 /**
- * Stores the pen back in the carousel or stall. If the pen carousel is full, the plotter will try
- * to put the pen away in the appropriate stall. If the stall is occupied, the plotter will attempt
- * to store the pen in pen stall 1, then 2, etc. If all the stalls are full, the pen holder will
- * return to its previous location.
+ * Stores the pen back in the carousel or stall. The plotter will try to put the pen away in the
+ * appropriate stall. If the stall is occupied, the plotter will attempt to store the pen in pen
+ * stall 1, then 2, then 3, etc. If all the stalls are full, the pen holder will return to its
+ * previous location.
  *
  * If the plotter does not support pen storage, this instruction is ignored.
  *
@@ -1951,10 +1987,10 @@ Plotter.prototype.stopCapturingToFile = function() {
 Plotter.prototype.getPlottableArea = function(metric = true) {
 
   let paper = this.characteristics.papers[this.paper],
-      x = 0,
-      y = 0,
-      width = 0,
-      height = 0;
+    x = 0,
+    y = 0,
+    width = 0,
+    height = 0;
 
   if (this.orientation === "portrait") {
     width = this._fromPlotterUnits(paper.short, metric);
