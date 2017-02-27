@@ -797,7 +797,9 @@ Plotter.prototype._initializeDevice = function(callback = null) {
 
       if (typeof callback === "function") {
 
-        if (parseInt(data) === 0) {
+        // We should only be checking for 0 but, despite what the documentation says, we sometines
+        // receive an empty string (\r terminated).
+        if (parseInt(data) === 0 || data.length === 0) {
           callback();
         } else {
           callback(new Error("Could not initialize device."));
