@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.5-3
+hpgl v0.8.5-4
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -766,15 +766,6 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
       return;
     }
 
-    /**
-     * Event emitted when a serial connection has been successfully established. This does not mean
-     * the device is ready to receive plotting instructions. For that, you should instead use the
-     * [ready]{@link Plotter#event:ready} event
-     *
-     * @event Plotter#connected
-     */
-    this.emit("connected");
-
     // Install listeners
     this.transport.on('data', this._onData.bind(this));
     this.transport.on('error', this._onError.bind(this));
@@ -783,8 +774,22 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
     this._initializeDevice((err) => {
 
       if (err) {
-        callback(err);
+
+        this._onError(err);
+        if (typeof callback === "function") callback(err);
+
       } else {
+
+        /**
+         * Event emitted when a serial connection has been successfully established and the device
+         * has been initialized. This does not mean the device is ready to receive plotting
+         * instructions yet. For that, you should instead use the [ready]{@link Plotter#event:ready}
+         * event
+         *
+         * @event Plotter#connected
+         */
+        this.emit("connected");
+
         this._configurePlottingEnvironment(options, callback);
       }
 
@@ -1014,7 +1019,7 @@ Plotter.prototype._stopAndEmptyQueue = function() {
  *
  * Newline (`\n`) characters may be used after the semicolons for readability. No other format is
  * supported. Also note that all HPGL **output** instructions (those starting with "O") will be
- * discarded. The file **cannot* include RS-232-C escape sequences.
+ * discarded. The file **cannot** include RS-232-C escape sequences.
  *
  * #### Example
  *
@@ -1903,14 +1908,11 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
  * ```
  * plotter
  *   .on("ready", function() {
- *
- *     if (err) {
- *       console.log("An error occured!");
- *       return;
- *     }
- *
  *     this.startCapturingToFile("test.hpgl");
+ *   })
  *
+ *   .on("error", function (err) {
+ *     console.log(err);
  *   })
  *   .connect(transport);
  *
