@@ -1863,7 +1863,7 @@ Plotter.prototype._appendToOutputFile = function(content, newline = true) {
     fs.ensureFileSync(this._outputFile);
     fs.appendFileSync(this._outputFile, content + (newline ? "\n" : ""));
   } catch (e) {
-    throw new Error("Could not append to specified output file.");
+    throw new Error("Could not append to specified output file (" + this._outputFile + ").");
   }
 
 };
@@ -2190,9 +2190,15 @@ Plotter.prototype._processQueue = function() {
   // Are we connected to a device? If not, simply save to file and move along
   if (!this.connected && this._outputFile) {
 
-    let command = this._queue.shift();
-    this.send(command.instruction, command.callback, command.waitForResponse);
-    if (this._queue.length > 0) { this._processQueue(); }
+    // Since we are not limited by the device's buffer, exhaust all commands at once and emopty
+    // queue when done.
+    this._queue.forEach((command) => {
+      this.send(command.instruction, command.callback);
+    });
+    this._queue = [];
+
+    // Make sure the queue continues to be processed.
+    this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
 
   } else {
 
