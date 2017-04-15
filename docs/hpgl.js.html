@@ -1070,7 +1070,6 @@ Plotter.prototype.plotFile = function(file, callback = null) {
       throw new Error("The plotFile() function can only be called after the device is ready.");
     }
 
-
     this.getStatus((status) => {
 
       if (!status.ready) {
@@ -1440,15 +1439,16 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
   if (this.connected) {
 
     // Check maximum instruction length (we must first check if the buffer size is available because
-    // it will not be for the very first instruction which is "IN".
+    // it will not be for the very first instructions.
     if (
       this.characteristics &amp;&amp;
       this.characteristics.buffer &amp;&amp;
       instruction.length > this.characteristics.buffer
     ) {
+      this._stopAndEmptyQueue();
       throw new RangeError(
-        "The maximum size for a single instruction is " + this.characteristics.buffer +
-        " bytes (characters)."
+        `Maximum HP-GL instruction length cannot be larger than device buffer. Instruction is ` +
+        `${commands[i].length} characters long but buffer is only ${this.characteristics.buffer}.`
       );
     }
 
@@ -2168,11 +2168,26 @@ Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
   for (let i = 0; i &lt; commands.length; i++) {
 
     if (commands[i].startsWith("O") &amp;&amp; options.ignoreOutputInstructions) {
-      // console.log("Ignore: " + commands[i]);
+      // console.log("Ignored: " + commands[i]);
       continue;
     }
 
-    // console.log("Add to _queue: " + commands[i]);
+    // console.log("Queued: " + commands[i]);
+
+    // Make sure a single instruction is not bigger than the device's buffer. This is also checked
+    // in send() but must be checked here because a command that is larger than the maximum buffer
+    // size will never make it to the send() function
+    if (
+      this.characteristics &amp;&amp;
+      this.characteristics.buffer &amp;&amp;
+      commands[i].length > this.characteristics.buffer
+    ) {
+      this._stopAndEmptyQueue();
+      throw new RangeError(
+        `Maximum HP-GL instruction length cannot be larger than device buffer. Instruction is ` +
+        `${commands[i].length} characters long but buffer is only ${this.characteristics.buffer}.`
+      );
+    }
 
     let command = { instruction: commands[i] };
 
@@ -2237,20 +2252,22 @@ Plotter.prototype._processQueue = function() {
         // If the command must wait for a response, we have to hold the queue until then. Otherwise,
         // if more commands are in the queue, process them.
         if (command.waitForResponse) {
+
+          // console.log("Wait for response.");
+
           this.once("data", () => {
-            // console.log("data");
+            // console.log("Response: " + data);
             this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
           })
+
         } else if (this._queue.length > 0) {
           this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
-          // this._processQueue();
         }
 
       } else {
 
-        // console.log("Not enough buffer space (instruction: " + this._queue[0].instruction.length + ", buffer: " + data);
-
         this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
+
       }
 
     }, true);
@@ -2276,7 +2293,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.5-4</b> /
+  <b>hpgl v0.8.5-5</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
