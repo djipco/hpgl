@@ -120,7 +120,7 @@ let Models = {
   "GENERIC": {
     brand: "Unknown",
     model: "GENERIC",
-    buffer: undefined,
+    buffer: 60,
     papers: {
       list: ["A", "B", "A4", "A3"],
       A4: {long: 10870, short: 7600},
@@ -157,7 +157,7 @@ let Models = {
   "7440A": {
     brand: "HP",
     model: "7440A",
-    buffer: undefined,
+    buffer: 60,
     papers: {
       list: ["A", "A4"],
       A4: {
@@ -192,7 +192,7 @@ let Models = {
   "7470A": {
     brand: "HP",
     model: "7470A",
-    buffer: undefined,
+    buffer: 255,
     papers: {
       list: ["A", "A4"],
       A4: {long: 10900, short: 7650},
@@ -218,7 +218,7 @@ let Models = {
   "7475A": {
     brand: "HP",
     model: "7475A",
-    buffer: undefined,
+    buffer: 1024,
     papers: {
       list: ["A", "B", "A4", "A3"],
       A: {
@@ -258,7 +258,7 @@ let Models = {
   "7550A": {
     brand: "HP",
     model: "7550A",
-    buffer: undefined,  // 12800 bytes memory
+    buffer: 12800,
     papers: {
       list: ["A", "B", "A4", "A3"],
       A4: {long: 10870, short: 7600},
@@ -299,7 +299,7 @@ let Models = {
   "7580A": {
     brand: "HP",
     model: "7580A",
-    buffer: undefined,  // ??? bytes memory
+    buffer: 1024,
     // papers: {
     //   list: ["A", "B", "C", "D", "A4", "A3", "A2", "A1"],
     //   A: {long: 10170, short: 7840},
@@ -336,7 +336,7 @@ let Models = {
   "7585A": {
     brand: "HP",
     model: "7585A",
-    buffer: undefined,  // ??? bytes memory
+    buffer: 1024,
     // papers: {
     //   list: ["A", "B", "C", "D", "E", "A4", "A3", "A2", "A1", "A0"],
     //   A: {long: 10170, short: 7840},
@@ -374,7 +374,7 @@ let Models = {
   "7586B": {
     brand: "HP",
     model: "7586B",
-    buffer: undefined,  // ??? bytes memory
+    buffer: 1024,
     // papers: {
     //   list: ["A", "B", "C", "D", "E", "A4", "A3", "A2", "A1", "A0"],
     //   A: {long: 10170, short: 7840},
@@ -1737,15 +1737,20 @@ Plotter.prototype.drawLines = function(positions = [], options = {}, callback) {
     let y = this._toPlotterUnits(positions[i+1]);
     let p = this._toAbsoluteHpglCoordinates(x, y);
 
-    // Chunks must be smaller than the total buffer size. For each chunk, we send "PA", then the
-    // positions (separated by commas) and finally ";". So, before adding a new position, we must
-    // make sure that this new position does no bring the chunk above the buffer's size. We take the
-    // length for the new position, add 3 bytes for "PA" and ";" and add that to the existing length
-    // of the chunk. If it exceeds the buffer's size, we create a new chunk.
-    if (
-      3 + chunks[current].join(",").length + ("," + p.x + "," + p.y).length
-      > this.characteristics.buffer
-    ) {
+    // Chunks must be smaller than the total buffer size. So, before adding a new position, we must
+    // make sure that this new position does no bring the chunk above the buffer's size. If it
+    // exceeds the buffer's size, we create a new chunk. Warning: if no device is connected, we rely
+    // on the device's buffer size reported in the characteristics.
+    if (!this.connected && !this.characteristics.buffer) {
+      throw new Error(
+        "The drawLines() function cannot properly chunk the instructions since the device's " +
+        "buffer size has not been defined in the characteristics."
+      );
+    }
+
+    let instruction = "PA" + chunks[current].join(",") + [p.x, p.y].join(",") + ";";
+
+    if (instruction.length > this.characteristics.buffer) {
       current++;
       chunks[current] = [];
     }
