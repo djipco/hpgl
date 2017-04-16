@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.5-6
+hpgl v0.8.5-7
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -2236,9 +2236,17 @@ Plotter.prototype._processQueue = function() {
 
   } else {
 
+    // We define a maximum delay to receive an answer from the device.
+    let to = setTimeout(() => {
+      throw new Error("Plotter did not answer buffer size request.")
+    }, 1000);
+
     // Before sending the command, we send a request to know the available buffer space on the
     // device.
     this.send(this.RS232_PREFIX + "B", (data) => {
+
+      // remove
+      clearTimeout(to);
 
       // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
       // delay processing until later.

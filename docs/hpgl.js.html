@@ -2246,9 +2246,17 @@ Plotter.prototype._processQueue = function() {
 
   } else {
 
+    // We define a maximum delay to receive an answer from the device.
+    let to = setTimeout(() => {
+      throw new Error("Plotter did not answer buffer size request.")
+    }, 1000);
+
     // Before sending the command, we send a request to know the available buffer space on the
     // device.
     this.send(this.RS232_PREFIX + "B", (data) => {
+
+      // remove
+      clearTimeout(to);
 
       // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
       // delay processing until later.
@@ -2304,7 +2312,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.5-6</b> /
+  <b>hpgl v0.8.5-7</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
