@@ -2207,16 +2207,17 @@ Plotter.prototype._processQueue = function() {
 
   } else {
 
-    // We define a maximum delay to receive an answer from the device.
+    // If no response is received within preset time, we try again.
     let to = setTimeout(() => {
-      throw new Error("Plotter did not answer buffer size request.")
+        console.log("Warning: Bad communication with the device. Attempting once more.");
+        this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
     }, 1000);
 
     // Before sending the command, we send a request to know the available buffer space on the
     // device.
     this.send(this.RS232_PREFIX + "B", (data) => {
 
-      // remove
+      // Remove retry timeout
       clearTimeout(to);
 
       // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
