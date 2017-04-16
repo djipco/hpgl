@@ -536,6 +536,21 @@ let Plotter = function() {
   });
 
   /**
+   * The amount of time to wait for an answer from the device.
+   *
+   * @member {Number}
+   * @name Plotter#QUEUE_DELAY
+   * @constant
+   * @default 100
+   * @private
+   */
+  Object.defineProperty(this, "MAX_RESPONSE_TIME", {
+    enumerable: true,
+    writable: false,
+    value: 1000
+  });
+
+  /**
    * Prefix for the RS-232 instructions. It is typically made up of the `escape` character followed
    * by a period.
    *
@@ -2207,14 +2222,14 @@ Plotter.prototype._processQueue = function() {
 
   } else {
 
-    // If no response is received within preset time, we try again.
+    // Before sending the actual command, we first send a request to know the available buffer space
+    // on the device. Since the response can sometimes be lost, we setup a timer that will retry
+    // should the response never come in.
     let to = setTimeout(() => {
-        console.log("Warning: Bad communication with the device. Attempting once more.");
-        this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
-    }, 1000);
+      console.log("Warning: Bad communication with the device. Attempting once more.");
+      this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
+    }, this.MAX_RESPONSE_TIME);
 
-    // Before sending the command, we send a request to know the available buffer space on the
-    // device.
     this.send(this.RS232_PREFIX + "B", (data) => {
 
       // Remove retry timeout
@@ -2254,8 +2269,6 @@ Plotter.prototype._processQueue = function() {
     }, true);
 
   }
-
-
 
 };
 
