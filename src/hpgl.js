@@ -532,7 +532,7 @@ let Plotter = function() {
   Object.defineProperty(this, "QUEUE_DELAY", {
     enumerable: true,
     writable: false,
-    value: 100
+    value: 200
   });
 
   /**
@@ -1424,7 +1424,7 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
       this._stopAndEmptyQueue();
       throw new RangeError(
         `Maximum HP-GL instruction length cannot be larger than device buffer. Instruction is ` +
-        `${commands[i].length} characters long but buffer is only ${this.characteristics.buffer}.`
+        `${instruction.length} characters long but buffer is only ${this.characteristics.buffer}.`
       );
     }
 
@@ -1763,7 +1763,8 @@ Plotter.prototype.drawLines = function(positions = [], options = {}, callback) {
       );
     }
 
-    let instruction = "PA" + chunks[current].join(",") + [p.x, p.y].join(",") + ";";
+    // Simulate final instruction to verify length
+    let instruction = "PA" + chunks[current].concat([p.x, p.y]).join(",") + ";";
 
     if (instruction.length > this.characteristics.buffer) {
       current++;
@@ -2157,16 +2158,17 @@ Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
 
     // Make sure a single instruction is not bigger than the device's buffer. This is also checked
     // in send() but must be checked here because a command that is larger than the maximum buffer
-    // size will never make it to the send() function
+    // size will never make it to the send() function. Important: we must add 1 to the length
+    // because of the termination character that will be added by send().
     if (
       this.characteristics &&
       this.characteristics.buffer &&
-      commands[i].length > this.characteristics.buffer
+      commands[i].length + 1 > this.characteristics.buffer
     ) {
       this._stopAndEmptyQueue();
       throw new RangeError(
         `Maximum HP-GL instruction length cannot be larger than device buffer. Instruction is ` +
-        `${commands[i].length} characters long but buffer is only ${this.characteristics.buffer}.`
+        `${(commands[i].length + 1)} characters long but buffer is only ${this.characteristics.buffer}.`
       );
     }
 
@@ -2237,7 +2239,7 @@ Plotter.prototype._processQueue = function() {
 
       // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
       // delay processing until later.
-      if (this._queue[0].instruction.length < data) {
+      if (this._queue[0].instruction.length <= data) {
 
         // console.log("Enough buffer space: " + data);
 
