@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.5-10
+hpgl v0.8.6-2
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -533,20 +533,19 @@ let Models = {
 let Plotter = function() {
 
   /**
-   * The number of milliseconds to wait while the hardware device completes its initialization
-   * sequence. It is necessary to wait for a certain time after initialization because, otherwise,
-   * following requests for data might see the data truncated.
+   * The number of milliseconds to wait for responses to RS-232-C instructions. This value is a
+   * lowest common denominator. As an example, the HP7440A's response time is around 260ms.
    *
    * @member {Number}
-   * @name Plotter#DEVICE_INIT_DELAY
+   * @name Plotter#DEVICE_RS232_DELAY
    * @constant
-   * @default 150
+   * @default 375
    * @private
    */
-  Object.defineProperty(this, "DEVICE_INIT_DELAY", {
+  Object.defineProperty(this, "DEVICE_RS232_DELAY", {
     enumerable: true,
     writable: false,
-    value: 150
+    value: 375
   });
 
   /**
@@ -768,45 +767,62 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
   this.transport = transport;
 
+  // Terminate any ongoing file capture session (if the connection works or not)
+  this.stopCapturingToFile();
+
   // Try to open transport layer
   this.transport.open((error) => {
 
-    // Terminate any ongoing file capture session
-    this.stopCapturingToFile();
+    // Prepare listeners for later
+    let onDataListener = this._onData.bind(this);
+    let onErrorListener = this._onError.bind(this);
 
-    // If the connection attempt was unsuccessful, we are done!
+    // Tear down function when connection fails
+    function fail(err) {
+      if (this.transport.isOpen()) this.transport.close();
+      this.transport.removeListener('data', onDataListener);
+      this.transport.removeListener('error', onErrorListener);
+      if (typeof callback === "function") callback(err);
+      // this._onError(err);
+    }
+
+    // If the serial connection attempt was unsuccessful, we are done!
     if (error) {
-      if (typeof callback === "function") { callback.call(this, error); }
-      this._onError(error);
+      fail.call(this, new Error("Failed to open serial port (" + this.transport.path + ")."));
       return;
     }
 
     // Install listeners
-    this.transport.on('data', this._onData.bind(this));
-    this.transport.on('error', this._onError.bind(this));
+    this.transport.on('data', onDataListener);
+    this.transport.on('error', onErrorListener);
 
-    // Initialize hardware device and, when done, configure plotting environment
-    this._initializeDevice((err) => {
+    // Check if RS-232-C communication with plotter works properly. This is to prevent the case
+    // where we are connected to a serial port which is not a compatible device. To do that we set a
+    // maximum time to receive a response.
+    let timeout = setTimeout(() => {
+      fail.call(
+        this,
+        new Error(`RS-232-C communication attempt with plotter timed out (${this.transport.path}).`)
+      );
+    }, this.DEVICE_RS232_DELAY);
 
-      if (err) {
+    this.getRs232Error((err) => {
 
-        this._onError(err);
-        if (typeof callback === "function") callback(err);
+      clearTimeout(timeout);
 
-      } else {
-
-        /**
-         * Event emitted when a serial connection has been successfully established and the device
-         * has been initialized. This does not mean the device is ready to receive plotting
-         * instructions yet. For that, you should instead use the [ready]{@link Plotter#event:ready}
-         * event
-         *
-         * @event Plotter#connected
-         */
-        this.emit("connected");
-
-        this._configurePlottingEnvironment(options, callback);
+      // If an error occured, we're done!
+      if (err.code !== 0) {
+        fail.call(
+          this,
+          new Error(
+            `Plotter initialization attempt failed (${this.transport.path}). Device returned ` +
+            `the following error: ${err.message}.`
+          )
+        );
+        return;
       }
+
+      this.initialize(options, callback);
 
     });
 
@@ -818,52 +834,91 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
 /**
  * Reset the device to its 'power on' status using the `IN` instruction (same as `DF` plus: pen is
- * raised, errors are cleared, rotation set to 0, scaling points reset). This operation is
- * asynchronous. It generally takes a little while for the device to be fully reset.
+ * raised, errors are cleared, rotation set to 0, scaling points reset). This function can also
+ * configure the plotting environments according to the `options` parameter. This operation is
+ * asynchronous.
  *
- * @param [callback=null] {Function}
- * @private
+ * Note: a call to this function is automatically performed when calling `connect()`.
+ *
+ * @param {Object} [options={}] Options to use while setting up the device.
+ * @param {string} [options.paper="A"] - The paper size to use. Choices are:
+ *   - **A**: ANSI A (8.5"x11", a.k.a "letter")
+ *   - **B**: ANSI B (11"x17", a.k.a "tabloid")
+ *   - **A4**: ISO A4 (210mm × 297mm)
+ *   - **A3**: ISO A3 (297mm × 420mm)
+ * @param {string} [options.orientation="landscape"] - The orientation of the paper: *landscape* or
+ * *portrait*.
+ * @param {number} [options.penThickness=0.3] - The drawing pen's thickness in millimiters (between
+ * 0.1mm and 5mm).
+ * @param {Function} [callback=undefined]  A function to call once the device has been initialized.
+ * In case of error, the function will receive an `Error` object
  */
-Plotter.prototype._initializeDevice = function(callback = null) {
+Plotter.prototype.initialize = function(options, callback) {
 
-  // Cannot be queued (because that would trigger a buffer size verification)
-  this.send("IN");
+  // Abort any lingering device instructions
+  this.send(this.RS232_PREFIX + "J");
 
-  // Wait a little for the device reset to fully complete
-  setTimeout(() => {
+  // Abort any lingering HP-GL instructions
+  this.send(this.RS232_PREFIX + "K");
 
-    // Make sure we hear back within a maximum timeframe. Otherwise, we throw an error.
-    let timeout = setTimeout(() => {
-      callback(new Error("Device initialization timed out."));
-    }, this.DEVICE_INIT_DELAY);
-
-    // We use the extended error instruction to check if we can actually talk to the device. This is
-    // to prevent a dead end in case the port is connected to a valid serial port which happens to
-    // not be a plotter.
-    this.send(this.RS232_PREFIX + "E", (data) => {
-
-      clearTimeout(timeout);
-
-      if (typeof callback === "function") {
-
-        // We should only be checking for 0 but, despite what the documentation says, we sometines
-        // receive an empty string (\r terminated).
-        if (parseInt(data) === 0 || data.length === 0) {
-          callback();
-        } else {
-          callback(new Error("Could not initialize device."));
-        }
-
-      }
-
-    }, true);
-
-  }, this.DEVICE_INIT_DELAY);
+  this._configurePlottingEnvironment(options, callback);
 
 
+};
 
+/**
+ * Retrieves any RS-232-C errors that might have occured and passes it to the specified callback
+ * function.
+ *
+ * @param {Function} callback A function to call once the error has been obtained from the
+ * device. This function receives an object with various properties which are detailed below.
+ * @param {Boolean} callback.code The error code.
+ * @param {Boolean} callback.message The error message.
+ *
+ * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
+ */
+Plotter.prototype.getRs232Error = function(callback) {
 
+  this.send(this.RS232_PREFIX + "E", (data) => {
 
+    // If there is no callback, we are done!
+    if (typeof callback !== "function") return;
+
+    // Parse returned code
+    let code = parseInt(data);
+    let error = {};
+
+    // We should only be checking for 0 but, despite what the documentation says, we sometines
+    // receive an empty string (\r terminated) when there are no errors...
+    if (data.length === 0) code = 0;
+
+    if (code === 0 ) {
+      error.message = "No error."
+    } else if (code === 10) {
+      error.message = "New output generated before previous output finished being transmitted."
+    } else if (code === 11) {
+      error.message = "Invalid character received after first two characters (ESC.)."
+    } else if (code === 12) {
+      error.message = "Invalid character received while parsing instruction."
+    } else if (code === 13) {
+      error.message = "Parameter out-of-range."
+    } else if (code === 14) {
+      error.message = "Too many parameters received."
+    } else if (code === 15) {
+      error.message = "Framing, parity or overrun error."
+    } else if (code === 16) {
+      error.message = "Input buffer has overflowed."
+    } else {
+      code = 99;
+      error.message = "Unknown error"
+    }
+    error.code = code;
+
+    callback(error);
+
+  }, true);
+
+  return this;
 
 };
 
@@ -886,9 +941,9 @@ Plotter.prototype._initializeDevice = function(callback = null) {
  */
 Plotter.prototype._configurePlottingEnvironment = function(options = {}, callback = null) {
 
-  // Retrieve device model. This must be done before the other instructions because they depend
-  // on the characteristics property being set.
-  this.queue("OI", (data) => {
+  // Retrieve device model. This must be done before other instructions because they depend on the
+  // `characteristics` property being set.
+  this.getModel((data) => {
 
     // Assign model (or GENERIC if model cannot be found)
     if (Models[data]) {
@@ -915,51 +970,105 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
       this.orientation = options.orientation.toLowerCase();
     }
 
-    // The device's default orientation changes according to paper size. For example, on the
-    // HP7475A, paper sizes A (letter) and A4 use a 'landscape' orientation by default whereas paper
-    // sizes B (tabloid) and A3 use a 'portrait' orientation by default...
-    //
-    // So, if we want some sort of standard we must rotate the orientation to whatever is requested
-    // (no matter the paper size). Other devices (7470A, for example) only have one orientation.
-    //
-    // Inform device of the paper size we wish to use. This is not necessary on devices that use the
-    // same orientation for all paper sizes.
-    if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
-      this.queue("PS" + this.characteristics.papers[this.paper].psCode);
-    }
+    // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
+    // block mode), we must first send an ESC.E (hence the call to getRs232Error) and read the
+    // response before sending an ESC.L to retrieve buffer size.
+    this.getRs232Error((err) => {
 
-    // Check if the user-requested orientation, matches the device's default orientation
-    // (landscape).
-    if (this.orientation === "landscape") {
-
-      this.queue("RO0");    // do not rotate (or rotate back to default)
-
-    } else {
-
-      // Check if the device supports rotation (not all do)
-      if ( this.characteristics.instructions.includes("RO") ) {
-        this.queue("RO90");   // rotate to other orientation
-      } else {
-        throw new Error("The device does not support the '" + this.orientation + "' orientation.");
+      if (err.code !== 0) {
+        if (typeof callback === "function") callback(new Error(err.message));
+        return;
       }
 
-    }
+      this.queue(this.RS232_PREFIX + "L", (data) => {
 
-    this.queue("IP");       // reassign P1 and P2
-    this.queue("IW");       // reset plotting window
+        this.characteristics.buffer = data;
+        this._onReady(callback);
 
-    // Retrieve buffer size. As per the "Output Buffer Size Instruction" documentation (when in
-    // block mode), we must first send an ESC.E and read the response before sending an ESC.L to
-    // retrieve buffer size.
-    this.queue(this.RS232_PREFIX + "E", () => {}, {waitForResponse: true});
-    this.queue(this.RS232_PREFIX + "L", (data) => {
-      this.characteristics.buffer = data;
+        // FIRST HP-GL INSTRUCTIONS START HERE!! IT IS IMPORTANT THAT THOSE INSTRUCTIONS HAPPEN
+        // AFTER ESC.L BECAUSE THE HP7440A DOES NOT RETURN THE BUFFER SIZE UNLESS THE BUFFER IS
+        // EMPTY!!
 
-      // We're done!
-      this._onReady(callback);
+        // Cannot be queued (because that would trigger a buffer size verification)
+        this.send("IN");
 
+        // The device's default orientation changes according to paper size. For example, on the
+        // HP7475A, paper sizes A (letter) and A4 use a 'landscape' orientation by default whereas
+        // paper sizes B (tabloid) and A3 use a 'portrait' orientation by default...
+        //
+        // So, if we want some sort of standard we must rotate the orientation to whatever is
+        // requested (no matter the paper size). Other devices (7470A, for example) only have one
+        // orientation.
+        //
+        // Inform device of the paper size we wish to use. This is not necessary on devices that use
+        // the same orientation for all paper sizes.
+        if ( this.characteristics.papers[this.paper].hasOwnProperty("psCode") ) {
+          this.queue("PS" + this.characteristics.papers[this.paper].psCode);
+        }
+
+        // Check if the user-requested orientation, matches the device's default orientation
+        // (landscape).
+        if (this.orientation === "landscape") {
+
+          this.queue("RO0");    // do not rotate (or rotate back to default)
+
+        } else {
+
+          // Check if the device supports rotation (not all do)
+          if ( this.characteristics.instructions.includes("RO") ) {
+            this.queue("RO90");   // rotate to other orientation
+          } else {
+            throw new Error("The device does not support the '" + this.orientation + "' orientation.");
+          }
+
+        }
+
+        this.queue("IP");       // reassign P1 and P2
+        this.queue("IW");       // reset plotting window
+
+      }, {waitForResponse: true});
+
+    });
+
+  })
+
+};
+
+/**
+ * Retrieves the model from the device using RS-232-C or HP-GL (depending on the model).
+ *
+ * @param callback A function to trigger once the model has been fetched. This function receives a
+ * string containing the model name.
+ */
+Plotter.prototype.getModel = function(callback) {
+
+  let cancel = false;
+
+  // Advanced devices (HP7475A) will be able to respond to OI instructions even if the plotter is
+  // not in "ready" state. Other devices (HP7440A), will cue such instructions for execution only
+  // after the device has entered "ready" state. However, on those devices, we can use ESC.A to
+  // retrieve the model. So, what we do is first try ESC.A and, if no response is received within a
+  // certain timeframe, we try OI. We cannot do it the other way around because the instruction
+  // would be queued for execution at a later time which is probably not a good idea.
+  let timeoutId = setTimeout(() => {
+
+    // If the timeout is triggered, the function set previously must not be carried out.
+    cancel = true;
+
+    // Since the ESC.A instruction does not exist on all devices, it triggers an error which we must
+    // get rid of before procedding.
+    this.send(this.RS232_PREFIX + "E");
+
+    this.queue("OI", (data) => {
+      if (typeof callback === "function") callback(data);
     }, {waitForResponse: true});
 
+  }, this.DEVICE_RS232_DELAY);
+
+  this.queue(this.RS232_PREFIX + "A", (data) => {
+    clearTimeout(timeoutId);
+    let [model] = data.split(",");
+    if (typeof callback === "function" && !cancel) callback(model);
   }, {waitForResponse: true});
 
 };
@@ -1426,10 +1535,13 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
     );
   }
 
-  // Add termination character. A semicolon is used unless we are printing a label (which requires
-  // a special termination char: ETX).
+  // Add termination character. A semicolon is used for HP-GL instructions unless we are printing a
+  // label (which requires a special termination char: ETX). RS-232-C isntructions only need a
+  // termination character when parameters are used. In this case the terminator is the colon.
   if (instruction.substring(0, 2) === "LB") {
     instruction += String.fromCharCode(3); // ETX character is label delimiter
+  } else if (instruction.substring(0, 2) === this.RS232_PREFIX) {
+    if (instruction.length > 3) instruction += ":";
   } else {
     instruction += ";";
   }
@@ -1460,7 +1572,7 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
     // Send the instruction. Wait for printer response if required
     if (waitForResponse) {
 
-      // console.log("Send and wait " + instruction);
+      console.log("Send and wait " + instruction);
 
       this.once("data", (data) => {
         // console.log("Received: " + data);
@@ -1470,7 +1582,7 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
 
     } else {
 
-      // console.log("Send " + instruction);
+      console.log("Send " + instruction);
 
       this.transport.write(instruction, (results) => {
         if (typeof callback === "function") callback(results);
