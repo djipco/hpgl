@@ -12,6 +12,20 @@ module.exports = {};
  */
 const ORIENTATIONS = ["portrait", "landscape"];
 
+const PAPER_SIZES = {
+  A: {short: 21.59, long: 27.94},
+  B: {short: 27.94, long: 43.18},
+  C: {short: 43.18, long: 55.88},
+  D: {short: 55.88, long: 86.36},
+  E: {short: 86.36, long: 111.76},
+
+  A4: {short: 21, long: 29.7},
+  A3: {short: 29.7, long: 42},
+  A2: {short: 42, long: 59.4},
+  A1: {short: 59.4, long: 84.1},
+  A0: {short: 84.1, long: 118.9}
+};
+
 /**
  * Supported character sets definitions. Currently, only French (FR1) is supported.
  * @private
@@ -821,7 +835,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
  * *portrait*.
  * @param {number} [options.penThickness=0.3] - The drawing pen's thickness in millimiters (between
  * 0.1mm and 5mm).
- * @param [callback] {Function=undefined} A function to call once the device has been initialized.
+ * @param {Function} [callback=undefined]  A function to call once the device has been initialized.
  * In case of error, the function will receive an `Error` object
  */
 Plotter.prototype.initialize = function(options, callback) {
@@ -833,7 +847,6 @@ Plotter.prototype.initialize = function(options, callback) {
   this.send(this.RS232_PREFIX + "K");
 
   this._configurePlottingEnvironment(options, callback);
-
 
 };
 
@@ -1002,6 +1015,38 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
     });
 
   })
+
+};
+
+/**
+ * Returns the dimensions of the currently selected paper size. The values returned (`width` and
+ * `height`) take into account the current paper orientation.
+ *
+ * @param {Boolean} metric A boolean value indicating whether the dimensions should be output in cm
+ * (true) or inches (false).
+ * @returns {Object} An object with `width` and `height` properties.
+ */
+Plotter.prototype.getPaperSize = function(metric = true) {
+
+  if (!this.connected && !this._outputFile) {
+    throw new Error(
+      "The plotter must be connected, or an output file specified, before retrieving paper " +
+      "dimensions."
+    );
+  }
+
+  let ratio = metric ? 1 : 1/2.54;
+  let dimensions = {};
+
+  if (this.orientation === "landscape") {
+    dimensions.width = PAPER_SIZES[this.paper].long * ratio;
+    dimensions.height = PAPER_SIZES[this.paper].short * ratio;
+  } else {
+    dimensions.width = PAPER_SIZES[this.paper].short * ratio;
+    dimensions.height = PAPER_SIZES[this.paper].long * ratio;
+  }
+
+  return dimensions;
 
 };
 
