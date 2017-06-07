@@ -104,6 +104,14 @@ passing in the `transport` variable, some optionnal settings and a function to t
 device is ready. Note that `this` is bound to the `Plotter` object and that plotting methods are 
 chainable.
 
+### Using Multiple Plotteres
+
+This library can be used to connect several plotters to the same host. However, not all 
+USB-to-Serial chipsets support this. 
+
+For example, the Prolific 2303 driver crashes my computer when I try use more than one adapter. On 
+the other hand, the Texas Instrument/TI driver works beautifully with multiple devices.
+
 ### Documentation
 
 I will try to maintain an up-to-date [API documentation](https://cotejp.github.io/hpgl/). A good 
