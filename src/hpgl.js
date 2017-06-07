@@ -1200,6 +1200,8 @@ Plotter.prototype.plotFile = function(file, callback = null) {
       throw new Error("The plotFile() function can only be called after the device is ready.");
     }
 
+
+
     this.getStatus((status) => {
 
       if (!status.ready) {
@@ -1477,28 +1479,32 @@ Plotter.prototype._toRelativeHpglCoordinates = function(x, y) {
 };
 
 /**
+ * This method is called when new data comes in from the serial port. Each time a \r is received, a
+ * "data" event is dispatched. This event contains all the data that was buffered since the previous
+ * dispatch.
+ *
  * @private
  * @param {Object} data
  */
 Plotter.prototype._onData = function(data) {
 
-  // console.log("_onData: " + data);
+  data.toString().split("").forEach((char) => {
 
-  if (data.toString() === "\r") {
+    if (char === "\r") {
 
-    /**
-     * Event emitted when data is received from the device.
-     * @event Plotter#data
-     * @param {string} data The data received.
-     */
-    this.emit("data", this._buffer);
-    this._buffer = "";
+      /**
+       * Event emitted when data is received from the device.
+       * @event Plotter#data
+       * @param {string} data The data received.
+       */
+      this.emit("data", this._buffer);
+      this._buffer = "";
 
-  } else {
+    } else {
+      this._buffer += char;
+    }
 
-    this._buffer += data.toString();
-
-  }
+  })
 
 };
 
