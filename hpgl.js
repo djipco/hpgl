@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.6-4
+hpgl v0.8.6-5
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -740,6 +740,14 @@ let Plotter = function() {
    * @readOnly
    */
   this.ready = false;
+
+  /**
+   * This is a an empty object inside which user's of this library are invited to add whatever
+   * property they might find useful.
+   *
+   * @member {Object}
+   */
+  this.userData = {};
 
 };
 
