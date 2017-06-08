@@ -712,6 +712,14 @@ let Plotter = function() {
    */
   this.ready = false;
 
+  /**
+   * This is a an empty object inside which user's of this library are invited to add whatever
+   * property they might find useful.
+   *
+   * @member {Object}
+   */
+  this.userData = {};
+
 };
 
 util.inherits(Plotter, EventEmitter);
