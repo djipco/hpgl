@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.6-5
+hpgl v0.8.6-6
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -559,7 +559,7 @@ let Plotter = function() {
   Object.defineProperty(this, "DEVICE_RS232_DELAY", {
     enumerable: true,
     writable: false,
-    value: 375
+    value: 500
   });
 
   /**
@@ -568,13 +568,13 @@ let Plotter = function() {
    * @member {Number}
    * @name Plotter#QUEUE_DELAY
    * @constant
-   * @default 100
+   * @default 200
    * @private
    */
   Object.defineProperty(this, "QUEUE_DELAY", {
     enumerable: true,
     writable: false,
-    value: 200
+    value: 350
   });
 
   /**
@@ -583,13 +583,13 @@ let Plotter = function() {
    * @member {Number}
    * @name Plotter#QUEUE_DELAY
    * @constant
-   * @default 100
+   * @default 2000
    * @private
    */
   Object.defineProperty(this, "MAX_RESPONSE_TIME", {
     enumerable: true,
     writable: false,
-    value: 1000
+    value: 2000
   });
 
   /**
@@ -1298,7 +1298,6 @@ Plotter.prototype.plotFile = function(file, callback = null) {
  */
 Plotter.prototype.wait = function(callback) {
 
-
   // If the plotter is not connected we simply wait for the queue to be empty
   if (!this.connected) {
 
@@ -1311,8 +1310,6 @@ Plotter.prototype.wait = function(callback) {
     return;
 
   }
-
-
 
   // Send a request for actual pen position and status. This means the device will have to finish
   // all queued instructions before being able to reply.
