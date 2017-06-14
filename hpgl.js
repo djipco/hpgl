@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.6-6
+hpgl v0.8.6-7
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
