@@ -569,7 +569,7 @@ let Plotter = function() {
   Object.defineProperty(this, "DEVICE_RS232_DELAY", {
     enumerable: true,
     writable: false,
-    value: 500
+    value: 375
   });
 
   /**
@@ -578,13 +578,13 @@ let Plotter = function() {
    * @member {Number}
    * @name Plotter#QUEUE_DELAY
    * @constant
-   * @default 200
+   * @default 20
    * @private
    */
   Object.defineProperty(this, "QUEUE_DELAY", {
     enumerable: true,
     writable: false,
-    value: 350
+    value: 20
   });
 
   /**
@@ -593,13 +593,13 @@ let Plotter = function() {
    * @member {Number}
    * @name Plotter#QUEUE_DELAY
    * @constant
-   * @default 2000
+   * @default 1000
    * @private
    */
   Object.defineProperty(this, "MAX_RESPONSE_TIME", {
     enumerable: true,
     writable: false,
-    value: 2000
+    value: 1000
   });
 
   /**
@@ -1906,13 +1906,55 @@ Plotter.prototype.drawCircle = function(radius = 1, angle = 5, options = {}, cal
  * @param {number} [options.linePattern=7] Integer between `0` and `7`. Value `0` prints dots at
  * line extremities only. Values `1` to `6` prints various types of dotted lines. Value `7`
  * (default) is a solid line.
+ * @param {number} [options.penUp=true] Whether the pen should be lifted off the paper at the end of
+ * the line.
+ * @param {number} [options.penDown=true] Whether the pen should be lowered on the paper before
+ * starting to draw a line;
  * @param {Function} [callback] A function to execute when the instruction has been sent to the
  * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
+// Plotter.prototype.drawLine = function(x, y, options = {}, callback) {
+//
+//   this.drawLines([x, y], options, callback);
+//   return this;
+//
+// };
+
 Plotter.prototype.drawLine = function(x, y, options = {}, callback) {
 
-  this.drawLines([x, y], options, callback);
+  // Assign defaults
+  options.penDown = (options.penDown !== false);
+  options.penUp = (options.penUp !== false);
+
+  // // Check validity of line pattern
+  // options.linePattern = parseInt(options.linePattern);
+  //
+  // if (isNaN(options.linePattern) || options.linePattern &lt; 0 || options.linePattern > 7) {
+  //   options.linePattern = 7;
+  // }
+  //
+  // // Assign desired line pattern
+  // if (options.linePattern === 7) {
+  //   this.queue("LT");
+  // } else {
+  //   this.queue("LT" + options.linePattern);
+  // }
+
+  // Convert poisition to plotter units
+  let p = this._toAbsoluteHpglCoordinates(this._toPlotterUnits(x), this._toPlotterUnits(y));
+
+  // Lower pen (if requested)
+  if (options.penDown) this.queue("PD");
+
+  // Send instruction and lift pen (if requested)
+  if (options.penUp) {
+    this.queue("PA" + p.x + "," + p.y);
+    this.queue("PU", callback);
+  } else {
+    this.queue("PA" + p.x + "," + p.y, callback);
+  }
+
   return this;
 
 };
@@ -1927,74 +1969,104 @@ Plotter.prototype.drawLine = function(x, y, options = {}, callback) {
  * @param {number} [options.linePattern=7] Integer between `0` and `7`. Value `0` only prints dots
  * at line extremities only. Values `1` to `6` prints various types of dotted lines. Value `7`
  * (default) is a solid line.
+ * @param {number} [options.penUp=true] Whether the pen should be lifted off the paper after drawing
+ * all the lines.
+ * @param {number} [options.penDown=true] Whether the pen should be lowered on the paper before
+ * drawing all the lines.
  * @param {Function} [callback] A function to execute when all the instruction(s) have been sent to
  * the device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  *
  * @todo add linePatternLength option
  */
+// Plotter.prototype.drawLines = function(positions = [], options = {}, callback) {
+//
+//   // Since this command can be very long, we break it into chunks no larger than the buffer size
+//   let chunks = [[]], current = 0;
+//
+//   // Check validity of line pattern
+//   // options.linePattern = options.linePattern || 7;
+//   options.linePattern = parseInt(options.linePattern);
+//
+//   if (isNaN(options.linePattern) || options.linePattern &lt; 0 || options.linePattern > 7) {
+//     options.linePattern = 7;
+//   }
+//
+//   if (options.linePattern === 7) {
+//     this.queue("LT");
+//   } else {
+//     this.queue("LT" + options.linePattern);
+//   }
+//
+//   // Positions are converted to plotter units and pushed in chunks no larger than the buffer
+//   for (let i = 0; i &lt; positions.length; i += 2) {
+//
+//     let x = this._toPlotterUnits(positions[i]);
+//     let y = this._toPlotterUnits(positions[i+1]);
+//     let p = this._toAbsoluteHpglCoordinates(x, y);
+//
+//     // Chunks must be smaller than the total buffer size. So, before adding a new position, we must
+//     // make sure that this new position does no bring the chunk above the buffer's size. If it
+//     // exceeds the buffer's size, we create a new chunk. Warning: if no device is connected, we rely
+//     // on the device's buffer size reported in the characteristics.
+//     if (!this.connected &amp;&amp; !this.characteristics.buffer) {
+//       throw new Error(
+//         "The drawLines() function cannot properly chunk the instructions since the device's " +
+//         "buffer size has not been defined in the characteristics."
+//       );
+//     }
+//
+//     // Simulate final instruction to verify length
+//     let instruction = "PA" + chunks[current].concat([p.x, p.y]).join(",") + ";";
+//
+//     if (instruction.length > this.characteristics.buffer) {
+//       current++;
+//       chunks[current] = [];
+//     }
+//     chunks[current].push(p.x, p.y);
+//
+//   }
+//
+//   // Only queue if there is actual data in the array. We lower the pen, go through each chunk and
+//   // then lift the pen up.
+//   if (chunks[0].length > 0) {
+//
+//     this.queue("PD");
+//
+//     chunks.forEach((chunk) => {
+//       this.queue("PA" + chunk.join(","));
+//     });
+//
+//     // We attach the callback to the very last instruction
+//     this.queue("PU", callback);
+//
+//   }
+//
+//   return this;
+//
+// };
 Plotter.prototype.drawLines = function(positions = [], options = {}, callback) {
 
-  // Since this command can be very long, we break it into chunks no larger than the buffer size
-  let chunks = [[]], current = 0;
+  // Assign defaults
+  options.penDown = (options.penDown !== false);
+  options.penUp = (options.penUp !== false);
 
-  // Check validity of line pattern
-  // options.linePattern = options.linePattern || 7;
-  options.linePattern = parseInt(options.linePattern);
+  if (options.penDown) this.queue("PD");
 
-  if (isNaN(options.linePattern) || options.linePattern &lt; 0 || options.linePattern > 7) {
-    options.linePattern = 7;
-  }
-
-  if (options.linePattern === 7) {
-    this.queue("LT");
-  } else {
-    this.queue("LT" + options.linePattern);
-  }
-
-  // Positions are converted to plotter units and pushed in chunks no larger than the buffer
+  // Draw all lines
   for (let i = 0; i &lt; positions.length; i += 2) {
 
-    let x = this._toPlotterUnits(positions[i]);
-    let y = this._toPlotterUnits(positions[i+1]);
-    let p = this._toAbsoluteHpglCoordinates(x, y);
-
-    // Chunks must be smaller than the total buffer size. So, before adding a new position, we must
-    // make sure that this new position does no bring the chunk above the buffer's size. If it
-    // exceeds the buffer's size, we create a new chunk. Warning: if no device is connected, we rely
-    // on the device's buffer size reported in the characteristics.
-    if (!this.connected &amp;&amp; !this.characteristics.buffer) {
-      throw new Error(
-        "The drawLines() function cannot properly chunk the instructions since the device's " +
-        "buffer size has not been defined in the characteristics."
-      );
+    // We attach the callback to the last instruction (if no penUp has been specified)
+    if (!options.penUp &amp;&amp; i+1 >= positions.length) {
+      this.drawLine(positions[i], positions[i+1], {penUp: false, penDown: false}, callback);
+    } else {
+      this.drawLine(positions[i], positions[i+1], {penUp: false, penDown: false});
     }
-
-    // Simulate final instruction to verify length
-    let instruction = "PA" + chunks[current].concat([p.x, p.y]).join(",") + ";";
-
-    if (instruction.length > this.characteristics.buffer) {
-      current++;
-      chunks[current] = [];
-    }
-    chunks[current].push(p.x, p.y);
 
   }
 
-  // Only queue if there is actual data in the array. We lower the pen, go through each chunk and
-  // then lift the pen up.
-  if (chunks[0].length > 0) {
+  if (options.penUp) this.queue("PU", callback);
 
-    this.queue("PD");
-
-    chunks.forEach((chunk) => {
-      this.queue("PA" + chunk.join(","));
-    });
-
-    // We attach the callback to the very last instruction
-    this.queue("PU", callback);
-
-  }
 
   return this;
 
@@ -2496,7 +2568,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.6-7</b> /
+  <b>hpgl v0.8.6-8</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
