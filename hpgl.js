@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.6-8
+hpgl v0.8.6-9
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -568,13 +568,13 @@ let Plotter = function() {
    * @member {Number}
    * @name Plotter#QUEUE_DELAY
    * @constant
-   * @default 20
+   * @default 100
    * @private
    */
   Object.defineProperty(this, "QUEUE_DELAY", {
     enumerable: true,
     writable: false,
-    value: 20
+    value: 100
   });
 
   /**
@@ -844,6 +844,8 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
         return;
       }
 
+      // console.log("rs2323 err code", err.code);
+
       this.initialize(options, callback);
 
     });
@@ -1109,12 +1111,16 @@ Plotter.prototype.getModel = function(callback) {
     cancel = true;
 
     // Since the ESC.A instruction does not exist on all devices, it triggers an error which we must
-    // get rid of before procedding.
-    this.send(this.RS232_PREFIX + "E");
+    // get rid of before proceeding. It is important to wait for the response even if we do not use
+    // it because otherwise, it will pollute the next data handler.
+    this.send(this.RS232_PREFIX + "E", () => {
 
-    this.queue("OI", (data) => {
-      if (typeof callback === "function") callback(data);
-    }, {waitForResponse: true});
+      // We don't care about the actual error. We just need to flush it from the device.
+      this.queue("OI", (data) => {
+        if (typeof callback === "function") callback(data);
+      }, {waitForResponse: true});
+
+    }, true);
 
   }, this.DEVICE_RS232_DELAY);
 
@@ -1904,50 +1910,50 @@ Plotter.prototype.drawCircle = function(radius = 1, angle = 5, options = {}, cal
  * device.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-// Plotter.prototype.drawLine = function(x, y, options = {}, callback) {
-//
-//   this.drawLines([x, y], options, callback);
-//   return this;
-//
-// };
-
 Plotter.prototype.drawLine = function(x, y, options = {}, callback) {
 
-  // Assign defaults
-  options.penDown = (options.penDown !== false);
-  options.penUp = (options.penUp !== false);
-
-  // // Check validity of line pattern
-  // options.linePattern = parseInt(options.linePattern);
-  //
-  // if (isNaN(options.linePattern) || options.linePattern < 0 || options.linePattern > 7) {
-  //   options.linePattern = 7;
-  // }
-  //
-  // // Assign desired line pattern
-  // if (options.linePattern === 7) {
-  //   this.queue("LT");
-  // } else {
-  //   this.queue("LT" + options.linePattern);
-  // }
-
-  // Convert poisition to plotter units
-  let p = this._toAbsoluteHpglCoordinates(this._toPlotterUnits(x), this._toPlotterUnits(y));
-
-  // Lower pen (if requested)
-  if (options.penDown) this.queue("PD");
-
-  // Send instruction and lift pen (if requested)
-  if (options.penUp) {
-    this.queue("PA" + p.x + "," + p.y);
-    this.queue("PU", callback);
-  } else {
-    this.queue("PA" + p.x + "," + p.y, callback);
-  }
-
+  this.drawLines([x, y], options, callback);
   return this;
 
 };
+
+// Plotter.prototype.drawLine = function(x, y, options = {}, callback) {
+//
+//   // Assign defaults
+//   options.penDown = (options.penDown !== false);
+//   options.penUp = (options.penUp !== false);
+//
+//   // // Check validity of line pattern
+//   // options.linePattern = parseInt(options.linePattern);
+//   //
+//   // if (isNaN(options.linePattern) || options.linePattern < 0 || options.linePattern > 7) {
+//   //   options.linePattern = 7;
+//   // }
+//   //
+//   // // Assign desired line pattern
+//   // if (options.linePattern === 7) {
+//   //   this.queue("LT");
+//   // } else {
+//   //   this.queue("LT" + options.linePattern);
+//   // }
+//
+//   // Convert poisition to plotter units
+//   let p = this._toAbsoluteHpglCoordinates(this._toPlotterUnits(x), this._toPlotterUnits(y));
+//
+//   // Lower pen (if requested)
+//   if (options.penDown) this.queue("PD");
+//
+//   // Send instruction and lift pen (if requested)
+//   if (options.penUp) {
+//     this.queue("PA" + p.x + "," + p.y);
+//     this.queue("PU", callback);
+//   } else {
+//     this.queue("PA" + p.x + "," + p.y, callback);
+//   }
+//
+//   return this;
+//
+// };
 
 /**
  * Draws a series of lines starting at the current pen position and going, in turn, to all x/y pairs
@@ -1969,98 +1975,98 @@ Plotter.prototype.drawLine = function(x, y, options = {}, callback) {
  *
  * @todo add linePatternLength option
  */
-// Plotter.prototype.drawLines = function(positions = [], options = {}, callback) {
-//
-//   // Since this command can be very long, we break it into chunks no larger than the buffer size
-//   let chunks = [[]], current = 0;
-//
-//   // Check validity of line pattern
-//   // options.linePattern = options.linePattern || 7;
-//   options.linePattern = parseInt(options.linePattern);
-//
-//   if (isNaN(options.linePattern) || options.linePattern < 0 || options.linePattern > 7) {
-//     options.linePattern = 7;
-//   }
-//
-//   if (options.linePattern === 7) {
-//     this.queue("LT");
-//   } else {
-//     this.queue("LT" + options.linePattern);
-//   }
-//
-//   // Positions are converted to plotter units and pushed in chunks no larger than the buffer
-//   for (let i = 0; i < positions.length; i += 2) {
-//
-//     let x = this._toPlotterUnits(positions[i]);
-//     let y = this._toPlotterUnits(positions[i+1]);
-//     let p = this._toAbsoluteHpglCoordinates(x, y);
-//
-//     // Chunks must be smaller than the total buffer size. So, before adding a new position, we must
-//     // make sure that this new position does no bring the chunk above the buffer's size. If it
-//     // exceeds the buffer's size, we create a new chunk. Warning: if no device is connected, we rely
-//     // on the device's buffer size reported in the characteristics.
-//     if (!this.connected && !this.characteristics.buffer) {
-//       throw new Error(
-//         "The drawLines() function cannot properly chunk the instructions since the device's " +
-//         "buffer size has not been defined in the characteristics."
-//       );
-//     }
-//
-//     // Simulate final instruction to verify length
-//     let instruction = "PA" + chunks[current].concat([p.x, p.y]).join(",") + ";";
-//
-//     if (instruction.length > this.characteristics.buffer) {
-//       current++;
-//       chunks[current] = [];
-//     }
-//     chunks[current].push(p.x, p.y);
-//
-//   }
-//
-//   // Only queue if there is actual data in the array. We lower the pen, go through each chunk and
-//   // then lift the pen up.
-//   if (chunks[0].length > 0) {
-//
-//     this.queue("PD");
-//
-//     chunks.forEach((chunk) => {
-//       this.queue("PA" + chunk.join(","));
-//     });
-//
-//     // We attach the callback to the very last instruction
-//     this.queue("PU", callback);
-//
-//   }
-//
-//   return this;
-//
-// };
 Plotter.prototype.drawLines = function(positions = [], options = {}, callback) {
 
-  // Assign defaults
-  options.penDown = (options.penDown !== false);
-  options.penUp = (options.penUp !== false);
+  // Since this command can be very long, we break it into chunks no larger than the buffer size
+  let chunks = [[]], current = 0;
 
-  if (options.penDown) this.queue("PD");
+  // Check validity of line pattern
+  // options.linePattern = options.linePattern || 7;
+  options.linePattern = parseInt(options.linePattern);
 
-  // Draw all lines
+  if (isNaN(options.linePattern) || options.linePattern < 0 || options.linePattern > 7) {
+    options.linePattern = 7;
+  }
+
+  if (options.linePattern === 7) {
+    this.queue("LT");
+  } else {
+    this.queue("LT" + options.linePattern);
+  }
+
+  // Positions are converted to plotter units and pushed in chunks no larger than the buffer
   for (let i = 0; i < positions.length; i += 2) {
 
-    // We attach the callback to the last instruction (if no penUp has been specified)
-    if (!options.penUp && i+1 >= positions.length) {
-      this.drawLine(positions[i], positions[i+1], {penUp: false, penDown: false}, callback);
-    } else {
-      this.drawLine(positions[i], positions[i+1], {penUp: false, penDown: false});
+    let x = this._toPlotterUnits(positions[i]);
+    let y = this._toPlotterUnits(positions[i+1]);
+    let p = this._toAbsoluteHpglCoordinates(x, y);
+
+    // Chunks must be smaller than the total buffer size. So, before adding a new position, we must
+    // make sure that this new position does no bring the chunk above the buffer's size. If it
+    // exceeds the buffer's size, we create a new chunk. Warning: if no device is connected, we rely
+    // on the device's buffer size reported in the characteristics.
+    if (!this.connected && !this.characteristics.buffer) {
+      throw new Error(
+        "The drawLines() function cannot properly chunk the instructions since the device's " +
+        "buffer size has not been defined in the characteristics."
+      );
     }
+
+    // Simulate final instruction to verify length
+    let instruction = "PA" + chunks[current].concat([p.x, p.y]).join(",") + ";";
+
+    if (instruction.length > this.characteristics.buffer) {
+      current++;
+      chunks[current] = [];
+    }
+    chunks[current].push(p.x, p.y);
 
   }
 
-  if (options.penUp) this.queue("PU", callback);
+  // Only queue if there is actual data in the array. We lower the pen, go through each chunk and
+  // then lift the pen up.
+  if (chunks[0].length > 0) {
 
+    this.queue("PD");
+
+    chunks.forEach((chunk) => {
+      this.queue("PA" + chunk.join(","));
+    });
+
+    // We attach the callback to the very last instruction
+    this.queue("PU", callback);
+
+  }
 
   return this;
 
 };
+// Plotter.prototype.drawLines = function(positions = [], options = {}, callback) {
+//
+//   // Assign defaults
+//   options.penDown = (options.penDown !== false);
+//   options.penUp = (options.penUp !== false);
+//
+//   if (options.penDown) this.queue("PD");
+//
+//   // Draw all lines
+//   for (let i = 0; i < positions.length; i += 2) {
+//
+//     // We attach the callback to the last instruction (if no penUp has been specified)
+//     if (!options.penUp && i+1 >= positions.length) {
+//       this.drawLine(positions[i], positions[i+1], {penUp: false, penDown: false}, callback);
+//     } else {
+//       this.drawLine(positions[i], positions[i+1], {penUp: false, penDown: false});
+//     }
+//
+//   }
+//
+//   if (options.penUp) this.queue("PU", callback);
+//
+//
+//   return this;
+//
+// };
 
 /**
  * Draws a rectangle with the specified `width` and `height` starting at the current pen position.
@@ -2520,10 +2526,9 @@ Plotter.prototype._processQueue = function() {
         // if more commands are in the queue, process them.
         if (command.waitForResponse) {
 
-          // console.log("Wait for response.");
+          console.log("Wait for response.");
 
           this.once("data", () => {
-            // console.log("Response: " + data);
             this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
           })
 
