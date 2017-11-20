@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.6-9
+hpgl v0.8.7-1
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -8,7 +8,7 @@ https://github.com/cotejp/hpgl
 
 The MIT License (MIT)
 
-Copyright (c) 2016, Jean-Philippe Côté
+Copyright (c) 2016-2017, Jean-Philippe Côté
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -41,6 +41,9 @@ module.exports = {};
  */
 const ORIENTATIONS = ["portrait", "landscape"];
 
+// End of text (ETX) character acts as label terminator
+const LABEL_TERMINATOR = String.fromCharCode(3);
+
 const PAPER_SIZES = {
   A: {short: 21.59, long: 27.94},
   B: {short: 27.94, long: 43.18},
@@ -55,44 +58,215 @@ const PAPER_SIZES = {
   A0: {short: 84.1, long: 118.9}
 };
 
-/**
- * Supported character sets definitions. Currently, only French (FR1) is supported.
- * @private
- */
-const CHARACTER_SETS = {
+const CHARACTERS = {
 
-  // ISO 646 French (FR1)
-  34: {
-    "!": 33,
-    '"': 34,
-    "£": 35,
-    "$": 36,
-    "’": 39,
-    ",": 44,
-    "à": 64,
-    "°": 91,
-    "ç": 92,
-    "§": 93,
-    "^": 94,
-    "_": 95,
-    "µ": 96,
-    "é": 123,
-    "ù": 124,
-    "è": 125,
-    "¨": 126,
+  // Character Set 0 (ANSI/ASCII)
+  " ": {code: 32, charset: 0},
+  "!": {code: 33, charset: 0},
+  '"': {code: 34, charset: 0},
+  "#": {code: 35, charset: 0},
+  "$": {code: 36, charset: 0},
+  "%": {code: 37, charset: 0},
+  "&": {code: 38, charset: 0},
+  "'": {code: 39, charset: 0},
+  "(": {code: 40, charset: 0},
+  ")": {code: 41, charset: 0},
+  "*": {code: 42, charset: 0},
+  "+": {code: 43, charset: 0},
+  ",": {code: 44, charset: 0},
+  "-": {code: 45, charset: 0},
+  ".": {code: 46, charset: 0},
+  "/": {code: 47, charset: 0},
+  "0": {code: 48, charset: 0},
+  "1": {code: 49, charset: 0},
+  "2": {code: 50, charset: 0},
+  "3": {code: 51, charset: 0},
+  "4": {code: 52, charset: 0},
+  "5": {code: 53, charset: 0},
+  "6": {code: 54, charset: 0},
+  "7": {code: 55, charset: 0},
+  "8": {code: 56, charset: 0},
+  "9": {code: 57, charset: 0},
+  ":": {code: 58, charset: 0},
+  ";": {code: 59, charset: 0},
+  "<": {code: 60, charset: 0},
+  "=": {code: 61, charset: 0},
+  ">": {code: 62, charset: 0},
+  "?": {code: 63, charset: 0},
+  "@": {code: 64, charset: 0},
+  "A": {code: 65, charset: 0},
+  "B": {code: 66, charset: 0},
+  "C": {code: 67, charset: 0},
+  "D": {code: 68, charset: 0},
+  "E": {code: 69, charset: 0},
+  "F": {code: 70, charset: 0},
+  "G": {code: 71, charset: 0},
+  "H": {code: 72, charset: 0},
+  "I": {code: 73, charset: 0},
+  "J": {code: 74, charset: 0},
+  "K": {code: 75, charset: 0},
+  "L": {code: 76, charset: 0},
+  "M": {code: 77, charset: 0},
+  "N": {code: 78, charset: 0},
+  "O": {code: 79, charset: 0},
+  "P": {code: 80, charset: 0},
+  "Q": {code: 81, charset: 0},
+  "R": {code: 82, charset: 0},
+  "S": {code: 83, charset: 0},
+  "T": {code: 84, charset: 0},
+  "U": {code: 85, charset: 0},
+  "V": {code: 86, charset: 0},
+  "W": {code: 87, charset: 0},
+  "X": {code: 88, charset: 0},
+  "Y": {code: 89, charset: 0},
+  "Z": {code: 90, charset: 0},
+  "[": {code: 91, charset: 0},
+  "\\": {code: 92, charset: 0},
+  "]": {code: 93, charset: 0},
+  "^": {code: 94, charset: 0},
+  "_": {code: 95, charset: 0},
+  "`": {code: 96, charset: 0},
+  "a": {code: 97, charset: 0},
+  "b": {code: 98, charset: 0},
+  "c": {code: 99, charset: 0},
+  "d": {code: 100, charset: 0},
+  "e": {code: 101, charset: 0},
+  "f": {code: 102, charset: 0},
+  "g": {code: 103, charset: 0},
+  "h": {code: 104, charset: 0},
+  "i": {code: 105, charset: 0},
+  "j": {code: 106, charset: 0},
+  "k": {code: 107, charset: 0},
+  "l": {code: 108, charset: 0},
+  "m": {code: 109, charset: 0},
+  "n": {code: 110, charset: 0},
+  "o": {code: 111, charset: 0},
+  "p": {code: 112, charset: 0},
+  "q": {code: 113, charset: 0},
+  "r": {code: 114, charset: 0},
+  "s": {code: 115, charset: 0},
+  "t": {code: 116, charset: 0},
+  "u": {code: 117, charset: 0},
+  "v": {code: 118, charset: 0},
+  "w": {code: 119, charset: 0},
+  "x": {code: 120, charset: 0},
+  "y": {code: 121, charset: 0},
+  "z": {code: 122, charset: 0},
+  "{": {code: 123, charset: 0},
+  "|": {code: 124, charset: 0},
+  "}": {code: 125, charset: 0},
+  "~": {code: 126, charset: 0},
 
-    // circumflex (we send "a", then "backspace" and then the circumflex accent)
-    "â": [97, 8, 94],
-    "ê": [101, 8, 94],
-    "ô": [111, 8, 94],
-    "û": [117, 8, 94],
+  // Character Set 7 (Roman Extensions)
+  "À": {code: 33, charset: 7},
+  "Â": {code: 34, charset: 7},
+  "È": {code: 35, charset: 7},
+  "Ê": {code: 36, charset: 7},
+  "Ë": {code: 37, charset: 7},
+  "Î": {code: 38, charset: 7},
+  "Ï": {code: 39, charset: 7},
+  "´": {code: 40, charset: 7},
+  // 41 is duplicate
+  "ˆ": {code: 42, charset: 7},
+  "¨": {code: 43, charset: 7},
+  "˜": {code: 44, charset: 7},
+  "Ù": {code: 45, charset: 7},
+  "Û": {code: 46, charset: 7},
+  "£": {code: 47, charset: 7},
+  "¯": {code: 48, charset: 7},
+  // 49 is unused
+  // 50 is unused
+  "˚": {code: 51, charset: 7},
+  "Ç": {code: 52, charset: 7},
+  "ç": {code: 53, charset: 7},
+  "Ñ": {code: 54, charset: 7},
+  "ñ": {code: 55, charset: 7},
+  "¡": {code: 56, charset: 7},
+  "¿": {code: 57, charset: 7},
+  "¤": {code: 58, charset: 7},
+  // 59 is duplicate of 47
+  "¥": {code: 60, charset: 7},
+  "§": {code: 61, charsetcharset: 7},
+  // 62: not sure... ƒ
+  "¢": {code: 63, charset: 7},
+  "â": {code: 64, charset: 7},
+  "ê": {code: 65, charset: 7},
+  "ô": {code: 66, charset: 7},
+  "û": {code: 67, charset: 7},
+  "á": {code: 68, charset: 7},
+  "é": {code: 69, charset: 7},
+  "ó": {code: 70, charset: 7},
+  "ú": {code: 71, charset: 7},
+  "à": {code: 72, charset: 7},
+  "è": {code: 73, charset: 7},
+  "ò": {code: 74, charset: 7},
+  "ù": {code: 75, charset: 7},
+  "ä": {code: 76, charset: 7},
+  "ë": {code: 77, charset: 7},
+  "ö": {code: 78, charset: 7},
+  "ü": {code: 79, charset: 7},
+  "Á": {code: 80, charset: 7},
+  // "?": 81,
+  // "?": 82,
+  "Æ": {code: 83, charset: 7},
+  // "?": 84,
+  "í": {code: 85, charset: 7},
+  // "?": 86,
+  // "?": 87,
+  // "?": 88,
+  "ì": {code: 89, charset: 7},
+  // "?": 90,
+  // "?": 91,
+  "É": {code: 92, charset: 7},
+  // "": 93,
+  // "": 94,
+  "Ô": {code: 95, charset: 7},
+  // same as 80
+  "Ã": {code: 97, charset: 7},
+  "ã": {code: 98, charset: 7},
+  // "?": 99,
+  // "?": 100,
+  "Í": {code: 101, charset: 7},
+  // "?": 102,
+  "Ó": {code: 103, charset: 7},
+  "Ò": {code: 104, charset: 7},
+  "Õ": {code: 105, charset: 7},
+  "õ": {code: 106, charset: 7},
+  "Š": {code: 107, charset: 7},
+  "š": {code: 108, charset: 7},
+  "Ú": {code: 109, charset: 7},
+  // "?": 110,
+  // "?": 111,
+  "þ": {code: 112, charset: 7},
+  "Þ": {code: 113, charset: 7},
+  // 114 is unused,
+  // 115 is unused,
+  // 116 is unused,
+  // 117 is unused,
+  // "?": 118,
+  "¼": {code: 119, charset: 7},
+  "½": {code: 120, charset: 7},
+  // "?": 121,
+  // "?": 122,
+  // "?": 123,
+  // "": 124,
+  // "?": 125,
+  "±": {code: 126, charset: 7}
 
-    // diaresis (we send "a", then "backspace" and then the diaresis mark)
-    "ä": [97, 8, 126],
-    "ë": [101, 8, 126],
-    "ö": [111, 8, 126],
-    "ü": [117, 8, 126]
-  }
+
+  // "µ": {code: 96, charset: 34}
+
+  // // circumflex (we send "a", then "backspace" and then the circumflex accent)
+  // "â": [97, 8, 94],
+  // "ê": [101, 8, 94],
+  // "ô": [111, 8, 94],
+  // "û": [117, 8, 94],
+  //
+  // // diaresis (we send "a", then "backspace" and then the diaresis mark)
+  // "ä": [97, 8, 126],
+  // "ë": [101, 8, 126],
+  // "ö": [111, 8, 126],
+  // "ü": [117, 8, 126]
 
 };
 
@@ -575,21 +749,6 @@ let Plotter = function() {
     enumerable: true,
     writable: false,
     value: 100
-  });
-
-  /**
-   * The amount of time to wait for an answer from the device.
-   *
-   * @member {Number}
-   * @name Plotter#QUEUE_DELAY
-   * @constant
-   * @default 1000
-   * @private
-   */
-  Object.defineProperty(this, "MAX_RESPONSE_TIME", {
-    enumerable: true,
-    writable: false,
-    value: 1000
   });
 
   /**
@@ -1601,7 +1760,7 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
   // label (which requires a special termination char: ETX). RS-232-C isntructions only need a
   // termination character when parameters are used. In this case the terminator is the colon.
   if (instruction.substring(0, 2) === "LB") {
-    instruction += String.fromCharCode(3); // ETX character is label delimiter
+    instruction += LABEL_TERMINATOR; // ETX character is label delimiter
   } else if (instruction.substring(0, 2) === this.RS232_PREFIX) {
     if (instruction.length > 3) instruction += ":";
   } else {
@@ -1666,39 +1825,19 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
  * Draws the specified text at the current pen position. The reference point is at the text's bottom
  * left.
  *
- * @todo text direction (double check with orientation)
- * @todo Add the missing character sets.
+ * Currently, all of the ANSI/ASCII characters are supported as well as most of the characters in
+ * the **Roman Extensions** character set (Set 7) which covers most european languages. I'm still
+ * missing some characters because I'm not sure what they are...
  *
- * @param {string} text The text to write
+ * @todo text direction (double check with orientation)
+ * @todo Add missing characters
+ *
+ * @param {string} text A UTF-8 string to plot.
  * @param {Object} [options={}] Options to control how the text is drawn.
  * @param {number} [options.characterWidth=0.187] The width, in centimeters, of a single character
  * of text. A negative value mirrors the text for that dimension.
  * @param {number} [options.characterHeight=0.269] The height, in centimeters, of a single character
  * of text. A negative value mirrors the text for that dimension.
- * @param {number} [options.charset=0] The numerical ID of the character set to use to print
- * the label. These sets are defined by the [IS0 646](https://en.wikipedia.org/wiki/ISO/IEC_646)
- * standard.
- *
- * Currently, only the **ANSI** (0) and the **ISO French** (34) sets are available:
- *  - 0: ANSI
- *  - ~~1: 9825 Character Set~~
- *  - ~~2: French/German~~
- *  - ~~3: Scandinavian~~
- *  - ~~4: Spanish/Latin American~~
- *  - ~~6: JIS~~
- *  - ~~7: Roman Extensions~~
- *  - ~~8: Katakana~~
- *  - ~~9: ISO Internation Reference Version~~
- *  - ~~30: ISO Swedish~~
- *  - ~~31: ISO Swedish for Names~~
- *  - ~~32: ISO Norway, Version 1 (sic)~~
- *  - ~~33: ISO German~~
- *  - 34: ISO French
- *  - ~~35: ISO United Kingdom (sic)~~
- *  - ~~36: ISO Italian~~
- *  - ~~37: ISO Spanish~~
- *  - ~~38: ISO Portuguese~~
- *  - ~~39: ISO Norway, Version 2 (sic)~~
  * @param {number} [options.rotation=0] The counter-clockwise rotation to apply to the text (in
  * degrees).
  * @param {number} [options.scale=0] The scale factor used to size the characters. For example, a
@@ -1714,15 +1853,13 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
 Plotter.prototype.drawText = function(text, options = {}, callback) {
 
   // Defaults
-  if ( ![0, 34].includes(options.charset) ) options.charset = 0;
   options.characterWidth = parseFloat(options.characterWidth) || .187;
   options.characterHeight = parseFloat(options.characterHeight) || .269;
   options.rotation = parseFloat(options.rotation) || 0;
   options.scale = parseFloat(options.scale) || 1;
   options.slant = parseFloat(options.slant) || 0;
 
-  // Define the standard character set (CS) and select it (SS)
-  this.queue("CS" + options.charset);
+  // Define select the standard character set
   this.queue("SS");
 
   // Assign character width and height
@@ -1749,43 +1886,31 @@ Plotter.prototype.drawText = function(text, options = {}, callback) {
   this.queue("SL" + this._toHpglDecimal( Math.tan(radSlant) ) );
 
   // Send label command
-  this.queue("LB" + this._toIso646(text, options.charset), callback);
+  this.queue(this.utf8toHpgl(text), callback);
 
   return this;
 
 };
 
 /**
- * Converts a UTF-8 string to an ISO 646 character set.
+ * Converts all characters in the UTF-8 input string to equivalent HPGL instruction(s). The function
+ * will switch character set as needed in an attempt to reproduce as many characters as possible.
  *
- * @private
- * @param {string} text The text to write
- * @param {number} [charset=0] The ISO 646 character set to convert the text to.
- * @returns {string} The converted text.
+ * If a character is not found, it will be drawn as is using Set 0 (ANSI/ASCII).
+ *
+ * @param {string} text A UTF-8 formatted string
+ * @returns {string} The resulting HPGL instruction(s)
  */
-Plotter.prototype._toIso646 = function(text, charset = 0) {
+Plotter.prototype.utf8toHpgl = function(text) {
 
-  // If no encoding is needed, bail out early.
-  if (charset === 0) { return text; }
+  let converted = text.split("").map(char => {
 
-  let converted = text.split("").map((char) => {
-
-    let found = CHARACTER_SETS[charset][char];
+    let found = CHARACTERS[char];
 
     if (found) {
-
-      if (!Array.isArray(found)) { found = [found]; }
-
-      let encoded = "";
-
-      found.forEach((element) => {
-        encoded += String.fromCharCode(element);
-      });
-
-      return encoded;
-
+      return "CS" + found.charset + ";LB" + String.fromCharCode(found.code) + LABEL_TERMINATOR;
     } else {
-      return char;
+      return "CS0;LB" + char + LABEL_TERMINATOR;
     }
 
   });
@@ -2418,7 +2543,7 @@ Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
   // Check if we are dealing with a single instruction or multiple instructions concatenated in one
   // string. To do that, we build a regex that will break the string on semicolons, newlines or CTX
   // characters (for label). Then we filter out empty elements.
-  let regex = new RegExp("[;\n" + String.fromCharCode(3) + "]");
+  let regex = new RegExp("[;\n" + LABEL_TERMINATOR + "]");
   let commands = instruction.split(regex).filter(function(n) { return n.length >= 2; });
 
   // The callback is only added to the last element (if many instructions are concatenated together)
@@ -2504,17 +2629,29 @@ Plotter.prototype._processQueue = function() {
     // should the response never come in.
     let to = setTimeout(() => {
       console.log("Warning: Bad communication with the device. Attempting once more.");
+
+      // Dispatch fake event to prevent the previous callback from being executed and screwing
+      // things up.
+      this.emit("data", -1);
+      this._buffer = "";
       this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
-    }, this.MAX_RESPONSE_TIME);
+
+    }, this.DEVICE_RS232_DELAY);
 
     this.send(this.RS232_PREFIX + "B", (data) => {
+
+      let freeSpace = parseInt(data);
+
+      // This is a special case when no data is received after a set amount of time and we fake it
+      // in order to start again.
+      if (freeSpace === -1) return;
 
       // Remove retry timeout
       clearTimeout(to);
 
       // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
       // delay processing until later.
-      if (this._queue[0].instruction.length <= data) {
+      if (this._queue[0].instruction.length <= freeSpace) {
 
         // console.log("Enough buffer space: " + data);
 
