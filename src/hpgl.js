@@ -824,7 +824,7 @@ let Plotter = function() {
   Object.defineProperty(this, 'connected', {
 
     get: () => {
-      return (this.transport && this.transport.isOpen()) === true;
+      return (this.transport && this.transport.isOpen) === true;
     }
 
   });
@@ -931,7 +931,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     // Tear down function when connection fails
     function fail(err) {
-      if (this.transport.isOpen()) this.transport.close();
+      if (this.transport.isOpen) this.transport.close();
       this.transport.removeListener('data', onDataListener);
       this.transport.removeListener('error', onErrorListener);
       if (typeof callback === "function") callback(err);
