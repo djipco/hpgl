@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.7-2
+hpgl v0.8.7-3
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -186,7 +186,7 @@ const CHARACTERS = {
   "¤": {code: 58, charset: 7},
   // 59 is duplicate of 47
   "¥": {code: 60, charset: 7},
-  "§": {code: 61, charsetcharset: 7},
+  "§": {code: 61, charset: 7},
   // 62: not sure... ƒ
   "¢": {code: 63, charset: 7},
   "â": {code: 64, charset: 7},
@@ -216,7 +216,7 @@ const CHARACTERS = {
   // "?": 88,
   "ì": {code: 89, charset: 7},
   // "?": 90,
-  // "?": 91,
+  "Ü": {code: 91, charset: 7},
   "É": {code: 92, charset: 7},
   // "": 93,
   // "": 94,
