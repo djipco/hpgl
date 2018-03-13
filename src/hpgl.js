@@ -1550,14 +1550,18 @@ Plotter.prototype.disconnect = function(callback = null) {
 
   this.ready = false;
 
-  this.abort();
+  this.abort(() => {
 
-  this.send("IN", () => {
-    this.transport.close((error) => {
-      this.transport = undefined;
-      if (typeof callback === "function") { callback(error); }
+    this.send("IN", () => {
+      this.transport.close((error) => {
+        this.transport = undefined;
+        if (typeof callback === "function") { callback(error); }
+      });
     });
+
   });
+
+
 
   /**
    * Event emitted when the serial connection has been successfully closed.
