@@ -19,7 +19,8 @@
     "pen plotter"
   ],
   "dependencies": {
-    "fs-extra": "^1.0.0"
+    "fs-extra": "^1.0.0",
+    "serialport": ">=6.0.0"
   },
   "homepage": "https://github.com/cotejp/hpgl",
   "license": "MIT",

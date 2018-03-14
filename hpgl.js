@@ -853,7 +853,14 @@ let Plotter = function() {
   Object.defineProperty(this, 'connected', {
 
     get: () => {
-      return (this.transport && this.transport.isOpen()) === true;
+      let transportIsOpen = false;
+      if ("isOpen" in this.transport) {
+        transportIsOpen = this.transport.isOpen;
+      }
+      else {
+        transportIsOpen = this.transport.isOpen();
+      }
+      return (this.transport && transportIsOpen) === true;
     }
 
   });
@@ -960,7 +967,14 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     // Tear down function when connection fails
     function fail(err) {
-      if (this.transport.isOpen()) this.transport.close();
+      let transportIsOpen = false;
+      if ("isOpen" in this.transport) {
+        transportIsOpen = this.transport.isOpen;
+      }
+      else {
+        transportIsOpen = this.transport.isOpen();
+      }
+      if (transportIsOpen) this.transport.close();
       this.transport.removeListener('data', onDataListener);
       this.transport.removeListener('error', onErrorListener);
       if (typeof callback === "function") callback(err);
