@@ -51,7 +51,7 @@ module.exports = {};
  */
 const ORIENTATIONS = ["portrait", "landscape"];
 
-// End of text (ETX) character acts as label terminator
+// End of text (ETX) character that acts as a label terminator
 const LABEL_TERMINATOR = String.fromCharCode(3);
 
 const PAPER_SIZES = {
@@ -263,7 +263,6 @@ const CHARACTERS = {
   // "?": 125,
   "±": {code: 126, charset: 7}
 
-
   // "µ": {code: 96, charset: 34}
 
   // // circumflex (we send "a", then "backspace" and then the circumflex accent)
@@ -370,8 +369,10 @@ let Models = {
   },
 
   /**
-   * Characteristics for the **HP 7440A** plotter. This model is also know as the *Color Pro
-   * Graphics* Plotter. It is an A/A4 size plotter with an 8-pen carousel.
+   * Characteristics for the **HP 7440A** plotter. This model is also known as the *Color Pro
+   * Graphics* Plotter. It is an ANSI A and ISO A4 plotter with an 8-pen carousel. Note that the
+   * paper size cannot be changed programmatically. It has to be changed by flipping a hardware
+   * switch on the back of the device.
    *
    * **Important**: this model can be fitted with an optional *Graphics Enhancement Cartridge* which
    * bumps its buffer memory to 1024 (instead of 60) bytes. The cartridge also adds support for
@@ -387,23 +388,32 @@ let Models = {
     buffer: 60,
     papers: {
       list: ["A", "A4"],
-      A4: {
+      A4: { // 210x297
         long: 10880,
-        short: 7640
+        short: 7640,
+        margins: {
+          portrait: {top: 440, right: 400, bottom: 560, left: 360}, // plotting range x: 10900 (272.5mm)
+          landscape: {top: 360, right: 420, bottom: 400, left: 560} // plotting range y: 7650 (191.25mm)
+        },
+        scalingPoints: {
+          p1: { x: 250, y: 279 },
+          p2: { x: 10250, y: 7479 }
+        }
       },
       A: {
         long: 10280,
         short: 7640,
         margins: {
-          portrait: {top: 240, right: 360, bottom: 640, left: 640},
-          landscape: {top: 640, right: 240, bottom: 360, left: 640}
+          portrait: {top: 240, right: 360, bottom: 640, left: 640}, // plotting range x : 10300 (257.5mm)
+          landscape: {top: 640, right: 240, bottom: 360, left: 640} // plotting range y : 7650 (191.25mm)
+        },
+        scalingPoints: {
+          p1: { x: 250, y: 279 },
+          p2: { x: 10250, y: 7479 }
         }
       },
     },
-    resolution: {
-      x: 40,
-      y: 40
-    },
+    resolution: { x: 40, y: 40 },
     instructions: [
       "CA", "CP", "CS", "DC", "DF", "DI", "DP", "DR", "IM", "IN", "IP", "IW", "LB", "LT", "OA",
       "OC", "OD", "OE", "OF", "OH", "OI", "OO", "OP", "OS", "OW", "PA", "PD", "PR", "PU", "RO",
@@ -449,21 +459,57 @@ let Models = {
     papers: {
       list: ["A", "B", "A4", "A3"],
       A: {
-        long: 10365, short: 7962, psCode: 4,
+        long: 10365,
+        short: 7962,
+        psCode: 4,
         margins: {
           landscape: {top: 562, right: 463, bottom: 112, left: 348},
           portrait: {top: 348, right: 562, bottom: 463, left: 112}
+        },
+        scalingPoints: {
+          p1: { x: 250, y: 596 },
+          p2: { x: 10250, y: 7796 }
         }
       },
       B: {
-        long: 16640, short: 10365, psCode: 0,
+        long: 16640,
+        short: 10365,
+        psCode: 0,
         margins: {
           landscape: {top: 463, right: 112, bottom: 348, left: 562},
           portrait: {top: 112, right: 348, bottom: 562, left: 463}
         },
+        scalingPoints: {
+          p1: { x: 522, y: 259 },
+          p2: { x: 15722, y: 10259 }
+        }
       },
-      A4: {long: 11040, short: 7721, psCode: 4},
-      A3: {long: 16158, short: 11040, psCode: 0}
+      A4: {
+        long: 11040,
+        short: 7721,
+        psCode: 4,
+        margins: {
+          landscape: {},
+          portrait: {}
+        },
+        scalingPoints: {
+          p1: { x: 603, y: 521 },
+          p2: { x: 10603, y: 7721 }
+        }
+      },
+      A3: {
+        long: 16158,
+        short: 11040,
+        psCode: 0,
+        margins: {
+          landscape: {},
+          portrait: {}
+        },
+        scalingPoints: {
+          p1: { x: 170, y: 602 },
+          p2: { x: 15370, y: 10602 }
+        }
+      }
     },
     resolution: {
       x: 40,
@@ -628,9 +674,6 @@ let Models = {
       "TL", "UC", "UF", "VS", "WG", "XT", "YT"
     ]
   }
-
-
-
 
 };
 
@@ -1175,7 +1218,6 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
       this.queue(this.RS232_PREFIX + "L", (data) => {
 
         this.characteristics.buffer = data;
-        this._onReady(callback);
 
         // FIRST HP-GL INSTRUCTIONS START HERE!! IT IS IMPORTANT THAT THOSE INSTRUCTIONS HAPPEN
         // AFTER ESC.L BECAUSE THE HP7440A DOES NOT RETURN THE BUFFER SIZE UNLESS THE BUFFER IS
@@ -1215,8 +1257,8 @@ Plotter.prototype._configurePlottingEnvironment = function(options = {}, callbac
 
         }
 
-        this.queue("IP");       // reassign P1 and P2
-        this.queue("IW");       // reset plotting window
+        this.queue("IP");                                       // reassign P1 and P2
+        this.queue("IW", this._onReady.bind(this, callback));   // reset plotting window
 
       }, {waitForResponse: true});
 
@@ -1348,6 +1390,41 @@ Plotter.prototype.abort = function(callback = null) {
   return this;
 
 };
+
+// /**
+//  * Flips the drawing
+//  *
+//  * @returns {Plotter}
+//  */
+// Plotter.prototype.flip = function(callback = null) {
+//
+//   if (!this.ready) {
+//     throw new Error("THe plotter must be ready before using flip().");
+//   }
+//
+//   let command = "IP";
+//
+//   if (!this.flipped) {
+//
+//     if (this.orientation === "landscape") {
+//
+//       command += this.characteristics.papers[this.paper].scalingPoints.p2.x + "," +
+//                  this.characteristics.papers[this.paper].scalingPoints.p2.y + "," +
+//                  this.characteristics.papers[this.paper].scalingPoints.p1.x + "," +
+//                  this.characteristics.papers[this.paper].scalingPoints.p1.y
+//
+//     } else {
+//
+//     }
+//
+//   }
+//
+//   this.flipped = !this.flipped;
+//   this.queue(command, callback);
+//
+//   return this;
+//
+// };
 
 /**
  * Stops the queue and empties it.
@@ -2714,7 +2791,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.7-3</b> /
+  <b>hpgl v0.8.7-4</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
