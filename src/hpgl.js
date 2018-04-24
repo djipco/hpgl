@@ -867,7 +867,15 @@ let Plotter = function() {
   Object.defineProperty(this, 'connected', {
 
     get: () => {
-      return (this.transport && this.transport.isOpen()) === true;
+
+      if (this.transport && typeof this.transport.isOpen === 'function') {
+        return this.transport.isOpen(); // browser-serialport
+      } else if (this.transport) {
+        return this.transport.isOpen; // node-serialport
+      } else {
+        return false;
+      }
+
     }
 
   });
@@ -974,7 +982,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     // Tear down function when connection fails
     function fail(err) {
-      if (this.transport.isOpen()) this.transport.close();
+      if (this.connected) this.transport.close();
       this.transport.removeListener('data', onDataListener);
       this.transport.removeListener('error', onErrorListener);
       if (typeof callback === "function") callback(err);
@@ -1842,7 +1850,7 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
       );
     }
 
-    // Send the instruction. Wait for printer response if required
+    // Send the instruction. Wait for plotter response if required
     if (waitForResponse) {
 
       console.log("Send and wait " + instruction);
