@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.7-4
+hpgl v0.8.7-5
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -554,11 +554,12 @@ let Models = {
    *
    * @type {PlotterCharacteristics}
    *
-   * A and A4 sizes are loaded with the longer axis horizontal.
-   * All other sizes have long axis vertical.
-   * LES MARGES SONT À LA PAGE 43 DU MANUEL. ÇA PERMETTRA DE CALCULER LES GROSSEURS
-   * LA PAGE 53 DIT COMMENT CHARGER LE PAPIER (DANS QUEL SENS)
    */
+
+  // * A and A4 sizes are loaded with the longer axis horizontal.
+  // * All other sizes have long axis vertical.
+  // * LES MARGES SONT À LA PAGE 43 DU MANUEL. ÇA PERMETTRA DE CALCULER LES GROSSEURS
+  // * LA PAGE 53 DIT COMMENT CHARGER LE PAPIER (DANS QUEL SENS)
   "7580A": {
     brand: "HP",
     model: "7580A",
@@ -593,9 +594,9 @@ let Models = {
    *
    * @type {PlotterCharacteristics}
    *
-   * A, C, A4, and A2 sizes are loaded with the longer axis horizontal.
-   * All other sizes have long axis vertical.
    */
+  // * A, C, A4, and A2 sizes are loaded with the longer axis horizontal.
+  // * All other sizes have long axis vertical.
   "7585A": {
     brand: "HP",
     model: "7585A",
@@ -896,7 +897,15 @@ let Plotter = function() {
   Object.defineProperty(this, 'connected', {
 
     get: () => {
-      return (this.transport && this.transport.isOpen()) === true;
+
+      if (this.transport && typeof this.transport.isOpen === 'function') {
+        return this.transport.isOpen(); // browser-serialport
+      } else if (this.transport) {
+        return this.transport.isOpen; // node-serialport
+      } else {
+        return false;
+      }
+
     }
 
   });
@@ -1003,7 +1012,7 @@ Plotter.prototype.connect = function(transport, options = {}, callback = null) {
 
     // Tear down function when connection fails
     function fail(err) {
-      if (this.transport.isOpen()) this.transport.close();
+      if (this.connected) this.transport.close();
       this.transport.removeListener('data', onDataListener);
       this.transport.removeListener('error', onErrorListener);
       if (typeof callback === "function") callback(err);
@@ -1871,7 +1880,7 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
       );
     }
 
-    // Send the instruction. Wait for printer response if required
+    // Send the instruction. Wait for plotter response if required
     if (waitForResponse) {
 
       console.log("Send and wait " + instruction);
