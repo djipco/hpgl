@@ -90,7 +90,8 @@ you would do it:</p>
 <pre class="prettyprint source lang-javascript"><code>// Import the 'serialport' module and instantiate it. Do not forget to set 'autoOpen' to false in 
 // the options.
 const SerialPort = require(&quot;serialport&quot;);
-var transport = new SerialPort(&quot;/dev/tty.usbserial&quot;, {autoOpen: false});</code></pre><p>If you are working on a Chrome or NW.js application, the procedure is slightly different:</p>
+var transport = new SerialPort(&quot;/dev/tty.usbserial&quot;, {autoOpen: false});
+</code></pre><p>If you are working on a Chrome or NW.js application, the procedure is slightly different:</p>
 <pre class="prettyprint source lang-javascript"><code>// Import the 'browser-serialport' module and instantiate it. Pass 'false' as the third parameter of
 // the SerialPort constructor so no automatic connection attempt is made.
 const SerialPort = require(&quot;browser-serialport&quot;).SerialPort;
@@ -143,7 +144,7 @@ are!</p>
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.7-4</b> /
+  <b>hpgl v0.8.7-7</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>
