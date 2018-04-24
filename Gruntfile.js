@@ -42,7 +42,7 @@ module.exports = function (grunt) {
       },
     },
 
-    // // Generate doc
+    // Generate doc
     jsdoc : {
       dist : {
         src: ['./src/*.js'],
