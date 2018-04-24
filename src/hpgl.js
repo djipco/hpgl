@@ -1367,7 +1367,7 @@ Plotter.prototype.abort = function(callback = null) {
 
         if (typeof callback === "function") callback();
 
-      }, 100)
+      }, 500); // not sure if this is the right number but it seems to work
 
     })
 
@@ -1664,7 +1664,7 @@ Plotter.prototype.disconnect = function(callback = null) {
           if (typeof callback === "function") { callback(error); }
         });
 
-      }, 100);
+      }, 500); // not sure if this is the right number but it seems to work
 
     });
 
