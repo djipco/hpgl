@@ -1406,7 +1406,7 @@ Plotter.prototype.abort = function(callback = null) {
 
         if (typeof callback === "function") callback();
 
-      }, 100)
+      }, 500); // not sure if this is the right number but it seems to work
 
     })
 
@@ -1703,7 +1703,7 @@ Plotter.prototype.disconnect = function(callback = null) {
           if (typeof callback === "function") { callback(error); }
         });
 
-      }, 100);
+      }, 500); // not sure if this is the right number but it seems to work
 
     });
 
@@ -2829,7 +2829,7 @@ module.exports.Plotter = Plotter;
 <footer style="font-style: normal; font-size: 0.9em">
 
   <hr>
-  <b>hpgl v0.8.7-7</b> /
+  <b>hpgl v0.8.7-8</b> /
   ©<a href="http://cote.cc">Jean-Philippe Côté</a>, 2016.
 
 </footer>

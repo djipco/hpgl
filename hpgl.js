@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.7-7
+hpgl v0.8.7-8
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -1396,7 +1396,7 @@ Plotter.prototype.abort = function(callback = null) {
 
         if (typeof callback === "function") callback();
 
-      }, 100)
+      }, 500); // not sure if this is the right number but it seems to work
 
     })
 
@@ -1693,7 +1693,7 @@ Plotter.prototype.disconnect = function(callback = null) {
           if (typeof callback === "function") { callback(error); }
         });
 
-      }, 100);
+      }, 500); // not sure if this is the right number but it seems to work
 
     });
 
