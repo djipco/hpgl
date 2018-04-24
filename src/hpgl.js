@@ -525,11 +525,12 @@ let Models = {
    *
    * @type {PlotterCharacteristics}
    *
-   * A and A4 sizes are loaded with the longer axis horizontal.
-   * All other sizes have long axis vertical.
-   * LES MARGES SONT À LA PAGE 43 DU MANUEL. ÇA PERMETTRA DE CALCULER LES GROSSEURS
-   * LA PAGE 53 DIT COMMENT CHARGER LE PAPIER (DANS QUEL SENS)
    */
+
+  // * A and A4 sizes are loaded with the longer axis horizontal.
+  // * All other sizes have long axis vertical.
+  // * LES MARGES SONT À LA PAGE 43 DU MANUEL. ÇA PERMETTRA DE CALCULER LES GROSSEURS
+  // * LA PAGE 53 DIT COMMENT CHARGER LE PAPIER (DANS QUEL SENS)
   "7580A": {
     brand: "HP",
     model: "7580A",
@@ -564,9 +565,9 @@ let Models = {
    *
    * @type {PlotterCharacteristics}
    *
-   * A, C, A4, and A2 sizes are loaded with the longer axis horizontal.
-   * All other sizes have long axis vertical.
    */
+  // * A, C, A4, and A2 sizes are loaded with the longer axis horizontal.
+  // * All other sizes have long axis vertical.
   "7585A": {
     brand: "HP",
     model: "7585A",
@@ -796,6 +797,14 @@ let Plotter = function() {
    * @member {Number}
    */
   this._queueTimeOutId = 0;
+
+  /**
+   * ID of the timeout used to reattempte communication (when lost)
+   *
+   * @private
+   * @member {Number}
+   */
+  this._retryTimeoutId = 0;
 
   /**
    * Serial input buffer
@@ -1342,17 +1351,25 @@ Plotter.prototype.abort = function(callback = null) {
   // Clear any timeout set to trigger the processing of the queue and empty it
   this._stopAndEmptyQueue();
 
-  // Send "Abort Graphic" instruction
+  // Abort graphics and device-control instructions, in turn.
   this.send(this.RS232_PREFIX + "K", () => {
 
-    /**
-     * Event emitted when a plotting job is aborted.
-     *
-     * @event Plotter#aborted
-     */
-    this.emit("aborted");
+    this.send(this.RS232_PREFIX + "J", () => {
 
-    if (typeof callback === "function") callback();
+      setTimeout(() => {
+
+        /**
+         * Event emitted when a plotting job is aborted.
+         *
+         * @event Plotter#aborted
+         */
+        this.emit("aborted");
+
+        if (typeof callback === "function") callback();
+
+      }, 100)
+
+    })
 
   });
 
@@ -1401,6 +1418,7 @@ Plotter.prototype.abort = function(callback = null) {
  */
 Plotter.prototype._stopAndEmptyQueue = function() {
   clearTimeout(this._queueTimeOutId);
+  clearTimeout(this._retryTimeoutId);
   this._queue = [];
 };
 
@@ -1628,7 +1646,7 @@ Plotter.prototype.disconnect = function(callback = null) {
     this.paper = "A";
   }
 
-  if ( !this.transport || this.transport.connectionId === -1 ) {
+  if ( !this.connected ) {
     if (typeof callback === "function") callback();
     return;
   }
@@ -1638,15 +1656,19 @@ Plotter.prototype.disconnect = function(callback = null) {
   this.abort(() => {
 
     this.send("IN", () => {
-      this.transport.close((error) => {
-        this.transport = undefined;
-        if (typeof callback === "function") { callback(error); }
-      });
+
+      setTimeout(() => {
+
+        this.transport.close((error) => {
+          this.transport = undefined;
+          if (typeof callback === "function") { callback(error); }
+        });
+
+      }, 100);
+
     });
 
   });
-
-
 
   /**
    * Event emitted when the serial connection has been successfully closed.
@@ -1672,10 +1694,17 @@ Plotter.prototype.destroy = function(callback = null) {
   // Stop and empty queue
   this._stopAndEmptyQueue();
 
-  this.disconnect(() => {
-    // Plotter = null;
+  // Disconnect connection to hardware
+  if (this.connected) {
+
+    this.disconnect(() => {
+      // Plotter = null;
+      if (typeof callback === "function") callback();
+    });
+
+  } else {
     if (typeof callback === "function") callback();
-  });
+  }
 
 };
 
@@ -2672,7 +2701,7 @@ Plotter.prototype._processQueue = function() {
   // Are we connected to a device? If not, simply save to file and move along
   if (!this.connected && this._outputFile) {
 
-    // Since we are not limited by the device's buffer, exhaust all commands at once and emopty
+    // Since we are not limited by the device's buffer, exhaust all commands at once and empty
     // queue when done.
     this._queue.forEach((command) => {
       this.send(command.instruction, command.callback);
@@ -2687,7 +2716,7 @@ Plotter.prototype._processQueue = function() {
     // Before sending the actual command, we first send a request to know the available buffer space
     // on the device. Since the response can sometimes be lost, we setup a timer that will retry
     // should the response never come in.
-    let to = setTimeout(() => {
+    this._retryTimeoutId = setTimeout(() => {
       console.log("Warning: Bad communication with the device. Attempting once more.");
 
       // Dispatch fake event to prevent the previous callback from being executed and screwing
@@ -2707,7 +2736,8 @@ Plotter.prototype._processQueue = function() {
       if (freeSpace === -1) return;
 
       // Remove retry timeout
-      clearTimeout(to);
+      clearTimeout(this._retryTimeoutId);
+      this._retryTimeoutId = 0;
 
       // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
       // delay processing until later.
