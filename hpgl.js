@@ -1,6 +1,6 @@
 /*
 
-hpgl v0.8.7-8
+hpgl v0.8.7-9
 
 A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.
 https://github.com/cotejp/hpgl
@@ -893,6 +893,24 @@ let Plotter = function() {
   this.orientation = "landscape";
 
   /**
+   * Whether the drawing should be flipped along the x-axis.
+   *
+   * @type {Boolean}
+   * @default false
+   * @readonly
+   */
+  this.flipX = false;
+
+  /**
+   * Whether the drawing should be flipped along the y-axis.
+   *
+   * @type {Boolean}
+   * @default false
+   * @readonly
+   */
+  this.flipY = false;
+
+  /**
    * Indicates whether a successful serial connection has been established or not. This does not
    * necessarily mean the device is ready to receive commands.
    *
@@ -1406,41 +1424,6 @@ Plotter.prototype.abort = function(callback = null) {
 
 };
 
-// /**
-//  * Flips the drawing
-//  *
-//  * @returns {Plotter}
-//  */
-// Plotter.prototype.flip = function(callback = null) {
-//
-//   if (!this.ready) {
-//     throw new Error("THe plotter must be ready before using flip().");
-//   }
-//
-//   let command = "IP";
-//
-//   if (!this.flipped) {
-//
-//     if (this.orientation === "landscape") {
-//
-//       command += this.characteristics.papers[this.paper].scalingPoints.p2.x + "," +
-//                  this.characteristics.papers[this.paper].scalingPoints.p2.y + "," +
-//                  this.characteristics.papers[this.paper].scalingPoints.p1.x + "," +
-//                  this.characteristics.papers[this.paper].scalingPoints.p1.y
-//
-//     } else {
-//
-//     }
-//
-//   }
-//
-//   this.flipped = !this.flipped;
-//   this.queue(command, callback);
-//
-//   return this;
-//
-// };
-
 /**
  * Stops the queue and empties it.
  * @private
@@ -1738,9 +1721,9 @@ Plotter.prototype.destroy = function(callback = null) {
 };
 
 /**
- * Converts a position whose reference origin is in the top-left corner of the paper sheet (+x going
- * right, +y going down) to the HPGL coordinates system which has its origin in the bottom-left
- * corner (+x going right, + y going up).
+ * Converts a position (in plotter units) whose reference origin is in the top-left corner of the
+ * paper sheet (+x going right, +y going down) to the HPGL coordinates system which has its origin
+ * in the bottom-left corner (+x going right, +y going up).
  *
  * Beware that the resulting position might be outside the plottable area.
  *
@@ -1755,6 +1738,33 @@ Plotter.prototype._toAbsoluteHpglCoordinates = function(x, y) {
 
   let p = this.characteristics.papers[this.paper];
 
+
+
+
+  // Check if image should be flipped
+  if (this.flipX) {
+
+    if (this.orientation === "landscape") {
+      x = this._toPlotterUnits(PAPER_SIZES[this.paper].long) - x;
+    } else {
+      x = this._toPlotterUnits(PAPER_SIZES[this.paper].short) - x;
+    }
+
+  }
+
+  if (this.flipY) {
+
+    if (this.orientation === "landscape") {
+      y = this._toPlotterUnits(PAPER_SIZES[this.paper].short) - y;
+    } else {
+      y = this._toPlotterUnits(PAPER_SIZES[this.paper].long) - y;
+    }
+
+  }
+
+
+
+
   // Compensate for margins
   x -= p.margins[this.orientation].left;
   y -= p.margins[this.orientation].top;
@@ -1764,6 +1774,9 @@ Plotter.prototype._toAbsoluteHpglCoordinates = function(x, y) {
   } else {
     x = this.characteristics.papers[this.paper].short - x;
   }
+
+
+
 
 
 
@@ -1784,6 +1797,10 @@ Plotter.prototype._toAbsoluteHpglCoordinates = function(x, y) {
  * @return {Object} An object whose **x** and **y** properties have been transformed.
  */
 Plotter.prototype._toRelativeHpglCoordinates = function(x, y) {
+
+  // Check if image has been flipped
+  if (this.flipX) x = -x;
+  if (this.flipY) y = -y;
 
   if (this.orientation === "landscape") {
     y = -y;
@@ -2061,7 +2078,7 @@ Plotter.prototype._toHpglInteger = function(value) {
 
 /**
  * Converts a numerical value to floating-point decimal value respecting HPGL's requirements (must
- * be between -128 and 127.9999 and must a maximum of 4 decimal places). The return value is
+ * be between -128 and 127.9999 and must have a maximum of 4 decimal places). The return value is
  * actually a string.
  *
  * @private
