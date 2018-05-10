@@ -114,9 +114,9 @@ the other hand, the Texas Instrument/TI driver works beautifully with multiple d
 
 ### Documentation
 
-I will try to maintain an up-to-date [API documentation](https://cotejp.github.io/hpgl/). A good 
-place to start is the [Plotter class](https://cotejp.github.io/hpgl/Plotter.html). If you find 
-errors, please [file an issue](https://github.com/cotejp/hpgl/issues) on GitHub.
+I will try to maintain an up-to-date [API documentation](https://djipco.github.io/hpgl/). A good
+place to start is the [Plotter class](https://djipco.github.io/hpgl/Plotter.html). If you find
+errors, please [file an issue](https://github.com/djipco/hpgl/issues) on GitHub.
 
 ## Support the Project
 
