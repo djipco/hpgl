@@ -1,15 +1,15 @@
 {
   "name": "hpgl",
-  "version": "0.8.7-9",
+  "version": "0.8.7-10",
   "description": "A Node.js library to communicate with HPGL-compatible devices such as plotters and printers.",
   "author": "Jean-Philippe Côté",
   "main": "hpgl.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/cotejp/hpgl.git"
+    "url": "git://github.com/djipco/hpgl.git"
   },
   "bugs": {
-    "url": "https://github.com/cotejp/hpgl/issues"
+    "url": "https://github.com/djipco/hpgl/issues"
   },
   "keywords": [
     "hpgl",
@@ -21,7 +21,7 @@
   "dependencies": {
     "fs-extra": "^1.0.0"
   },
-  "homepage": "https://github.com/cotejp/hpgl",
+  "homepage": "https://github.com/djipco/hpgl",
   "license": "MIT",
   "devDependencies": {
     "docdash": "^0.4.0",
