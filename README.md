@@ -3,7 +3,7 @@
 
 [![npm](https://img.shields.io/npm/v/hpgl.svg)](https://www.npmjs.com/package/hpgl)
 [![npm](https://img.shields.io/npm/dt/hpgl.svg)](https://www.npmjs.com/package/hpgl)
-[![Beerpay](https://beerpay.io/cotejp/hpgl/badge.svg?style=flat)](https://beerpay.io/cotejp/hpgl) 
+[![Beerpay](https://beerpay.io/djipco/hpgl/badge.svg?style=flat)](https://beerpay.io/djipco/hpgl) 
 
 ### About
 
