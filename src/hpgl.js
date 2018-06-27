@@ -1358,13 +1358,26 @@ Plotter.prototype._onReady = function(callback = null) {
 };
 
 /**
- * Immediately abort any ongoing and upcoming plotting instructions.
+ * Immediately abort any ongoing and upcoming plotting instructions. This empties the queue of any
+ * pending instructions.
  *
  * @param [callback] {Function} - A function to execute once the abort command has been sent to the
  * device.
  * @returns {Plotter}
  */
 Plotter.prototype.abort = function(callback = null) {
+
+  // If an already queued instruction is waiting for a response, we emit an empty "data" event. This
+  // makes it obvious that the operation was aborted.
+  this.emit("data");
+
+  // If more queued instructions contain callbacks waiting for responses, we also trigger them with
+  // undefined response data.
+  this._queue.forEach(command => {
+    if (command.waitForResponse && typeof command.callback === "function") {
+      command.callback();
+    }
+  });
 
   // Clear any timeout set to trigger the processing of the queue and empty it
   this._stopAndEmptyQueue();
@@ -1535,17 +1548,25 @@ Plotter.prototype.wait = function(callback) {
 
   // Send a request for actual pen position and status. This means the device will have to finish
   // all queued instructions before being able to reply.
-  this.queue("OA", (data) => {
+  this.queue("OA", data => {
 
-    let [x, y, penDown] = data.split(",");
+    let status = undefined;
 
-    let status = {
-      x: this._fromPlotterUnits(x),
-      y: this._fromPlotterUnits(y),
-      penDown: penDown === "1"
-    };
+    // Check if data was actually received. Receiving `undefined` usually means that `abort()` was
+    // called.
+    if (data) {
 
-    if (typeof callback === "function") { callback(status); }
+      let [x, y, penDown] = data.split(",");
+
+      status = {
+        x: this._fromPlotterUnits(x),
+        y: this._fromPlotterUnits(y),
+        penDown: penDown === "1"
+      };
+
+    }
+
+    if (typeof callback === "function") callback(status);
 
   }, {waitForResponse: true});
 
@@ -2639,7 +2660,8 @@ Plotter.prototype.getStatus = function(callback) {
  * @param {Object} [options=Object] Additional options
  * @param {Boolean} [options.waitForResponse=false] Whether to execute the callback function
  * immediately after the data has been sent or only after an answer has been received from the
- * device.
+ * device. If `Plotter.abort()` is used, instructions waiting for a response will see their
+ * callback executed with `undefined` as data.
  * @param {Boolean} [options.ignoreOutputInstructions=false] Whether to ignore HPGL output
  * instructions (instructions starting with "O"). This is useful when plotting a whole file.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
@@ -2656,11 +2678,8 @@ Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
   for (let i = 0; i < commands.length; i++) {
 
     if (commands[i].startsWith("O") && options.ignoreOutputInstructions) {
-      // console.log("Ignored: " + commands[i]);
       continue;
     }
-
-    // console.log("Queued: " + commands[i]);
 
     // Make sure a single instruction is not bigger than the device's buffer. This is also checked
     // in send() but must be checked here because a command that is larger than the maximum buffer
