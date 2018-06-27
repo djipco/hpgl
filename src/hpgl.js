@@ -2360,7 +2360,7 @@ Plotter.prototype.drawRectangle = function(width, height, options = {}, callback
  * @param metric {Boolean} - Whether the coordinates are in centimeters (default) or decimal inches.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
  */
-Plotter.prototype.moveTo = function(x, y, metric = true) {
+Plotter.prototype.moveTo = function(x = 0, y = 0, metric = true) {
 
   let point = this._toAbsoluteHpglCoordinates(
     this._toPlotterUnits(x, metric),
