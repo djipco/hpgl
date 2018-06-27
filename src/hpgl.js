@@ -1367,14 +1367,18 @@ Plotter.prototype._onReady = function(callback = null) {
  */
 Plotter.prototype.abort = function(callback = null) {
 
-  // If an already queued instruction is waiting for a response, we emit an empty "data" event. This
-  // makes it obvious that the operation was aborted.
-  this.emit("data");
+  /**
+   * Event emitted when the current job is aborted.
+   * @event Plotter#abort
+   */
+  // This is listened to (at least) when an instruction must trigger a callback and this instruction
+  // is currently being processed.
+  this.emit("aborted");
 
-  // If more queued instructions contain callbacks waiting for responses, we also trigger them with
-  // undefined response data.
+  // If more queued instructions contain callbacks specified to execute on `Plotter.abort()`, we
+  // trigger them (with `undefined` as data).
   this._queue.forEach(command => {
-    if (command.waitForResponse && typeof command.callback === "function") {
+    if (command.executeCallbackOnAbort && typeof command.callback === "function" ) {
       command.callback();
     }
   });
@@ -1388,16 +1392,7 @@ Plotter.prototype.abort = function(callback = null) {
     this.send(this.RS232_PREFIX + "J", () => {
 
       setTimeout(() => {
-
-        /**
-         * Event emitted when a plotting job is aborted.
-         *
-         * @event Plotter#aborted
-         */
-        this.emit("aborted");
-
         if (typeof callback === "function") callback();
-
       }, 500); // not sure if this is the right number but it seems to work
 
     })
@@ -1415,6 +1410,12 @@ Plotter.prototype.abort = function(callback = null) {
 Plotter.prototype._stopAndEmptyQueue = function() {
   clearTimeout(this._queueTimeOutId);
   clearTimeout(this._retryTimeoutId);
+
+
+  this._queueTimeOutId = 0;
+  this._retryTimeoutId = 0;
+
+
   this._queue = [];
 };
 
@@ -1568,7 +1569,7 @@ Plotter.prototype.wait = function(callback) {
 
     if (typeof callback === "function") callback(status);
 
-  }, {waitForResponse: true});
+  }, {waitForResponse: true, executeCallbackOnAbort: true});
 
 };
 
@@ -1840,8 +1841,6 @@ Plotter.prototype._onData = function(data) {
  */
 Plotter.prototype._onError = function(error) {
 
-  // console.log(error);
-
   /**
    * Event emitted when an error occurs. The specified function will receive an object with
    * information about the error.
@@ -1920,17 +1919,17 @@ Plotter.prototype.send = function(instruction, callback = null, waitForResponse 
     // Send the instruction. Wait for plotter response if required
     if (waitForResponse) {
 
-      console.log("Send and wait " + instruction);
+      // console.info("Send and wait for response: " + instruction);
 
       this.once("data", (data) => {
-        // console.log("Received: " + data);
+        // console.info("Received response: " + data);
         if (typeof callback === "function") callback(data);
       });
       this.transport.write(instruction);
 
     } else {
 
-      console.log("Send " + instruction);
+      // console.info("Send: " + instruction);
 
       this.transport.write(instruction, (results) => {
         if (typeof callback === "function") callback(results);
@@ -2659,9 +2658,9 @@ Plotter.prototype.getStatus = function(callback) {
  * multiple commands, the callback will be fired after each command.
  * @param {Object} [options=Object] Additional options
  * @param {Boolean} [options.waitForResponse=false] Whether to execute the callback function
- * immediately after the data has been sent or only after an answer has been received from the
- * device. If `Plotter.abort()` is used, instructions waiting for a response will see their
- * callback executed with `undefined` as data.
+ * after the data has been sent or only after an answer has been received from the device.
+ * @param {Boolean} [options.executeCallbackOnAbort=false] Whether the specified callback (if any)
+ * should be executed or simply ignored when `Plotter.abort()` is called.
  * @param {Boolean} [options.ignoreOutputInstructions=false] Whether to ignore HPGL output
  * instructions (instructions starting with "O"). This is useful when plotting a whole file.
  * @returns {Plotter} Returns the `Plotter` object to allow method chaining.
@@ -2702,6 +2701,7 @@ Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
     if (i === commands.length - 1) {
       command.callback = callback;
       command.waitForResponse = options.waitForResponse;
+      command.executeCallbackOnAbort = options.executeCallbackOnAbort;
     }
 
     this._queue.push(command);
@@ -2725,8 +2725,6 @@ Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
  * @private
  */
 Plotter.prototype._processQueue = function() {
-
-  // console.log("Process queue");
 
   // Make sure any pending timeout is cancelled. We will add a new one if necessary. Exit if no
   // commands are pending.
@@ -2753,7 +2751,8 @@ Plotter.prototype._processQueue = function() {
     // on the device. Since the response can sometimes be lost, we setup a timer that will retry
     // should the response never come in.
     this._retryTimeoutId = setTimeout(() => {
-      console.log("Warning: Bad communication with the device. Attempting once more.");
+
+      // console.warn("Warning: Bad communication with the device. Attempting once more.");
 
       // Dispatch fake event to prevent the previous callback from being executed and screwing
       // things up.
@@ -2777,11 +2776,9 @@ Plotter.prototype._processQueue = function() {
 
       // If there is enough buffer space, we send the instruction. Otherwise, we set a timeout to
       // delay processing until later.
-      if (this._queue[0].instruction.length <= freeSpace) {
+      if (this._queue[0] && this._queue[0].instruction.length <= freeSpace) {
 
-        // console.log("Enough buffer space: " + data);
-
-        // Send oldest available instruction first (and keep it for later check)
+        // Send oldest available instruction first (and keep it for later checks)
         let command = this._queue.shift();
         this.send(command.instruction, command.callback, command.waitForResponse);
 
@@ -2789,9 +2786,21 @@ Plotter.prototype._processQueue = function() {
         // if more commands are in the queue, process them.
         if (command.waitForResponse) {
 
-          console.log("Wait for response.");
+          // console.info("Wait for response.");
+
+          // Make sure the callback will be triggered if an abort call is made (if required)
+          let onAbort = () => {
+            if (
+              command.executeCallbackOnAbort &&
+              typeof command.callback === "function"
+            ) {
+              command.callback();
+            }
+          };
+          this.once("aborted", onAbort);
 
           this.once("data", () => {
+            this.removeListener("aborted", onAbort);
             this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
           })
 
