@@ -2738,7 +2738,7 @@ Plotter.prototype.queue = function(instruction, callback = null, options = {}) {
   }
 
   // If the queue is not set for execution, set it.
-  if (this._queueTimeOutId === 0) {
+  if (this._queueTimeOutId === 0 && this._retryTimeoutId === 0) {
     this._queueTimeOutId = setTimeout(this._processQueue.bind(this), this.QUEUE_DELAY);
   }
 
