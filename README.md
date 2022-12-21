@@ -3,7 +3,6 @@
 
 [![npm](https://img.shields.io/npm/v/hpgl.svg)](https://www.npmjs.com/package/hpgl)
 [![npm](https://img.shields.io/npm/dt/hpgl.svg)](https://www.npmjs.com/package/hpgl)
-[![Beerpay](https://beerpay.io/djipco/hpgl/badge.svg?style=flat)](https://beerpay.io/djipco/hpgl) 
 
 ### About
 
@@ -25,11 +24,12 @@ module instead (**version 2.1.0 or greater**).
 > *Note: it is possible to use `node-serialport` within NW.js and Electron projects but it needs to 
 > be specifically recompiled for those environment.*
 
-So far, the library has only beed tested with [HP 7475A](http://hpmuseum.net/display_item.php?hw=74)
-and [HP 7440A](http://hpmuseum.net/display_item.php?hw=80) plotters. If you have success with other 
-makes or models, [let me know](https://twitter.com/jpcote). Beware that some HP plotters are only 
-equipped with a proprietary HPIB or GPIB interface. To use this library, your plotter must have a 
-**serial** interface (RS-232-C).
+So far, the library has only beed tested with [HP 7475A](http://hpmuseum.net/display_item.php?hw=74), 
+[HP 7440A](http://hpmuseum.net/display_item.php?hw=80) and 
+[Roland DXY-1300](https://archive.org/details/rolanddxy130012001100commandreferencemanualaf**) 
+plotters. If you have success with other makes or models, [let me know](https://twitter.com/djipco). 
+Beware that some HP plotters are only equipped with a proprietary HPIB or GPIB interface. To use 
+this library, your plotter must have a **serial** interface (RS-232-C).
 
 ### Coordinate System
 
@@ -104,7 +104,7 @@ passing in the `transport` variable, some optionnal settings and a function to t
 device is ready. Note that `this` is bound to the `Plotter` object and that plotting methods are 
 chainable.
 
-### Using Multiple Plotteres
+### Using Multiple Plotters
 
 This library can be used to connect several plotters to the same host. However, not all 
 USB-to-Serial chipsets support this. 
@@ -120,10 +120,8 @@ errors, please [file an issue](https://github.com/djipco/hpgl/issues) on GitHub.
 
 ## Support the Project
 
-If you find this library useful, you can **[buy me a drink](https://beerpay.io/cotejp/hpgl)** as a 
-token of your appreciation. This would automatically make you even more awesome than you already 
+If you find this library useful, you can 💜 [**sponsor the project**](https://github.com/sponsors/djipco)
+as a token of your appreciation. This would automatically make you even more awesome than you already 
 are!
-
-[![Beerpay](https://beerpay.io/cotejp/hpgl/badge.svg?style=beer-square)](https://beerpay.io/cotejp/hpgl)
 
 Cheers!
